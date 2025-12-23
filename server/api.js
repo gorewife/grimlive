@@ -28,29 +28,41 @@ async function parseBody(req) {
   });
 }
 
-// Initialize SQLite schema (for local dev - production uses PostgreSQL)
+// Initialize SQLite schema (for local dev - production uses grimkeeper's PostgreSQL)
+// These tables extend grimkeeper's existing schema
 db.exec(`
   CREATE TABLE IF NOT EXISTS web_sessions (
     session_id TEXT PRIMARY KEY,
     token TEXT UNIQUE NOT NULL,
+    discord_user_id INTEGER,  -- Links to Discord account
     created_at INTEGER DEFAULT (strftime('%s', 'now')),
     expires_at INTEGER NOT NULL,
     stat_tracking_enabled INTEGER DEFAULT 1
   );
 
+  -- Mimics grimkeeper's games table structure for local dev
+  -- In production, uses existing grimkeeper games table
   CREATE TABLE IF NOT EXISTS games (
     game_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    web_session_id TEXT REFERENCES web_sessions(session_id),
-    started_at INTEGER DEFAULT (strftime('%s', 'now')),
-    ended_at INTEGER,
+    guild_id INTEGER,  -- NULL for web-only games
+    category_id INTEGER,  -- NULL for web-only games
     script TEXT,
-    num_players INTEGER,
-    winning_team TEXT
+    custom_name TEXT,
+    start_time REAL,  -- Unix timestamp (FLOAT in PostgreSQL)
+    end_time REAL,
+    players TEXT,  -- JSON array of player user IDs
+    player_count INTEGER,
+    storyteller_id INTEGER,  -- Discord user ID of host
+    winner TEXT,  -- 'Good', 'Evil', or NULL
+    is_active INTEGER DEFAULT 1,
+    completed_at INTEGER
   );
 
+  -- Player tracking extension (new - not in grimkeeper yet)
   CREATE TABLE IF NOT EXISTS game_players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     game_id INTEGER REFERENCES games(game_id),
+    discord_id INTEGER,  -- NULL if not linked
     player_name TEXT NOT NULL,
     seat_number INTEGER NOT NULL,
     role_id TEXT,
@@ -63,7 +75,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS player_deaths (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     game_player_id INTEGER REFERENCES game_players(id),
-    death_type TEXT,
+    death_type TEXT,  -- 'execution', 'night_kill', 'other'
     day_number INTEGER,
     killer_player_id INTEGER,
     died_at INTEGER DEFAULT (strftime('%s', 'now'))
@@ -104,7 +116,7 @@ export const api = {
     });
   },
 
-  // POST /api/game/start - Start new game
+  // POST /api/game/start - Start new game (grimkeeper-compatible format)
   startGame: async (req) => {
     const session = verifyToken(req);
     if (!session) {
@@ -112,10 +124,25 @@ export const api = {
     }
 
     const body = await parseBody(req);
-    const { script, numPlayers } = body;
+    const { script, customName, players, storytellerId } = body;
 
-    const result = db.query('INSERT INTO games (web_session_id, script, num_players) VALUES (?, ?, ?) RETURNING game_id')
-      .get(session.session_id, script || null, numPlayers || 0);
+    // Use grimkeeper's games table structure
+    const result = db.query(`
+      INSERT INTO games (
+        guild_id, category_id, script, custom_name, start_time, 
+        players, player_count, storyteller_id, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) 
+      RETURNING game_id
+    `).get(
+      null,  // guild_id NULL for web games
+      null,  // category_id NULL for web games
+      script || null,
+      customName || null,
+      Date.now() / 1000,  // Unix timestamp
+      JSON.stringify(players || []),
+      players?.length || 0,
+      session.discord_user_id || storytellerId || null
+    );
     
     return jsonResponse({ gameId: result.game_id });
   },
@@ -130,8 +157,17 @@ export const api = {
     const body = await parseBody(req);
     const { gameId, winningTeam } = body;
 
-    db.query('UPDATE games SET ended_at = ?, winning_team = ? WHERE game_id = ?')
-      .run(Math.floor(Date.now() / 1000), winningTeam, gameId);
+    // Update using grimkeeper's schema
+    db.query(`
+      UPDATE games 
+      SET end_time = ?, winner = ?, is_active = 0, completed_at = ?
+      WHERE game_id = ?
+    `).run(
+      Date.now() / 1000,
+      winningTeam,  // 'Good' or 'Evil'
+      Date.now() / 1000,
+      gameId
+    );
 
     // Update winning team flag for all players
     db.query(`
