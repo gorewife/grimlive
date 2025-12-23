@@ -59,13 +59,14 @@ db.exec(`
   );
 
   -- Player tracking extension (new - not in grimkeeper yet)
+  -- Stores FINAL roles at game end only
   CREATE TABLE IF NOT EXISTS game_players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     game_id INTEGER REFERENCES games(game_id),
     discord_id INTEGER,  -- NULL if not linked
     player_name TEXT NOT NULL,
     seat_number INTEGER NOT NULL,
-    role_id TEXT,
+    role_id TEXT,  -- Final role at game end
     role_name TEXT,
     team TEXT,
     survived INTEGER DEFAULT 1,  -- 1 = survived, 0 = died

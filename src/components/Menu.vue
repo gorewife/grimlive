@@ -123,6 +123,14 @@
             <li @click="joinSession">Join (Player)<em>[J]</em></li>
           </template>
           <template v-else>
+            <li v-if="!session.isSpectator && isStatTrackingEnabled" @click="startGame">
+              <small>Start Game</small>
+              <em><font-awesome-icon icon="play" /></em>
+            </li>
+            <li v-if="!session.isSpectator && isStatTrackingEnabled && currentGameId" @click="endGame">
+              <small>End Game</small>
+              <em><font-awesome-icon icon="stop" /></em>
+            </li>
             <li v-if="session.ping">
               <small>
                 Delay to {{ session.isSpectator ? "Host" : "Players" }}
@@ -305,6 +313,9 @@ export default {
     isStatTrackingEnabled() {
       return stats.isEnabled();
     },
+    currentGameId() {
+      return stats.currentGameId;
+    },
     ...mapState(["grimoire", "session", "edition"]),
     ...mapState("players", ["players", "npcs"]),
   },
@@ -464,6 +475,43 @@ export default {
         await stats.enable();
         this.$forceUpdate();
       }
+    },
+    async startGame() {
+      if (this.session.isSpectator || !stats.isEnabled()) return;
+      
+      // Get current script/edition name
+      const script = this.edition.name || this.edition.id || 'Custom';
+      const playerNames = this.players.map(p => p.name);
+      
+      await stats.startGame(script, script, playerNames);
+      this.$forceUpdate(); // Update UI to show End Game button
+    },
+    async endGame() {
+      if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
+      
+      // Prompt for winner
+      const winner = prompt('Who won? Enter "Good" or "Evil"');
+      if (!winner) return;
+      
+      const winningTeam = winner.toLowerCase() === 'good' ? 'Good' : 'Evil';
+      
+      // Send all players with their final roles
+      for (let i = 0; i < this.players.length; i++) {
+        const player = this.players[i];
+        if (player.role && player.role.id) {
+          await stats.addPlayer(
+            player.name,
+            i + 1, // seat number
+            player.role.id,
+            player.role.name,
+            player.role.team
+          );
+        }
+      }
+      
+      // End the game
+      await stats.endGame(winningTeam);
+      this.$forceUpdate();
     },
     ...mapMutations([
       "toggleGrimoire",
