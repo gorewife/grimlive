@@ -58,6 +58,8 @@ const faIcons = [
   "WindowMaximize",
   "WindowMinimize",
   "YinYang",
+  "SignOutAlt",
+  "Play",
 ];
 const fabIcons = ["Github", "Discord"];
 library.add(

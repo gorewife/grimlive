@@ -118,20 +118,27 @@
             {{ session.isSpectator ? "Playing" : "Hosting" }}
           </li>
           <li class="headline" v-else>Live Session</li>
+          
+          <!-- Discord Login (always visible) -->
+          <li v-if="!isDiscordLinked" @click="loginWithDiscord" style="background: #5865F2;">
+            <small style="color: white;">Log in with Discord</small>
+            <em><font-awesome-icon :icon="['fab', 'discord']" style="color: white;" /></em>
+          </li>
+          <li v-else style="color: #57F287;">
+            <small>✓ Discord: {{ discordUsername }}</small>
+            <em @click="logoutDiscord" style="cursor: pointer;" title="Logout"><font-awesome-icon icon="sign-out-alt" /></em>
+          </li>
+
           <template v-if="!session.sessionId">
             <li @click="hostSession">Host (Storyteller)<em>[H]</em></li>
             <li @click="joinSession">Join (Player)<em>[J]</em></li>
           </template>
           <template v-else>
-            <li v-if="!session.isSpectator && isStatTrackingEnabled" @click="startGame">
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && !currentGameId" @click="startGame">
               <small>Start Game</small>
               <em><font-awesome-icon icon="play" /></em>
             </li>
-            <li v-if="!session.isSpectator && isStatTrackingEnabled && !isDiscordLinked" @click="linkDiscord">
-              <small style="color: orange;">⚠ Link Discord to track stats</small>
-              <em><font-awesome-icon :icon="['fab', 'discord']" /></em>
-            </li>
-            <li v-if="!session.isSpectator && isStatTrackingEnabled && currentGameId" @click="endGame">
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="endGame">
               <small>End Game</small>
               <em><font-awesome-icon icon="stop" /></em>
             </li>
@@ -188,7 +195,7 @@
                   ]"
               /></em>
             </li>
-            <li v-if="!session.isSpectator" @click="toggleStatTracking">
+            <li v-if="!session.isSpectator && isDiscordLinked" @click="toggleStatTracking">
               <small>Track Game Stats</small>
               <em
                 ><font-awesome-icon
@@ -315,10 +322,18 @@ export default {
       );
     },
     isStatTrackingEnabled() {
-      return stats.isEnabled();
+      // Force reactivity
+      this.updateKey; // eslint-disable-line no-unused-expressions
+      return localStorage.getItem('statTrackingEnabled') === 'true';
     },
     isDiscordLinked() {
-      return stats.isDiscordLinked();
+      // Force reactivity
+      this.updateKey; // eslint-disable-line no-unused-expressions
+      return !!localStorage.getItem('discordUserId');
+    },
+    discordUsername() {
+      this.updateKey; // eslint-disable-line no-unused-expressions
+      return localStorage.getItem('discordUsername') || 'Unknown';
     },
     currentGameId() {
       return stats.currentGameId;
@@ -329,6 +344,7 @@ export default {
   data() {
     return {
       tab: "grimoire",
+      updateKey: 0, // Force computed property updates
     };
   },
   methods: {
@@ -475,22 +491,34 @@ export default {
     async toggleStatTracking() {
       if (this.session.isSpectator) return;
       
+      // Can only enable if Discord is linked
+      if (!stats.isEnabled() && !stats.isDiscordLinked()) {
+        alert('Please log in with Discord first to enable stat tracking.');
+        return;
+      }
+      
       if (stats.isEnabled()) {
         stats.disable();
-        this.$forceUpdate(); // Force re-render to update checkbox
       } else {
         await stats.enable();
-        this.$forceUpdate();
+      }
+      this.updateKey++; // Trigger computed property updates
+    },
+    loginWithDiscord() {
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://clocktower.live:8001'
+        : 'http://localhost:8001';
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback.html');
+      window.location.href = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
+    },
+    logoutDiscord() {
+      if (confirm('Log out of Discord? This will disable stat tracking.')) {
+        stats.logout();
+        window.location.reload();
       }
     },
     async startGame() {
-      if (this.session.isSpectator || !stats.isEnabled()) return;
-      
-      // Check if Discord is linked
-      if (!stats.isDiscordLinked()) {
-        alert('You must link your Discord account before starting a tracked game.');
-        return;
-      }
+      if (this.session.isSpectator || !stats.isEnabled() || !stats.isDiscordLinked()) return;
       
       // Prompt for session ID (category ID)
       const categoryId = prompt('Enter Discord Session ID (Category ID from /setbotc):');
@@ -503,14 +531,6 @@ export default {
       const gameId = await stats.startGame(script, script, playerNames, categoryId);
       if (gameId) {
         this.$forceUpdate(); // Update UI to show End Game button
-      }
-    },
-    linkDiscord() {
-      // For now, simple prompt. TODO: Implement OAuth flow
-      const userId = prompt('Enter your Discord User ID (temp - will be OAuth later):');
-      if (userId) {
-        stats.setDiscordUserId(userId);
-        this.$forceUpdate();
       }
     },
     async endGame() {

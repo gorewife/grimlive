@@ -7,6 +7,7 @@ class StatsService {
     this.token = localStorage.getItem('statsToken');
     this.sessionId = localStorage.getItem('statsSessionId');
     this.discordUserId = localStorage.getItem('discordUserId');
+    this.discordUsername = localStorage.getItem('discordUsername');
     this.currentGameId = null;
     this.enabled = localStorage.getItem('statTrackingEnabled') === 'true';
   }
@@ -19,9 +20,34 @@ class StatsService {
     return !!this.discordUserId;
   }
 
+  getDiscordUsername() {
+    return this.discordUsername;
+  }
+
+  setDiscordUser(userId, username) {
+    this.discordUserId = userId;
+    this.discordUsername = username;
+    localStorage.setItem('discordUserId', userId);
+    localStorage.setItem('discordUsername', username);
+  }
+
   setDiscordUserId(userId) {
     this.discordUserId = userId;
     localStorage.setItem('discordUserId', userId);
+  }
+
+  logout() {
+    this.discordUserId = null;
+    this.discordUsername = null;
+    this.enabled = false;
+    this.token = null;
+    this.sessionId = null;
+    this.currentGameId = null;
+    localStorage.removeItem('discordUserId');
+    localStorage.removeItem('discordUsername');
+    localStorage.removeItem('statTrackingEnabled');
+    localStorage.removeItem('statsToken');
+    localStorage.removeItem('statsSessionId');
   }
 
   async enable() {
@@ -43,7 +69,12 @@ class StatsService {
     try {
       const response = await fetch(`${this.baseUrl}/session/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          discord_user_id: this.discordUserId
+        })
       });
       
       const data = await response.json();

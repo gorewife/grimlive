@@ -93,13 +93,16 @@ function verifyToken(req) {
 
 export const api = {
   // POST /api/session/create - Create new tracking session
-  createSession: (req) => {
+  createSession: async (req) => {
+    const body = await parseBody(req);
+    const { discord_user_id } = body;
+    
     const token = crypto.randomUUID();
     const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
     
     const sessionId = crypto.randomUUID();
-    db.query('INSERT INTO web_sessions (session_id, token, expires_at) VALUES (?, ?, ?)')
-      .run(sessionId, token, expiresAt);
+    db.query('INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES (?, ?, ?, ?)')
+      .run(sessionId, token, discord_user_id || null, expiresAt);
     
     return jsonResponse({ 
       sessionId, 
@@ -221,5 +224,84 @@ export const api = {
     `).all(gameId);
     
     return jsonResponse({ players });
+  },
+
+  // OAuth endpoints
+  discordOAuth: async (req) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const redirectUri = url.searchParams.get('redirect_uri');
+    
+    if (!redirectUri) {
+      return jsonResponse({ error: 'Missing redirect_uri' }, 400);
+    }
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    if (!clientId) {
+      return jsonResponse({ error: 'Discord OAuth not configured' }, 500);
+    }
+
+    // Redirect to Discord OAuth
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
+    
+    return {
+      status: 302,
+      headers: { Location: discordAuthUrl },
+      text: async () => ''
+    };
+  },
+
+  discordCallback: async (req) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const code = url.searchParams.get('code');
+    
+    if (!code) {
+      return jsonResponse({ error: 'Missing authorization code' }, 400);
+    }
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    const redirectUri = url.searchParams.get('redirect_uri') || 'http://localhost:8080/auth/callback';
+
+    try {
+      // Exchange code for access token
+      const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri
+        })
+      });
+
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenData.access_token) {
+        return jsonResponse({ error: 'Failed to get access token' }, 500);
+      }
+
+      // Get user info
+      const userResponse = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`
+        }
+      });
+
+      const userData = await userResponse.json();
+      
+      return jsonResponse({
+        userId: userData.id,
+        username: userData.username,
+        discriminator: userData.discriminator,
+        avatar: userData.avatar
+      });
+    } catch (error) {
+      console.error('Discord OAuth error:', error);
+      return jsonResponse({ error: 'OAuth failed' }, 500);
+    }
   }
 };

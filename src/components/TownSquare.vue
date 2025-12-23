@@ -318,14 +318,14 @@ export default {
 }
 
 @mixin on-circle($item-count) {
-  $angle: (360 / $item-count);
+  $angle: math.div(360, $item-count);
   $rot: 0;
 
   // rotation and tooltip placement
   @for $i from 1 through $item-count {
     &:nth-child(#{$i}) {
       transform: rotate($rot * 1deg);
-      @if $i - 1 <= ($item-count / 2) {
+      @if $i - 1 <= math.div($item-count, 2) {
         // first half of players
         z-index: $item-count - $i + 1;
         // open menu on the left
@@ -379,11 +379,11 @@ export default {
       }
 
       // move reminders closer to the sides of the circle
-      $q: ($item-count / 4);
+      $q: math.div($item-count, 4);
       $x: $i - 1;
-      @if $x < $q or ($x >= ($item-count / 2) and $x < $q * 3) {
+      @if $x < $q or ($x >= math.div($item-count, 2) and $x < $q * 3) {
         .player {
-          margin-bottom: -10% + 20% * (1 - (($x % $q) / $q));
+          margin-bottom: -10% + 20% * (1 - math.div($x % $q, $q));
         }
       } @else {
         .player {

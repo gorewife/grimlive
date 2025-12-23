@@ -6,6 +6,26 @@ import { URL } from "url";
 import { WebSocketServer, WebSocket } from "ws";
 import client from "prom-client";
 import { api } from "./api.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from parent directory
+const envPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...values] = trimmed.split('=');
+      if (key && values.length) {
+        process.env[key.trim()] = values.join('=').trim();
+      }
+    }
+  });
+  console.log('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
+}
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -42,6 +62,22 @@ const requestHandler = async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host}`);
   
+  // Route OAuth requests (not under /api/)
+  if (url.pathname === '/auth/discord') {
+    const response = await api.discordOAuth(req);
+    if (response.headers?.Location) {
+      res.writeHead(response.status || 302, response.headers);
+      res.end();
+      return;
+    }
+  } else if (url.pathname === '/auth/discord/callback') {
+    const response = await api.discordCallback(req);
+    res.writeHead(response.status || 200, { 'Content-Type': 'application/json' });
+    const body = await response.text();
+    res.end(body);
+    return;
+  }
+  
   // Route API requests
   if (url.pathname.startsWith('/api/')) {
     const path = url.pathname.slice(5); // Remove '/api/'
@@ -50,7 +86,7 @@ const requestHandler = async (req, res) => {
       let response;
       
       if (path === 'session/create' && req.method === 'POST') {
-        response = api.createSession(req);
+        response = await api.createSession(req);
       } else if (path === 'game/start' && req.method === 'POST') {
         response = await api.startGame(req);
       } else if (path === 'game/end' && req.method === 'POST') {

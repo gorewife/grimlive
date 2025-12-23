@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Discord Authentication</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #1e1e1e;
+      color: #fff;
+    }
+    .loading {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading">
+    <h2>Authenticating with Discord...</h2>
+    <p id="message">Please wait...</p>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (!code) {
+      document.getElementById('message').textContent = 'Error: No authorization code received';
+    } else {
+
+      const baseUrl = location.origin.includes('localhost') 
+        ? 'http://localhost:8001'
+        : 'https://clocktower.live:8001';
+      
+      fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback.html')}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.userId) {
+            localStorage.setItem('discordUserId', data.userId);
+            localStorage.setItem('discordUsername', `${data.username}${data.discriminator !== '0' ? '#' + data.discriminator : ''}`);
+            window.location.href = '/';
+          } else {
+            document.getElementById('message').textContent = 'Error: ' + (data.error || 'Unknown error');
+          }
+        })
+        .catch(error => {
+          document.getElementById('message').textContent = 'Error: ' + error.message;
+        });
+    }
+  </script>
+</body>
+</html>
