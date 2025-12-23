@@ -5,3 +5,19 @@ tmp
 *.pem
 .DS_Store
 src/assets/icons
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Personal docs
+BUN_MIGRATION.md
+TECHNICAL_ANALYSIS.md
+
+# Vite cache
+.vite
+
+# Environment files
+.env
+.env.local

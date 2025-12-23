@@ -4,12 +4,13 @@
   "description": "Blood on the Clocktower Town Square",
   "author": "Steffen Baumgart",
   "scripts": {
-    "clone-images": "npx rimraf ./tmp/botc-icons/ && git clone https://github.com/tomozbot/botc-icons.git --depth 1 ./tmp/botc-icons",
-    "copy-images": "npx copyfiles -u 3 ./tmp/botc-icons/WEBP/**/* ./src/assets/icons/ && npx copyfiles -u 3 ./tmp/botc-icons/WEBP/* ./src/assets/icons/",
-    "serve": "npm run clone-images && npm run copy-images && vue-cli-service serve",
-    "build": "npm run clone-images && npm run copy-images && vue-cli-service build ./src/main.js",
-    "lint": "vue-cli-service lint",
-    "lint-ci": "vue-cli-service lint --no-fix --max-warnings=0"
+    "clone-images": "rimraf ./tmp/botc-icons/ && git clone https://github.com/tomozbot/botc-icons.git --depth 1 ./tmp/botc-icons",
+    "copy-images": "copyfiles -u 3 './tmp/botc-icons/WEBP/**/*' ./src/assets/icons/ && copyfiles -u 3 './tmp/botc-icons/WEBP/*' ./src/assets/icons/",
+    "dev": "bun run clone-images && bun run copy-images && vite",
+    "build": "bun run clone-images && bun run copy-images && vite build",
+    "preview": "vite preview",
+    "lint": "eslint --ext .js,.vue src",
+    "lint-fix": "eslint --ext .js,.vue src --fix"
   },
   "main": "App.vue",
   "dependencies": {
@@ -17,7 +18,6 @@
     "@fortawesome/free-brands-svg-icons": "^5.15.1",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/vue-fontawesome": "^0.1.10",
-    "@vue/cli-service": "^5.0.8",
     "@vue/runtime-dom": "^3.3.4",
     "prom-client": "^13.0.0",
     "sass": "^1.69.5",
@@ -28,14 +28,17 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
-    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vitejs/plugin-vue2": "^2.3.4",
     "@vue/eslint-config-prettier": "^8.0.0",
     "copyfiles": "^2.4.1",
     "eslint": "^8.53.0",
     "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-vue": "^9.18.1",
     "prettier": "^3.0.3",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vite": "^7.3.0",
+    "vite-plugin-vue-devtools": "^8.0.5",
+    "vite-plugin-vue2": "^2.0.3"
   },
   "keywords": [
     "botc",

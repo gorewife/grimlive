@@ -1,6 +1,6 @@
 <template>
   <div class="intro">
-    <img src="static/apple-icon.png" alt="" class="logo" />
+    <img src="/static/apple-icon.png" alt="" class="logo" />
     <div>
       Welcome to the (unofficial)
       <b>Virtual Town Square and Grimoire</b> for Blood on the Clocktower!

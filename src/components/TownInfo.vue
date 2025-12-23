@@ -7,7 +7,7 @@
         backgroundImage: `url(${
           edition.logo && grimoire.isImageOptIn
             ? edition.logo
-            : require('../assets/editions/' + edition.id + '.webp')
+            : getEditionImage(edition.id)
         })`,
       }"
     ></li>
@@ -74,8 +74,12 @@
 <script>
 import gameJSON from "./../counts.json";
 import { mapState } from "vuex";
+import { getEditionImage } from "@/utils/images";
 
 export default {
+  methods: {
+    getEditionImage
+  },
   computed: {
     teams: function () {
       const { players } = this.$store.state.players;

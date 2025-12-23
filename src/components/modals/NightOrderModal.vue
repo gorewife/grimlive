@@ -120,6 +120,7 @@
 
 <script>
 import Modal from "./Modal";
+import { iconImages, assetImages } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 export default {
@@ -314,7 +315,7 @@ export default {
         role.id === "minioninfo" ||
         role.id === "demoninfo"
       ) {
-        return require(`../../assets/${role.id}.webp`);
+        return assetImages[`../../assets/${role.id}.webp`];
       }
 
       if (role.image && this.grimoire.isImageOptIn) {
@@ -325,9 +326,9 @@ export default {
         return role.image;
       }
 
-      return require(
-        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp",
-      );
+      return iconImages[
+        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp"
+      ];
     },
     setResponded(player, roleId) {
       var hasResponded = { ...player.hasResponded };

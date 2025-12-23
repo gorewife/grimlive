@@ -29,7 +29,7 @@
           <span
             class="icon"
             :style="{
-              backgroundImage: `url(${require('../../assets/icons/bootlegger.webp')})`,
+              backgroundImage: `url(${iconImages['../../assets/icons/bootlegger.webp']})`,
             }"
           ></span>
           <div class="role">
@@ -105,6 +105,7 @@
 
 <script>
 import Modal from "./Modal";
+import { iconImages } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 export default {
@@ -172,9 +173,9 @@ export default {
         return role.image;
       }
 
-      return require(
-        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp",
-      );
+      return iconImages[
+        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp"
+      ];
     },
     ...mapMutations(["toggleModal"]),
   },

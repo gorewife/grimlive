@@ -1,9 +1,11 @@
-const crypto = require("crypto");
-const fs = require("fs");
-const https = require("https");
-const { URL } = require("url");
-const WebSocket = require("ws");
-const client = require("prom-client");
+import crypto from "crypto";
+import fs from "fs";
+import https from "https";
+import http from "http";
+import { URL } from "url";
+import { WebSocketServer, WebSocket } from "ws";
+import client from "prom-client";
+import { api } from "./api.js";
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -25,15 +27,84 @@ if (process.env.NODE_ENV !== "development") {
   );
 }
 
-const server = https.createServer(options);
-const wss = new WebSocket.Server({
-  ...(process.env.NODE_ENV === "development" ? { port: 8001 } : { server }),
+// HTTP request handler for REST API
+const requestHandler = async (req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  // Route API requests
+  if (url.pathname.startsWith('/api/')) {
+    const path = url.pathname.slice(5); // Remove '/api/'
+    
+    try {
+      let response;
+      
+      if (path === 'session/create' && req.method === 'POST') {
+        response = api.createSession(req);
+      } else if (path === 'game/start' && req.method === 'POST') {
+        response = await api.startGame(req);
+      } else if (path === 'game/end' && req.method === 'POST') {
+        response = await api.endGame(req);
+      } else if (path === 'player/add' && req.method === 'POST') {
+        response = await api.addPlayer(req);
+      } else if (path === 'player/death' && req.method === 'POST') {
+        response = await api.addDeath(req);
+      } else if (path.startsWith('stats/game/') && req.method === 'GET') {
+        const gameId = path.split('/')[2];
+        response = api.getGameStats(req, gameId);
+      } else {
+        response = Response.json({ error: 'Not found' }, { status: 404 });
+      }
+      
+      res.writeHead(response.status || 200, { 'Content-Type': 'application/json' });
+      const body = await response.text();
+      res.end(body);
+    } catch (error) {
+      console.error('API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+  
+  // Default response for non-API requests
+  res.writeHead(404);
+  res.end('Not Found');
+};
+
+// Create HTTP or HTTPS server depending on environment
+const server = process.env.NODE_ENV === "development"
+  ? http.createServer(requestHandler)
+  : https.createServer(options, requestHandler);
+
+// Start server listening
+if (process.env.NODE_ENV === "development") {
+  server.listen(8001, () => {
+    console.log('HTTP server listening on port 8001 (development mode)');
+  });
+}
+
+const wss = new WebSocketServer({
+  server,
   verifyClient: (info) =>
     info.origin &&
     !!info.origin.match(
       /^https?:\/\/([^.]+\.github\.io|localhost|clocktower\.live)/i,
     ),
 });
+
+console.log(`WebSocket server starting in ${process.env.NODE_ENV || 'production'} mode...`);
+console.log(`Port: ${process.env.NODE_ENV === "development" ? "8001" : "8001 (via HTTPS server)"}`);
 
 function noop() {}
 

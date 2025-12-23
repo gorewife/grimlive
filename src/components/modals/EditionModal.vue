@@ -8,9 +8,7 @@
           class="edition"
           :class="['edition-' + edition.id]"
           :style="{
-            backgroundImage: `url(${require(
-              '../../assets/editions/' + edition.id + '.webp',
-            )})`,
+            backgroundImage: `url(${getEditionImage(edition.id)})`,
           }"
           :key="edition.id"
           @click="loadOfficial(edition)"
@@ -21,7 +19,7 @@
           class="edition edition-custom"
           @click="isCustom = true"
           :style="{
-            backgroundImage: `url(${require('../../assets/editions/custom.webp')})`,
+            backgroundImage: `url(${getEditionImage('custom')})`,
           }"
         >
           Custom Script / Characters
@@ -96,6 +94,7 @@ import customsJSON from "../../customs";
 import editionJSON from "../../editions";
 import { mapMutations, mapState } from "vuex";
 import Modal from "./Modal";
+import { getEditionImage } from "@/utils/images";
 
 export default {
   components: {
@@ -110,6 +109,7 @@ export default {
   },
   computed: mapState(["roles", "modals", "edition", "jinxes"]),
   methods: {
+    getEditionImage,
     openUpload() {
       this.$refs.upload.click();
     },
@@ -122,7 +122,6 @@ export default {
             const roles = JSON.parse(reader.result);
             this.parseRoles(roles);
           } catch (e) {
-            console.log(e);
             alert("Error reading custom script: " + e.message);
           }
           this.$refs.upload.value = "";

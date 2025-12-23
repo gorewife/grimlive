@@ -17,11 +17,11 @@
                 ? Array.isArray(reminder.image)
                   ? reminder.image[0]
                   : reminder.image
-                : require(
+                : iconImages[
                     '../../assets/icons/' +
                       (reminder.imageAlt || reminder.role) +
-                      '.webp',
-                  )
+                      '.webp'
+                  ]
             })`,
           }"
         ></span>
@@ -40,6 +40,7 @@
 
 <script>
 import Modal from "./Modal";
+import { iconImages } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 /**

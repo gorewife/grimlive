@@ -44,6 +44,7 @@
 
 <script>
 import { mapState } from "vuex";
+import { iconImages } from "@/utils/images";
 
 export default {
   name: "Token",
@@ -81,19 +82,21 @@ export default {
         return role.image;
       }
 
-      return require(
-        "../assets/icons/" +
-          (this.alignmentIndex > 0 ? "Alternate/" : "") +
-          (role.imageAlt || role.id) +
-          (this.role.team === "traveller"
-            ? this.alignmentIndex === 1
-              ? "_g"
-              : this.alignmentIndex === 2
-                ? "_e"
-                : ""
-            : "") +
-          ".webp",
-      );
+      // Construct the path to match the glob import keys
+      const path = "../assets/icons/" +
+        (this.alignmentIndex > 0 ? "Alternate/" : "") +
+        (role.imageAlt || role.id) +
+        (this.role.team === "traveller"
+          ? this.alignmentIndex === 1
+            ? "_g"
+            : this.alignmentIndex === 2
+              ? "_e"
+              : ""
+          : "") +
+        ".webp";
+
+      // Return the imported image URL
+      return iconImages[path] || '';
     },
     setRole() {
       this.$emit("set-role");

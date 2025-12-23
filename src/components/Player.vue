@@ -266,11 +266,11 @@
                 ? Array.isArray(reminder.image)
                   ? reminder.image[0]
                   : reminder.image
-                : require(
+                : iconImages[
                     '../assets/icons/' +
                       (reminder.imageAlt || reminder.role) +
-                      '.webp',
-                  )
+                      '.webp'
+                  ]
             })`,
           }"
         ></span>
@@ -406,28 +406,28 @@ export default {
         this.isMenuOpen = false;
       }
     },
-    removePlayer() {
+    // Helper to close menu and emit trigger
+    triggerAndClose(event, payload) {
       this.isMenuOpen = false;
-      this.$emit("trigger", ["removePlayer"]);
+      this.$emit("trigger", payload ? [event, payload] : [event]);
+    },
+    removePlayer() {
+      this.triggerAndClose("removePlayer");
     },
     swapPlayer(player) {
-      this.isMenuOpen = false;
-      this.$emit("trigger", ["swapPlayer", player]);
+      this.triggerAndClose("swapPlayer", player);
     },
     movePlayer(player) {
-      this.isMenuOpen = false;
-      this.$emit("trigger", ["movePlayer", player]);
+      this.triggerAndClose("movePlayer", player);
     },
     nominatePlayer(player) {
-      this.isMenuOpen = false;
-      this.$emit("trigger", ["nominatePlayer", player]);
+      this.triggerAndClose("nominatePlayer", player);
     },
     cancel() {
       this.$emit("trigger", ["cancel"]);
     },
     claimSeat() {
-      this.isMenuOpen = false;
-      this.$emit("trigger", ["claimSeat"]);
+      this.triggerAndClose("claimSeat");
     },
     setSeatTitle() {
       if (this.player.connected) {

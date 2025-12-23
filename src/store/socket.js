@@ -11,7 +11,7 @@ class LiveSession {
     this._reconnectTimer = null;
     this._players = {}; // map of players connected to a session
     this._pings = {}; // map of player IDs to ping
-    this._notify = new Audio(require("@/assets/sounds/roles-notify.mp3"));
+    this._notify = new Audio(new URL('@/assets/sounds/roles-notify.mp3', import.meta.url).href);
     // reconnect to previous session
     if (this._store.state.session.sessionId) {
       this.connect(this._store.state.session.sessionId);

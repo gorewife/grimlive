@@ -1,29 +1,29 @@
-module.exports = (store) => {
+export default (store) => {
   const updatePagetitle = (isPublic) =>
     (document.title = `Blood on the Clocktower ${
       isPublic ? "Town Square" : "Grimoire"
     }`);
 
-  // initialize data
-  if (localStorage.getItem("background")) {
+  // Helper to load localStorage boolean flags
+  const loadFlag = (key, mutation) => {
+    if (localStorage.getItem(key)) {
+      store.commit(mutation, true);
+    }
+  };
+
+  // Initialize data from localStorage
+  if (localStorage.background) {
     store.commit("setBackground", localStorage.background);
   }
-  if (localStorage.getItem("muted")) {
-    store.commit("toggleMuted", true);
+  loadFlag("muted", "toggleMuted");
+  loadFlag("static", "toggleStatic");
+  loadFlag("mockAssignments", "toggleMockAssignments");
+  loadFlag("imageOptIn", "toggleImageOptIn");
+  
+  if (localStorage.zoom) {
+    store.commit("setZoom", parseFloat(localStorage.zoom));
   }
-  if (localStorage.getItem("static")) {
-    store.commit("toggleStatic", true);
-  }
-  if (localStorage.getItem("mockAssignments")) {
-    store.commit("toggleMockAssignments", true);
-  }
-  if (localStorage.getItem("imageOptIn")) {
-    store.commit("toggleImageOptIn", true);
-  }
-  if (localStorage.getItem("zoom")) {
-    store.commit("setZoom", parseFloat(localStorage.getItem("zoom")));
-  }
-  if (localStorage.getItem("isGrimoire")) {
+  if (localStorage.isGrimoire) {
     store.commit("toggleGrimoire", false);
     updatePagetitle(false);
   }
