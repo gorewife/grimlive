@@ -46,15 +46,5 @@ CREATE TABLE IF NOT EXISTS player_roles (
 CREATE INDEX idx_player_roles_game_player_id ON player_roles(game_player_id);
 CREATE INDEX idx_player_roles_role_id ON player_roles(role_id);
 
--- Player death events - tracks when and how players died
-CREATE TABLE IF NOT EXISTS player_deaths (
-    id SERIAL PRIMARY KEY,
-    game_player_id INTEGER NOT NULL REFERENCES game_players(id) ON DELETE CASCADE,
-    death_type TEXT NOT NULL CHECK (death_type IN ('execution', 'night_kill', 'other')),
-    day_number INTEGER,
-    killer_player_id INTEGER REFERENCES game_players(id) ON DELETE SET NULL,  -- Who killed them
-    died_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_player_deaths_game_player_id ON player_deaths(game_player_id);
-CREATE INDEX idx_player_deaths_killer_player_id ON player_deaths(killer_player_id);
+-- Note: Complex death tracking (who killed who, day-by-day) deferred to later phase
+-- For now, survived/died is tracked in game_players.survived field

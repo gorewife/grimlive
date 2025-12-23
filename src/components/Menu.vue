@@ -176,6 +176,16 @@
                   ]"
               /></em>
             </li>
+            <li v-if="!session.isSpectator" @click="toggleStatTracking">
+              <small>Track Game Stats</small>
+              <em
+                ><font-awesome-icon
+                  :icon="[
+                    'fas',
+                    isStatTrackingEnabled ? 'check-square' : 'square',
+                  ]"
+              /></em>
+            </li>
             <li @click="leaveSession">
               Leave Session
               <em>{{ session.sessionId }}</em>
@@ -282,6 +292,7 @@
 
 <script>
 import { mapMutations, mapState } from "vuex";
+import stats from "../services/stats";
 
 export default {
   computed: {
@@ -290,6 +301,9 @@ export default {
         this.npcs.some((npc) => npc.id === "gardener") &&
         !this.npcs.some((npc) => npc.id === "tor")
       );
+    },
+    isStatTrackingEnabled() {
+      return stats.isEnabled();
     },
     ...mapState(["grimoire", "session", "edition"]),
     ...mapState("players", ["players", "npcs"]),
@@ -438,6 +452,17 @@ export default {
       if (!this.session.isVoteWatchingAllowed) {
         // Disable vote history if votes are hidden
         this.$store.commit("session/setVoteHistoryAllowed", false);
+      }
+    },
+    async toggleStatTracking() {
+      if (this.session.isSpectator) return;
+      
+      if (stats.isEnabled()) {
+        stats.disable();
+        this.$forceUpdate(); // Force re-render to update checkbox
+      } else {
+        await stats.enable();
+        this.$forceUpdate();
       }
     },
     ...mapMutations([

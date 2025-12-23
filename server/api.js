@@ -68,17 +68,8 @@ db.exec(`
     role_id TEXT,
     role_name TEXT,
     team TEXT,
-    survived INTEGER DEFAULT 0,
+    survived INTEGER DEFAULT 1,  -- 1 = survived, 0 = died
     winning_team INTEGER DEFAULT 0
-  );
-
-  CREATE TABLE IF NOT EXISTS player_deaths (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_player_id INTEGER REFERENCES game_players(id),
-    death_type TEXT,  -- 'execution', 'night_kill', 'other'
-    day_number INTEGER,
-    killer_player_id INTEGER,
-    died_at INTEGER DEFAULT (strftime('%s', 'now'))
   );
 `);
 
@@ -198,38 +189,12 @@ export const api = {
     return jsonResponse({ playerId: result.id });
   },
 
-  // POST /api/player/death - Record player death
-  addDeath: async (req) => {
-    const session = verifyToken(req);
-    if (!session) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
-    }
-
-    const body = await parseBody(req);
-    const { gamePlayerId, deathType, dayNumber, killerPlayerId } = body;
-
-    db.query(`
-      INSERT INTO player_deaths (game_player_id, death_type, day_number, killer_player_id)
-      VALUES (?, ?, ?, ?)
-    `).run(gamePlayerId, deathType, dayNumber || null, killerPlayerId || null);
-
-    // Update survival status
-    db.query('UPDATE game_players SET survived = 0 WHERE id = ?').run(gamePlayerId);
-    
-    return jsonResponse({ success: true });
-  },
-
   // GET /api/stats/game/:gameId - Get game statistics
   getGameStats: (req, gameId) => {
     const players = db.query(`
-      SELECT 
-        gp.*,
-        pd.death_type,
-        pd.day_number
-      FROM game_players gp
-      LEFT JOIN player_deaths pd ON pd.game_player_id = gp.id
-      WHERE gp.game_id = ?
-      ORDER BY gp.seat_number
+      SELECT * FROM game_players
+      WHERE game_id = ?
+      ORDER BY seat_number
     `).all(gameId);
     
     return jsonResponse({ players });
