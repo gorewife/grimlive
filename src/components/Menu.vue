@@ -127,6 +127,10 @@
               <small>Start Game</small>
               <em><font-awesome-icon icon="play" /></em>
             </li>
+            <li v-if="!session.isSpectator && isStatTrackingEnabled && !isDiscordLinked" @click="linkDiscord">
+              <small style="color: orange;">⚠ Link Discord to track stats</small>
+              <em><font-awesome-icon :icon="['fab', 'discord']" /></em>
+            </li>
             <li v-if="!session.isSpectator && isStatTrackingEnabled && currentGameId" @click="endGame">
               <small>End Game</small>
               <em><font-awesome-icon icon="stop" /></em>
@@ -313,6 +317,9 @@ export default {
     isStatTrackingEnabled() {
       return stats.isEnabled();
     },
+    isDiscordLinked() {
+      return stats.isDiscordLinked();
+    },
     currentGameId() {
       return stats.currentGameId;
     },
@@ -479,12 +486,32 @@ export default {
     async startGame() {
       if (this.session.isSpectator || !stats.isEnabled()) return;
       
+      // Check if Discord is linked
+      if (!stats.isDiscordLinked()) {
+        alert('You must link your Discord account before starting a tracked game.');
+        return;
+      }
+      
+      // Prompt for session ID (category ID)
+      const categoryId = prompt('Enter Discord Session ID (Category ID from /setbotc):');
+      if (!categoryId) return;
+      
       // Get current script/edition name
       const script = this.edition.name || this.edition.id || 'Custom';
       const playerNames = this.players.map(p => p.name);
       
-      await stats.startGame(script, script, playerNames);
-      this.$forceUpdate(); // Update UI to show End Game button
+      const gameId = await stats.startGame(script, script, playerNames, categoryId);
+      if (gameId) {
+        this.$forceUpdate(); // Update UI to show End Game button
+      }
+    },
+    linkDiscord() {
+      // For now, simple prompt. TODO: Implement OAuth flow
+      const userId = prompt('Enter your Discord User ID (temp - will be OAuth later):');
+      if (userId) {
+        stats.setDiscordUserId(userId);
+        this.$forceUpdate();
+      }
     },
     async endGame() {
       if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;

@@ -6,12 +6,22 @@ class StatsService {
       : 'http://localhost:8001/api';
     this.token = localStorage.getItem('statsToken');
     this.sessionId = localStorage.getItem('statsSessionId');
+    this.discordUserId = localStorage.getItem('discordUserId');
     this.currentGameId = null;
     this.enabled = localStorage.getItem('statTrackingEnabled') === 'true';
   }
 
   isEnabled() {
     return this.enabled;
+  }
+
+  isDiscordLinked() {
+    return !!this.discordUserId;
+  }
+
+  setDiscordUserId(userId) {
+    this.discordUserId = userId;
+    localStorage.setItem('discordUserId', userId);
   }
 
   async enable() {
@@ -51,7 +61,7 @@ class StatsService {
     }
   }
 
-  async startGame(script, customName, players, storytellerId) {
+  async startGame(script, customName, players, categoryId) {
     if (!this.enabled || !this.token) return;
 
     try {
@@ -65,11 +75,17 @@ class StatsService {
           script,
           customName,
           players: players.map(p => p.id || p.name),
-          storytellerId
+          storytellerId: this.discordUserId,
+          categoryId  // Pass category_id to look up guild_id
         })
       });
 
       const data = await response.json();
+      
+      if (data.error) {
+        alert(data.error);
+        return null;
+      }
       
       if (data.gameId) {
         this.currentGameId = data.gameId;
@@ -78,6 +94,7 @@ class StatsService {
       }
     } catch (error) {
       console.error('Failed to start game tracking:', error);
+      alert('Failed to start game tracking');
     }
   }
 

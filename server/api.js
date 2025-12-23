@@ -116,7 +116,29 @@ export const api = {
     }
 
     const body = await parseBody(req);
-    const { script, customName, players, storytellerId } = body;
+    const { script, customName, players, storytellerId, categoryId } = body;
+
+    // Validate storyteller has linked Discord
+    if (!session.discord_user_id) {
+      return jsonResponse({ 
+        error: 'Storyteller must link Discord account before starting games' 
+      }, 400);
+    }
+
+    let guildId = null;
+    
+    // If categoryId provided, look up guild_id from sessions table
+    if (categoryId) {
+      // Note: This requires PostgreSQL connection in production
+      // For local SQLite, we'll allow null guild_id for testing
+      try {
+        // TODO: Query sessions table when PostgreSQL is connected
+        // For now, allow web-only games with null guild_id
+        console.log('Category ID provided:', categoryId);
+      } catch (error) {
+        console.error('Failed to lookup session:', error);
+      }
+    }
 
     // Use grimkeeper's games table structure
     const result = db.query(`
@@ -126,8 +148,8 @@ export const api = {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) 
       RETURNING game_id
     `).get(
-      null,  // guild_id NULL for web games
-      null,  // category_id NULL for web games
+      guildId,  // guild_id from sessions lookup
+      categoryId || null,  // category_id from user input
       script || null,
       customName || null,
       Date.now() / 1000,  // Unix timestamp
