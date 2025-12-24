@@ -87,6 +87,8 @@ const requestHandler = async (req, res) => {
       
       if (path === 'session/create' && req.method === 'POST') {
         response = await api.createSession(req);
+      } else if (path === 'session/update-discord' && req.method === 'POST') {
+        response = await api.updateSessionDiscordUser(req);
       } else if (path === 'game/start' && req.method === 'POST') {
         response = await api.startGame(req);
       } else if (path === 'game/end' && req.method === 'POST') {
@@ -98,6 +100,8 @@ const requestHandler = async (req, res) => {
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);
+      } else if (path === 'sessions' && req.method === 'GET') {
+        response = await api.getSessions(req);
       } else {
         response = Response.json({ error: 'Not found' }, { status: 404 });
       }

@@ -8,8 +8,10 @@ class StatsService {
     this.sessionId = localStorage.getItem('statsSessionId');
     this.discordUserId = localStorage.getItem('discordUserId');
     this.discordUsername = localStorage.getItem('discordUsername');
+    this.selectedSessionCode = localStorage.getItem('selectedSessionCode');
     this.currentGameId = null;
     this.enabled = localStorage.getItem('statTrackingEnabled') === 'true';
+    this.availableSessions = [];
   }
 
   isEnabled() {
@@ -24,11 +26,35 @@ class StatsService {
     return this.discordUsername;
   }
 
-  setDiscordUser(userId, username) {
+  async setDiscordUser(userId, username) {
     this.discordUserId = userId;
     this.discordUsername = username;
     localStorage.setItem('discordUserId', userId);
     localStorage.setItem('discordUsername', username);
+    
+    // Update existing session with Discord user ID if we have one
+    if (this.token && this.sessionId) {
+      await this.updateSessionDiscordUser(userId);
+    }
+  }
+
+  async updateSessionDiscordUser(userId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/session/update-discord`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`
+        },
+        body: JSON.stringify({ discord_user_id: userId })
+      });
+      
+      if (response.ok) {
+        console.log('Updated session with Discord user ID');
+      }
+    } catch (error) {
+      console.error('Failed to update session with Discord ID:', error);
+    }
   }
 
   setDiscordUserId(userId) {
@@ -42,12 +68,65 @@ class StatsService {
     this.enabled = false;
     this.token = null;
     this.sessionId = null;
+    this.selectedSessionCode = null;
     this.currentGameId = null;
+    this.availableSessions = [];
     localStorage.removeItem('discordUserId');
     localStorage.removeItem('discordUsername');
     localStorage.removeItem('statTrackingEnabled');
     localStorage.removeItem('statsToken');
     localStorage.removeItem('statsSessionId');
+    localStorage.removeItem('selectedSessionCode');
+  }
+
+  getSelectedSessionCode() {
+    return this.selectedSessionCode;
+  }
+
+  setSelectedSessionCode(code) {
+    this.selectedSessionCode = code;
+    localStorage.setItem('selectedSessionCode', code);
+  }
+
+  async fetchSessions() {
+    console.log('stats.fetchSessions: token exists?', !!this.token);
+    if (!this.token) {
+      console.log('No token, creating session first...');
+      await this.createSession();
+    }
+
+    try {
+      const url = `${this.baseUrl}/sessions`;
+      console.log('Fetching sessions from:', url);
+      console.log('Using token:', this.token?.substring(0, 8) + '...');
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`
+        }
+      });
+
+      console.log('Sessions response status:', response.status);
+      const data = await response.json();
+      console.log('Sessions response data:', data);
+      
+      if (data.sessions) {
+        this.availableSessions = data.sessions;
+        console.log('Stored', data.sessions.length, 'sessions');
+        return data.sessions;
+      }
+      console.log('No sessions in response');
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error);
+      return [];
+    }
+  }
+
+  getAvailableSessions() {
+    return this.availableSessions;
   }
 
   async enable() {
@@ -92,7 +171,7 @@ class StatsService {
     }
   }
 
-  async startGame(script, customName, players, categoryId) {
+  async startGame(script, customName, players, sessionCode) {
     if (!this.enabled || !this.token) return;
 
     try {
@@ -107,7 +186,7 @@ class StatsService {
           customName,
           players: players.map(p => p.id || p.name),
           storytellerId: this.discordUserId,
-          categoryId  // Pass category_id to look up guild_id
+          sessionCode: sessionCode || this.selectedSessionCode  // Use session code instead of categoryId
         })
       });
 

@@ -129,6 +129,46 @@
             <em @click="logoutDiscord" style="cursor: pointer;" title="Logout"><font-awesome-icon icon="sign-out-alt" /></em>
           </li>
 
+          <!-- Discord Session Selector (only when Discord linked and hosting/storyteller) -->
+          <li v-if="isDiscordLinked && !session.isSpectator">
+            <small style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <select 
+                  v-model="selectedSession" 
+                  @change="onSessionSelect"
+                  style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px; cursor: pointer;"
+                >
+                  <option value="" style="background: #1a1a1a; color: white;">Select Discord Session...</option>
+                  <option 
+                    v-for="sess in discordSessions" 
+                    :key="sess.session_code" 
+                    :value="sess.session_code"
+                    style="background: #1a1a1a; color: white;"
+                  >
+                    {{ sess.session_code }} - {{ sess.category_name || sess.guild_name }}
+                  </option>
+                </select>
+                <button 
+                  @click="fetchDiscordSessions" 
+                  style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px 8px; border-radius: 3px; cursor: pointer;"
+                  title="Refresh sessions"
+                >
+                  🔄
+                </button>
+              </div>
+              <input 
+                v-model="manualSessionCode"
+                @input="onManualSessionInput"
+                placeholder="Or enter session code (e.g., s1)"
+                style="width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px;"
+              />
+            </small>
+          </li>
+          <li v-if="selectedSessionDisplay && !session.isSpectator" style="color: #57F287; font-size: 0.85em;">
+            <small>🔗 Linked: {{ selectedSessionDisplay }}</small>
+            <em @click="clearSelectedSession" style="cursor: pointer;" title="Unlink">✕</em>
+          </li>
+
           <template v-if="!session.sessionId">
             <li @click="hostSession">Host (Storyteller)<em>[H]</em></li>
             <li @click="joinSession">Join (Player)<em>[J]</em></li>
@@ -345,7 +385,39 @@ export default {
     return {
       tab: "grimoire",
       updateKey: 0, // Force computed property updates
+      discordSessions: [],
+      selectedSession: '',
+      selectedSessionDisplay: '',
+      manualSessionCode: '',
     };
+  },
+  async mounted() {
+    // Load selected session from stats service
+    if (stats.isDiscordLinked()) {
+      // Update session with Discord ID if not already set
+      const discordId = localStorage.getItem('discordUserId');
+      const discordUsername = localStorage.getItem('discordUsername');
+      if (discordId && discordUsername) {
+        await stats.setDiscordUser(discordId, discordUsername);
+      }
+      
+      this.selectedSession = stats.getSelectedSessionCode() || '';
+      if (this.selectedSession) {
+        this.selectedSessionDisplay = this.selectedSession;
+      }
+      // Fetch available sessions after updating Discord ID
+      await this.fetchDiscordSessions();
+    }
+  },
+  watch: {
+    // Watch for Discord login status changes
+    isDiscordLinked(newVal, oldVal) {
+      console.log('isDiscordLinked changed:', oldVal, '->', newVal);
+      if (newVal && !oldVal) {
+        // User just logged in, fetch sessions
+        this.fetchDiscordSessions();
+      }
+    }
   },
   methods: {
     setBackground() {
@@ -504,7 +576,7 @@ export default {
       }
       this.updateKey++; // Trigger computed property updates
     },
-    loginWithDiscord() {
+    async loginWithDiscord() {
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://clocktower.live:8001'
         : 'http://localhost:8001';
@@ -517,18 +589,64 @@ export default {
         window.location.reload();
       }
     },
+    async fetchDiscordSessions() {
+      console.log('fetchDiscordSessions called, Discord linked:', stats.isDiscordLinked());
+      if (!stats.isDiscordLinked()) {
+        console.log('Not fetching sessions - Discord not linked');
+        return;
+      }
+      
+      console.log('Calling stats.fetchSessions()...');
+      const sessions = await stats.fetchSessions();
+      console.log('Fetched Discord sessions:', sessions);
+      this.discordSessions = sessions || [];
+      console.log('discordSessions array now has', this.discordSessions.length, 'items');
+    },
+    onSessionSelect() {
+      if (this.selectedSession) {
+        // Clear manual input when dropdown is used
+        this.manualSessionCode = '';
+        stats.setSelectedSessionCode(this.selectedSession);
+        const session = this.discordSessions.find(s => s.session_code === this.selectedSession);
+        this.selectedSessionDisplay = session ? `${session.session_code} - ${session.category_name || session.guild_name}` : this.selectedSession;
+      } else {
+        stats.setSelectedSessionCode('');
+        this.selectedSessionDisplay = '';
+      }
+    },
+    onManualSessionInput() {
+      // Clear dropdown when manual input is used
+      this.selectedSession = '';
+      const code = this.manualSessionCode.trim();
+      if (code) {
+        stats.setSelectedSessionCode(code);
+        this.selectedSessionDisplay = code;
+      } else {
+        stats.setSelectedSessionCode('');
+        this.selectedSessionDisplay = '';
+      }
+    },
+    clearSelectedSession() {
+      this.selectedSession = '';
+      this.selectedSessionDisplay = '';
+      this.manualSessionCode = '';
+      stats.setSelectedSessionCode('');
+    },
     async startGame() {
       if (this.session.isSpectator || !stats.isEnabled() || !stats.isDiscordLinked()) return;
       
-      // Prompt for session ID (category ID)
-      const categoryId = prompt('Enter Discord Session ID (Category ID from /setbotc):');
-      if (!categoryId) return;
+      // Check if a Discord session is selected
+      const sessionCode = stats.getSelectedSessionCode();
+      if (!sessionCode) {
+        alert('Please select a Discord session from the dropdown above, or continue without linking to track stats independently.');
+        // Allow starting without session link
+      }
       
       // Get current script/edition name
       const script = this.edition.name || this.edition.id || 'Custom';
       const playerNames = this.players.map(p => p.name);
       
-      const gameId = await stats.startGame(script, script, playerNames, categoryId);
+      const gameId = await stats.startGame(script, script, playerNames, sessionCode);
       if (gameId) {
         this.$forceUpdate(); // Update UI to show End Game button
       }

@@ -30,6 +30,13 @@ async function parseBody(req) {
 
 // Initialize SQLite schema (for local dev - production uses grimkeeper's PostgreSQL)
 // These tables extend grimkeeper's existing schema
+
+// Drop and recreate game tables to ensure schema matches (keep sessions to avoid logout)
+db.exec(`
+  DROP TABLE IF EXISTS game_players;
+  DROP TABLE IF EXISTS games;
+`);
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS web_sessions (
     session_id TEXT PRIMARY KEY,
@@ -42,7 +49,7 @@ db.exec(`
 
   -- Mimics grimkeeper's games table structure for local dev
   -- In production, uses existing grimkeeper games table
-  CREATE TABLE IF NOT EXISTS games (
+  CREATE TABLE games (
     game_id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id INTEGER,  -- NULL for web-only games
     category_id INTEGER,  -- NULL for web-only games
@@ -60,7 +67,7 @@ db.exec(`
 
   -- Player tracking extension (new - not in grimkeeper yet)
   -- Stores FINAL roles at game end only
-  CREATE TABLE IF NOT EXISTS game_players (
+  CREATE TABLE game_players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     game_id INTEGER REFERENCES games(game_id),
     discord_id INTEGER,  -- NULL if not linked
@@ -83,11 +90,25 @@ function generateToken() {
 function verifyToken(req) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
+    console.log('No auth header or invalid format');
     return null;
   }
   const token = auth.slice(7);
+  const currentTime = Math.floor(Date.now() / 1000);
   const session = db.query('SELECT * FROM web_sessions WHERE token = ? AND expires_at > ?')
-    .get(token, Date.now() / 1000);
+    .get(token, currentTime);
+  
+  if (!session) {
+    console.log(`Token verification failed: token=${token}, current_time=${currentTime}`);
+    // Check if token exists at all
+    const tokenExists = db.query('SELECT * FROM web_sessions WHERE token = ?').get(token);
+    if (tokenExists) {
+      console.log(`Token exists but expired: expires_at=${tokenExists.expires_at}, current=${currentTime}`);
+    } else {
+      console.log('Token does not exist in database');
+    }
+  }
+  
   return session;
 }
 
@@ -111,6 +132,32 @@ export const api = {
     });
   },
 
+  // POST /api/session/update-discord - Update session with Discord user ID
+  updateSessionDiscordUser: async (req) => {
+    const session = verifyToken(req);
+    if (!session) {
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await parseBody(req);
+    const { discord_user_id } = body;
+
+    if (!discord_user_id) {
+      return jsonResponse({ error: 'discord_user_id required' }, 400);
+    }
+
+    try {
+      db.query('UPDATE web_sessions SET discord_user_id = ? WHERE token = ?')
+        .run(discord_user_id, session.token);
+      
+      console.log(`Updated session ${session.session_id} with Discord user ID ${discord_user_id}`);
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Failed to update session:', error);
+      return jsonResponse({ error: 'Failed to update session' }, 500);
+    }
+  },
+
   // POST /api/game/start - Start new game (grimkeeper-compatible format)
   startGame: async (req) => {
     const session = verifyToken(req);
@@ -119,7 +166,7 @@ export const api = {
     }
 
     const body = await parseBody(req);
-    const { script, customName, players, storytellerId, categoryId } = body;
+    const { script, customName, players, storytellerId, sessionCode } = body;
 
     // Validate storyteller has linked Discord
     if (!session.discord_user_id) {
@@ -128,18 +175,46 @@ export const api = {
       }, 400);
     }
 
+    // Validate required fields
+    if (!script || !customName) {
+      return jsonResponse({ error: 'Script and custom name are required' }, 400);
+    }
+
+    if (!players || !Array.isArray(players) || players.length === 0) {
+      return jsonResponse({ error: 'At least one player is required' }, 400);
+    }
+
+    // Minimum 3 total (1 ST + 2 players) for testing
+    if (players.length < 2) {
+      return jsonResponse({ error: 'At least 2 players required (excluding storyteller)' }, 400);
+    }
+
     let guildId = null;
+    let categoryId = null;
     
-    // If categoryId provided, look up guild_id from sessions table
-    if (categoryId) {
+    // If sessionCode provided, look up guild_id and category_id from sessions table
+    if (sessionCode) {
       // Note: This requires PostgreSQL connection in production
       // For local SQLite, we'll allow null guild_id for testing
       try {
         // TODO: Query sessions table when PostgreSQL is connected
-        // For now, allow web-only games with null guild_id
-        console.log('Category ID provided:', categoryId);
+        // SELECT guild_id, category_id FROM sessions WHERE session_code = ? AND storyteller_user_id = ?
+        // For now in SQLite dev mode, allow web-only games
+        console.log('Session code provided:', sessionCode);
+        
+        // In production PostgreSQL, validate session ownership:
+        // const sessionData = await pgPool.query(
+        //   'SELECT guild_id, category_id FROM sessions WHERE session_code = $1 AND storyteller_user_id = $2',
+        //   [sessionCode, session.discord_user_id]
+        // );
+        // if (!sessionData.rows.length) {
+        //   return jsonResponse({ error: 'Invalid session code or not authorized' }, 403);
+        // }
+        // guildId = sessionData.rows[0].guild_id;
+        // categoryId = sessionData.rows[0].category_id;
       } catch (error) {
         console.error('Failed to lookup session:', error);
+        return jsonResponse({ error: 'Failed to validate session code' }, 500);
       }
     }
 
@@ -224,6 +299,44 @@ export const api = {
     `).all(gameId);
     
     return jsonResponse({ players });
+  },
+
+  // GET /api/sessions - Get available Discord sessions for storyteller
+  getSessions: async (req) => {
+    console.log('GET /api/sessions called');
+    const session = verifyToken(req);
+    if (!session) {
+      console.log('Session verification failed for /api/sessions');
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+
+    console.log('Session verified, discord_user_id:', session.discord_user_id);
+    if (!session.discord_user_id) {
+      console.log('No discord_user_id, returning empty sessions');
+      return jsonResponse({ sessions: [] });
+    }
+
+    try {
+      // For now, always use mock data during development
+      // TODO: When ready for production, implement PostgreSQL query:
+      // SELECT s.session_code, c.name as category_name, g.name as guild_name 
+      // FROM sessions s 
+      // JOIN guilds g ON s.guild_id = g.guild_id
+      // WHERE s.storyteller_user_id = $1
+      
+      // Mock data for development
+      console.log('Returning mock sessions for development');
+      const mockSessions = [
+        { session_code: 's1', category_name: 'Blood on the Clocktower', guild_name: 'Test Server' },
+        { session_code: 's2', category_name: 'BotC Games', guild_name: 'Test Server' },
+        { session_code: 's3', category_name: 'Practice Games', guild_name: 'Another Server' }
+      ];
+      console.log('Mock sessions:', mockSessions);
+      return jsonResponse({ sessions: mockSessions });
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error);
+      return jsonResponse({ error: 'Failed to fetch sessions' }, 500);
+    }
   },
 
   // OAuth endpoints
