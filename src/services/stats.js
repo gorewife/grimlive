@@ -1,4 +1,3 @@
-// Stats tracking API client
 class StatsService {
   constructor() {
     this.baseUrl = import.meta.env.PROD
@@ -11,7 +10,6 @@ class StatsService {
     this.selectedSessionCode = localStorage.getItem('selectedSessionCode');
     this.currentGameId = null;
     this.enabled = localStorage.getItem('statTrackingEnabled') === 'true';
-    this.availableSessions = [];
   }
 
   isEnabled() {
@@ -32,7 +30,6 @@ class StatsService {
     localStorage.setItem('discordUserId', userId);
     localStorage.setItem('discordUsername', username);
     
-    // Update existing session with Discord user ID if we have one
     if (this.token && this.sessionId) {
       await this.updateSessionDiscordUser(userId);
     }
@@ -70,7 +67,6 @@ class StatsService {
     this.sessionId = null;
     this.selectedSessionCode = null;
     this.currentGameId = null;
-    this.availableSessions = [];
     localStorage.removeItem('discordUserId');
     localStorage.removeItem('discordUsername');
     localStorage.removeItem('statTrackingEnabled');
@@ -88,52 +84,10 @@ class StatsService {
     localStorage.setItem('selectedSessionCode', code);
   }
 
-  async fetchSessions() {
-    console.log('stats.fetchSessions: token exists?', !!this.token);
-    if (!this.token) {
-      console.log('No token, creating session first...');
-      await this.createSession();
-    }
-
-    try {
-      const url = `${this.baseUrl}/sessions`;
-      console.log('Fetching sessions from:', url);
-      console.log('Using token:', this.token?.substring(0, 8) + '...');
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        }
-      });
-
-      console.log('Sessions response status:', response.status);
-      const data = await response.json();
-      console.log('Sessions response data:', data);
-      
-      if (data.sessions) {
-        this.availableSessions = data.sessions;
-        console.log('Stored', data.sessions.length, 'sessions');
-        return data.sessions;
-      }
-      console.log('No sessions in response');
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
-      return [];
-    }
-  }
-
-  getAvailableSessions() {
-    return this.availableSessions;
-  }
-
   async enable() {
     this.enabled = true;
     localStorage.setItem('statTrackingEnabled', 'true');
     
-    // Create session if we don't have one
     if (!this.token) {
       await this.createSession();
     }
@@ -233,7 +187,7 @@ class StatsService {
     }
   }
 
-  async addPlayer(playerName, seatNumber, roleId, roleName, team) {
+  async addPlayer(playerName, seatNumber, roleId, roleName, team, isFinal = false, discordId = null) {
     if (!this.enabled || !this.token || !this.currentGameId) return;
 
     try {
@@ -249,12 +203,14 @@ class StatsService {
           seatNumber,
           roleId,
           roleName,
-          team
+          team,
+          isFinal,
+          discordId
         })
       });
 
       const data = await response.json();
-      console.log('Player added:', playerName, roleId);
+      console.log('Player added:', playerName, roleId, isFinal ? '(final)' : '(starting)');
       return data.playerId;
     } catch (error) {
       console.error('Failed to add player:', error);
@@ -274,5 +230,5 @@ class StatsService {
   }
 }
 
-// Export singleton instance
+
 export default new StatsService();

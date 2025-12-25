@@ -29,6 +29,7 @@
     <TownSquare></TownSquare>
     <Menu ref="menu"></Menu>
     <EditionModal />
+    <EndGameModal @winner-selected="handleWinnerSelected" />
     <NpcModal />
     <RolesModal />
     <ReferenceModal />
@@ -48,6 +49,7 @@ import TownInfo from "./components/TownInfo";
 import Menu from "./components/Menu";
 import RolesModal from "./components/modals/RolesModal";
 import EditionModal from "./components/modals/EditionModal";
+import EndGameModal from "./components/modals/EndGameModal";
 import Intro from "./components/Intro";
 import ReferenceModal from "./components/modals/ReferenceModal";
 import Vote from "./components/Vote";
@@ -70,6 +72,7 @@ export default {
     TownSquare,
     Menu,
     EditionModal,
+    EndGameModal,
     RolesModal,
     Gradients,
   },
@@ -138,6 +141,11 @@ export default {
           break;
       }
     },
+    handleWinnerSelected(team) {
+      if (this.$refs.menu) {
+        this.$refs.menu.confirmEndGame(team);
+      }
+    },
   },
 };
 </script>
@@ -171,9 +179,10 @@ body {
   background-size: cover;
   color: white;
   height: 100%;
-  font-family: "Roboto Condensed", sans-serif;
+  font-family: "Roboto Condensed", "Segoe UI", Tahoma, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   padding: 0;
   margin: 0;
   overflow: hidden;

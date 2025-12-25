@@ -2,6 +2,7 @@
 node_modules
 dist
 tmp
+dev
 *.pem
 .DS_Store
 src/assets/icons

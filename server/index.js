@@ -11,8 +11,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env from parent directory
-const envPath = path.join(__dirname, '..', '.env');
+// Load .env from current directory
+const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf-8');
   envContent.split('\n').forEach(line => {
@@ -100,8 +100,6 @@ const requestHandler = async (req, res) => {
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);
-      } else if (path === 'sessions' && req.method === 'GET') {
-        response = await api.getSessions(req);
       } else {
         response = Response.json({ error: 'Not found' }, { status: 404 });
       }

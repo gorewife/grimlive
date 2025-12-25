@@ -101,6 +101,7 @@ import Player from "./Player";
 import Token from "./Token";
 import ReminderModal from "./modals/ReminderModal";
 import RoleModal from "./modals/RoleModal";
+import stats from "@/services/stats";
 
 export default {
   components: {
@@ -148,6 +149,15 @@ export default {
         this.$store.commit("session/claimSeat", -1);
       } else {
         this.$store.commit("session/claimSeat", playerIndex);
+        // Link Discord ID to the claimed seat (cached in stats service)
+        const discordUserId = stats.discordUserId || localStorage.getItem("discord_user_id");
+        if (discordUserId) {
+          this.$store.commit("players/update", {
+            player: this.players[playerIndex],
+            property: "discord_id",
+            value: discordUserId
+          });
+        }
       }
     },
     openReminderModal(playerIndex) {

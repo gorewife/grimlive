@@ -143,6 +143,7 @@ export default new Vuex.Store({
     },
     modals: {
       edition: false,
+      endGame: false,
       npc: false,
       gameState: false,
       messages: false,

@@ -129,44 +129,24 @@
             <em @click="logoutDiscord" style="cursor: pointer;" title="Logout"><font-awesome-icon icon="sign-out-alt" /></em>
           </li>
 
-          <!-- Discord Session Selector (only when Discord linked and hosting/storyteller) -->
+          <!-- Discord Session Code Input (only when Discord linked and hosting/storyteller) -->
           <li v-if="isDiscordLinked && !session.isSpectator">
             <small style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
-              <div style="display: flex; gap: 4px; align-items: center;">
-                <select 
-                  v-model="selectedSession" 
-                  @change="onSessionSelect"
-                  style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px; cursor: pointer;"
-                >
-                  <option value="" style="background: #1a1a1a; color: white;">Select Discord Session...</option>
-                  <option 
-                    v-for="sess in discordSessions" 
-                    :key="sess.session_code" 
-                    :value="sess.session_code"
-                    style="background: #1a1a1a; color: white;"
-                  >
-                    {{ sess.session_code }} - {{ sess.category_name || sess.guild_name }}
-                  </option>
-                </select>
-                <button 
-                  @click="fetchDiscordSessions" 
-                  style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px 8px; border-radius: 3px; cursor: pointer;"
-                  title="Refresh sessions"
-                >
-                  🔄
-                </button>
-              </div>
+              <label style="font-size: 0.75em; color: rgba(255,255,255,0.6); margin-bottom: 2px;">
+                session code
+              </label>
               <input 
-                v-model="manualSessionCode"
-                @input="onManualSessionInput"
-                placeholder="Or enter session code (e.g., s1)"
+                v-model="sessionCode"
+                @input="onSessionCodeInput"
+                placeholder="e.g., s1, s2 (from *game in discord)"
+                title="get code from *game command in discord"
                 style="width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px;"
               />
             </small>
           </li>
-          <li v-if="selectedSessionDisplay && !session.isSpectator" style="color: #57F287; font-size: 0.85em;">
-            <small>🔗 Linked: {{ selectedSessionDisplay }}</small>
-            <em @click="clearSelectedSession" style="cursor: pointer;" title="Unlink">✕</em>
+          <li v-if="sessionCode && !session.isSpectator" style="color: #57F287; font-size: 0.85em;">
+            <small>🔗 Session: {{ sessionCode }}</small>
+            <em @click="clearSessionCode" style="cursor: pointer;" title="Clear">✕</em>
           </li>
 
           <template v-if="!session.sessionId">
@@ -385,10 +365,7 @@ export default {
     return {
       tab: "grimoire",
       updateKey: 0, // Force computed property updates
-      discordSessions: [],
-      selectedSession: '',
-      selectedSessionDisplay: '',
-      manualSessionCode: '',
+      sessionCode: '',
     };
   },
   async mounted() {
@@ -401,23 +378,11 @@ export default {
         await stats.setDiscordUser(discordId, discordUsername);
       }
       
-      this.selectedSession = stats.getSelectedSessionCode() || '';
-      if (this.selectedSession) {
-        this.selectedSessionDisplay = this.selectedSession;
-      }
-      // Fetch available sessions after updating Discord ID
-      await this.fetchDiscordSessions();
+      // Load saved session code
+      this.sessionCode = stats.getSelectedSessionCode() || '';
     }
   },
   watch: {
-    // Watch for Discord login status changes
-    isDiscordLinked(newVal, oldVal) {
-      console.log('isDiscordLinked changed:', oldVal, '->', newVal);
-      if (newVal && !oldVal) {
-        // User just logged in, fetch sessions
-        this.fetchDiscordSessions();
-      }
-    }
   },
   methods: {
     setBackground() {
@@ -580,7 +545,7 @@ export default {
       const baseUrl = import.meta.env.PROD
         ? 'https://api.hystericca.dev'
         : 'http://localhost:8001';
-      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback.html');
+      const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
       window.location.href = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
     },
     logoutDiscord() {
@@ -589,94 +554,82 @@ export default {
         window.location.reload();
       }
     },
-    async fetchDiscordSessions() {
-      console.log('fetchDiscordSessions called, Discord linked:', stats.isDiscordLinked());
-      if (!stats.isDiscordLinked()) {
-        console.log('Not fetching sessions - Discord not linked');
-        return;
-      }
-      
-      console.log('Calling stats.fetchSessions()...');
-      const sessions = await stats.fetchSessions();
-      console.log('Fetched Discord sessions:', sessions);
-      this.discordSessions = sessions || [];
-      console.log('discordSessions array now has', this.discordSessions.length, 'items');
+    onSessionCodeInput() {
+      const code = this.sessionCode.trim();
+      stats.setSelectedSessionCode(code);
     },
-    onSessionSelect() {
-      if (this.selectedSession) {
-        // Clear manual input when dropdown is used
-        this.manualSessionCode = '';
-        stats.setSelectedSessionCode(this.selectedSession);
-        const session = this.discordSessions.find(s => s.session_code === this.selectedSession);
-        this.selectedSessionDisplay = session ? `${session.session_code} - ${session.category_name || session.guild_name}` : this.selectedSession;
-      } else {
-        stats.setSelectedSessionCode('');
-        this.selectedSessionDisplay = '';
-      }
-    },
-    onManualSessionInput() {
-      // Clear dropdown when manual input is used
-      this.selectedSession = '';
-      const code = this.manualSessionCode.trim();
-      if (code) {
-        stats.setSelectedSessionCode(code);
-        this.selectedSessionDisplay = code;
-      } else {
-        stats.setSelectedSessionCode('');
-        this.selectedSessionDisplay = '';
-      }
-    },
-    clearSelectedSession() {
-      this.selectedSession = '';
-      this.selectedSessionDisplay = '';
-      this.manualSessionCode = '';
+    clearSessionCode() {
+      this.sessionCode = '';
       stats.setSelectedSessionCode('');
     },
     async startGame() {
       if (this.session.isSpectator || !stats.isEnabled() || !stats.isDiscordLinked()) return;
       
-      // Check if a Discord session is selected
       const sessionCode = stats.getSelectedSessionCode();
       if (!sessionCode) {
-        alert('Please select a Discord session from the dropdown above, or continue without linking to track stats independently.');
-        // Allow starting without session link
+        alert('enter session code (from *game in discord) to link stats, or continue without linking');
       }
       
-      // Get current script/edition name
-      const script = this.edition.name || this.edition.id || 'Custom';
+      let script = 'Custom Script';
+      let customName = '';
+      
+      if (this.edition.isOfficial) {
+        script = this.edition.name || this.edition.id;
+      } else {
+        customName = this.edition.name || this.edition.id || 'Unnamed Script';
+      }
+      
       const playerNames = this.players.map(p => p.name);
       
-      const gameId = await stats.startGame(script, script, playerNames, sessionCode);
+      const gameId = await stats.startGame(script, customName, playerNames, sessionCode);
       if (gameId) {
-        this.$forceUpdate(); // Update UI to show End Game button
+        const playerPromises = this.players
+          .map((player, i) => {
+            if (player.role && player.role.id) {
+              return stats.addPlayer(
+                player.name,
+                i + 1,
+                player.role.id,
+                player.role.name,
+                player.role.team,
+                false,
+                player.discord_id
+              );
+            }
+            return null;
+          })
+          .filter(p => p !== null);
+        
+        await Promise.all(playerPromises);
       }
     },
     async endGame() {
       if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
       
-      // Prompt for winner
-      const winner = prompt('Who won? Enter "Good" or "Evil"');
-      if (!winner) return;
+      this.$store.commit("toggleModal", "endGame");
+    },
+    async confirmEndGame(winningTeam) {
+      if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
       
-      const winningTeam = winner.toLowerCase() === 'good' ? 'Good' : 'Evil';
+      const playerPromises = this.players
+        .map((player, i) => {
+          if (player.role && player.role.id) {
+            return stats.addPlayer(
+              player.name,
+              i + 1,
+              player.role.id,
+              player.role.name,
+              player.role.team,
+              true,
+              player.discord_id
+            );
+          }
+          return null;
+        })
+        .filter(p => p !== null);
       
-      // Send all players with their final roles
-      for (let i = 0; i < this.players.length; i++) {
-        const player = this.players[i];
-        if (player.role && player.role.id) {
-          await stats.addPlayer(
-            player.name,
-            i + 1, // seat number
-            player.role.id,
-            player.role.name,
-            player.role.team
-          );
-        }
-      }
-      
-      // End the game
+      await Promise.all(playerPromises);
       await stats.endGame(winningTeam);
-      this.$forceUpdate();
     },
     ...mapMutations([
       "toggleGrimoire",
@@ -717,6 +670,7 @@ export default {
 
   svg {
     filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
+    font-size: 1.4em;
     &.success {
       animation: greenToWhite 1s normal forwards;
       animation-iteration-count: 1;
@@ -776,6 +730,7 @@ export default {
     border-bottom: 0;
     border-radius: 10px 10px 0 0;
     padding: 5px 5px 15px;
+    font-size: 1.5em;
   }
 
   a {
@@ -806,9 +761,11 @@ export default {
       align-items: center;
       justify-content: space-between;
       min-height: 30px;
+      font-size: 0.95em;
+      font-weight: 300;
 
       @media (orientation: portrait) {
-        font-size: 16px;
+        font-size: 15px;
       }
 
       &.tabs {
@@ -823,6 +780,7 @@ export default {
           padding: 5px 0;
           cursor: pointer;
           transition: color 250ms;
+          font-size: 1.2em;
           &:hover {
             color: red;
           }
@@ -858,11 +816,14 @@ export default {
     }
 
     .headline {
-      font-family: PiratesBay, sans-serif;
-      letter-spacing: 1px;
-      padding: 0 10px;
+      font-family: "Cinzel", "IM Fell English", serif;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 5px 10px;
       text-align: center;
       justify-content: center;
+      font-size: 1.05em;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
       background: linear-gradient(
         to right,
         $townsfolk 0%,
@@ -872,7 +833,7 @@ export default {
       );
 
       @media (orientation: portrait) {
-        font-size: 16px;
+        font-size: 15px;
       }
     }
   }

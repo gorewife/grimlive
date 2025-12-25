@@ -1,19 +1,19 @@
 # Blood on the Clocktower Grimoire & Town Square
 
-![social](https://user-images.githubusercontent.com/325521/102897760-d1147b00-4468-11eb-9d7b-63a204bc9fc1.png)
+This is a fork of the original clocktower.live tool with integrated game tracking and Discord bot support.
 
-This is an unofficial online tool to run Blood on the Clocktower games through Discord or other digital means.
-It is supposed to aid storytellers and players by allowing them to quickly set up games, run votes and much more.
+**What's New:**
+- **Game tracking**: Starting roles, final roles, win/loss stats per player
+- **Discord integration**: Link your Discord account, claim seats, automatic stat attribution
+- **Bot announcements**: Game start/end notifications in Discord via [GrimKeeper](https://github.com/gorewife/grimkeeper)
+- **Session persistence**: Reusable session codes for storytellers
+- **Modernized UI**: Improved typography and visual polish
 
-[You can try it online!](https://clocktower.live)
+**Original features** (public grimoire, live sessions, custom scripts, all editions) remain intact.
 
-If you want to learn more about how to use the app as a player, [JayBotC](https://www.youtube.com/channel/UCNZy-4Rp877XtTHaIZdWYFQ) kindly created two tutorial videos.
+For bot setup and features, see [GrimKeeper documentation](https://github.com/gorewife/grimkeeper).
 
-### How to host a game
-[![How to host a game](https://img.youtube.com/vi/lVRJPBXfqxg/0.jpg)](https://www.youtube.com/watch?v=lVRJPBXfqxg)
-
-### How to play a game
-[![How to play a game](https://img.youtube.com/vi/VCpFnJFiCbk/0.jpg)](https://www.youtube.com/watch?v=VCpFnJFiCbk)
+---
 
 ## Features
 
@@ -118,4 +118,6 @@ For further details on the JSON structure, see the official app's [JSON Schema](
 This project and its website are provided free of charge and not affiliated with The Pandemonium Institute in any way.
 
 ## Credits
-* Bra1n for building the original tool
+* [Bra1n](https://github.com/bra1n) for building the original clocktower.live in 2021
+* Forked from [nicholas-eden/townsquare](https://github.com/nicholas-eden/townsquare)
+* This fork maintained by [gorewife](https://github.com/gorewife)

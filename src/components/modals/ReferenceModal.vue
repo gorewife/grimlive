@@ -105,7 +105,7 @@
 
 <script>
 import Modal from "./Modal";
-import { iconImages } from "@/utils/images";
+import { iconImages, getRoleIcon } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 export default {
@@ -173,9 +173,7 @@ export default {
         return role.image;
       }
 
-      return iconImages[
-        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp"
-      ];
+      return getRoleIcon(role.id, role.imageAlt);
     },
     ...mapMutations(["toggleModal"]),
   },

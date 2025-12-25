@@ -157,6 +157,12 @@
         :class="{ active: isMenuOpen }"
       >
         <span>{{ player.name }}</span>
+        <img 
+          v-if="isStatsLinked" 
+          src="../assets/icons/discord-white-icon.webp" 
+          class="discord-indicator"
+          title="Stats tracking enabled"
+        />
         <span class="pronouns" v-if="player.pronouns">{{
           player.pronouns
         }}</span>
@@ -266,11 +272,7 @@
                 ? Array.isArray(reminder.image)
                   ? reminder.image[0]
                   : reminder.image
-                : iconImages[
-                    '../assets/icons/' +
-                      (reminder.imageAlt || reminder.role) +
-                      '.webp'
-                  ]
+                : getRoleIcon(reminder.role, reminder.imageAlt)
             })`,
           }"
         ></span>
@@ -286,7 +288,9 @@
 
 <script>
 import Token from "./Token";
+import { getRoleIcon } from "@/utils/images";
 import { mapGetters, mapState } from "vuex";
+import stats from "@/services/stats";
 
 export default {
   components: {
@@ -328,6 +332,9 @@ export default {
         return { width: 12 + this.grimoire.zoom + unit };
       }
     },
+    isStatsLinked: function () {
+      return stats.isEnabled() && stats.isDiscordLinked() && !!this.player.discord_id;
+    },
   },
   data() {
     return {
@@ -336,6 +343,7 @@ export default {
     };
   },
   methods: {
+    getRoleIcon,
     changeAlignment() {
       let newAlignment = this.player.alignmentIndex + 1;
       if (
@@ -406,7 +414,6 @@ export default {
         this.isMenuOpen = false;
       }
     },
-    // Helper to close menu and emit trigger
     triggerAndClose(event, payload) {
       this.isMenuOpen = false;
       this.$emit("trigger", payload ? [event, payload] : [event]);
@@ -906,6 +913,14 @@ li.move:not(.from) .player .overlay svg.move {
   svg {
     top: 3px;
     margin-right: 2px;
+  }
+
+  .discord-indicator {
+    width: 1em;
+    height: 1em;
+    margin-left: 4px;
+    vertical-align: middle;
+    filter: brightness(1.2);
   }
 
   span {

@@ -1,6 +1,7 @@
 const NEWPLAYER = {
   name: "",
   id: "",
+  discord_id: null,
   connected: false,
   role: {},
   alignmentIndex: 0,

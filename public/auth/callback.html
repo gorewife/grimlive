@@ -34,9 +34,9 @@
 
       const baseUrl = location.origin.includes('localhost') 
         ? 'http://localhost:8001'
-        : 'https://clocktower.live:8001';
+        : 'https://api.hystericca.dev';
       
-      fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback.html')}`)
+      fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`)
         .then(response => response.json())
         .then(data => {
           if (data.userId) {

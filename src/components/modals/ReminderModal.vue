@@ -17,11 +17,7 @@
                 ? Array.isArray(reminder.image)
                   ? reminder.image[0]
                   : reminder.image
-                : iconImages[
-                    '../../assets/icons/' +
-                      (reminder.imageAlt || reminder.role) +
-                      '.webp'
-                  ]
+                : getRoleIcon(reminder.role, reminder.imageAlt)
             })`,
           }"
         ></span>
@@ -40,7 +36,7 @@
 
 <script>
 import Modal from "./Modal";
-import { iconImages } from "@/utils/images";
+import { iconImages, getRoleIcon } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 /**
@@ -150,6 +146,7 @@ export default {
     };
   },
   methods: {
+    getRoleIcon,
     addReminder(reminder) {
       const player = this.$store.state.players.players[this.playerIndex];
       let value;

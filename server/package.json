@@ -5,16 +5,18 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "NODE_ENV=development node --watch index.js"
+    "start": "bun run index.js",
+    "dev": "NODE_ENV=development bun --watch run index.js",
+    "start:node": "node index.js",
+    "dev:node": "NODE_ENV=development node --watch index.js"
   },
   "dependencies": {
-    "better-sqlite3": "^12.5.0",
     "pg": "^8.11.0",
     "prom-client": "^15.1.0",
     "ws": "^8.16.0"
   },
   "engines": {
+    "bun": ">=1.0.0",
     "node": ">=18.0.0"
   }
 }
