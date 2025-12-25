@@ -1,8 +1,8 @@
 // Stats tracking API client
 class StatsService {
   constructor() {
-    this.baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://clocktower.live:8001/api'
+    this.baseUrl = import.meta.env.PROD
+      ? 'https://api.hystericca.dev/api'  // or 'https://hystericca.dev/api'
       : 'http://localhost:8001/api';
     this.token = localStorage.getItem('statsToken');
     this.sessionId = localStorage.getItem('statsSessionId');

@@ -1,8 +1,30 @@
 // REST API for stat tracking - runs alongside WebSocket server
-import { Database } from 'bun:sqlite';
+import pg from 'pg';
 import crypto from 'crypto';
 
-const db = new Database('grimlive.db', { create: true });
+const { Pool } = pg;
+
+// Use SQLite for local dev, PostgreSQL for production
+const usePostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
+
+// Only import SQLite if needed (Node.js doesn't support bun:sqlite)
+let Database, db;
+if (!usePostgres) {
+  try {
+    // Try importing better-sqlite3 for Node.js
+    const sqlite = await import('better-sqlite3');
+    Database = sqlite.default;
+    db = new Database('grimlive.db');
+  } catch (e) {
+    console.error('SQLite not available:', e.message);
+    db = null;
+  }
+} else {
+  db = null;
+}
+const pgPool = usePostgres ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
+
+console.log(`Using ${usePostgres ? 'PostgreSQL' : 'SQLite'} for database`);
 
 // Helper to create JSON response
 function jsonResponse(data, status = 200) {
@@ -28,58 +50,56 @@ async function parseBody(req) {
   });
 }
 
-// Initialize SQLite schema (for local dev - production uses grimkeeper's PostgreSQL)
-// These tables extend grimkeeper's existing schema
+// Initialize SQLite schema (for local dev only)
+if (!usePostgres && db) {
+  // Drop and recreate game tables to ensure schema matches (keep sessions to avoid logout)
+  db.exec(`
+    DROP TABLE IF EXISTS game_players;
+    DROP TABLE IF EXISTS games;
+  `);
 
-// Drop and recreate game tables to ensure schema matches (keep sessions to avoid logout)
-db.exec(`
-  DROP TABLE IF EXISTS game_players;
-  DROP TABLE IF EXISTS games;
-`);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS web_sessions (
+      session_id TEXT PRIMARY KEY,
+      token TEXT UNIQUE NOT NULL,
+      discord_user_id INTEGER,  -- Links to Discord account
+      created_at INTEGER DEFAULT (strftime('%s', 'now')),
+      expires_at INTEGER NOT NULL,
+      stat_tracking_enabled INTEGER DEFAULT 1
+    );
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS web_sessions (
-    session_id TEXT PRIMARY KEY,
-    token TEXT UNIQUE NOT NULL,
-    discord_user_id INTEGER,  -- Links to Discord account
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    expires_at INTEGER NOT NULL,
-    stat_tracking_enabled INTEGER DEFAULT 1
-  );
+    -- Mimics grimkeeper's games table structure for local dev
+    CREATE TABLE games (
+      game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      guild_id INTEGER,  -- NULL for web-only games
+      category_id INTEGER,  -- NULL for web-only games
+      script TEXT,
+      custom_name TEXT,
+      start_time REAL,  -- Unix timestamp (FLOAT in PostgreSQL)
+      end_time REAL,
+      players TEXT,  -- JSON array of player user IDs
+      player_count INTEGER,
+      storyteller_id INTEGER,  -- Discord user ID of host
+      winner TEXT,  -- 'Good', 'Evil', or NULL
+      is_active INTEGER DEFAULT 1,
+      completed_at INTEGER
+    );
 
-  -- Mimics grimkeeper's games table structure for local dev
-  -- In production, uses existing grimkeeper games table
-  CREATE TABLE games (
-    game_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    guild_id INTEGER,  -- NULL for web-only games
-    category_id INTEGER,  -- NULL for web-only games
-    script TEXT,
-    custom_name TEXT,
-    start_time REAL,  -- Unix timestamp (FLOAT in PostgreSQL)
-    end_time REAL,
-    players TEXT,  -- JSON array of player user IDs
-    player_count INTEGER,
-    storyteller_id INTEGER,  -- Discord user ID of host
-    winner TEXT,  -- 'Good', 'Evil', or NULL
-    is_active INTEGER DEFAULT 1,
-    completed_at INTEGER
-  );
-
-  -- Player tracking extension (new - not in grimkeeper yet)
-  -- Stores FINAL roles at game end only
-  CREATE TABLE game_players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id INTEGER REFERENCES games(game_id),
-    discord_id INTEGER,  -- NULL if not linked
-    player_name TEXT NOT NULL,
-    seat_number INTEGER NOT NULL,
-    role_id TEXT,  -- Final role at game end
-    role_name TEXT,
-    team TEXT,
-    survived INTEGER DEFAULT 1,  -- 1 = survived, 0 = died
-    winning_team INTEGER DEFAULT 0
-  );
-`);
+    -- Player tracking extension
+    CREATE TABLE game_players (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id INTEGER REFERENCES games(game_id),
+      discord_id INTEGER,  -- NULL if not linked
+      player_name TEXT NOT NULL,
+      seat_number INTEGER NOT NULL,
+      role_id TEXT,  -- Final role at game end
+      role_name TEXT,
+      team TEXT,
+      survived INTEGER DEFAULT 1,  -- 1 = survived, 0 = died
+      winning_team INTEGER DEFAULT 0
+    );
+  `);
+}
 
 // Generate session token
 function generateToken() {
@@ -87,7 +107,7 @@ function generateToken() {
 }
 
 // Middleware to verify session token
-function verifyToken(req) {
+async function verifyToken(req) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
     console.log('No auth header or invalid format');
@@ -95,17 +115,35 @@ function verifyToken(req) {
   }
   const token = auth.slice(7);
   const currentTime = Math.floor(Date.now() / 1000);
-  const session = db.query('SELECT * FROM web_sessions WHERE token = ? AND expires_at > ?')
-    .get(token, currentTime);
   
-  if (!session) {
-    console.log(`Token verification failed: token=${token}, current_time=${currentTime}`);
-    // Check if token exists at all
-    const tokenExists = db.query('SELECT * FROM web_sessions WHERE token = ?').get(token);
-    if (tokenExists) {
-      console.log(`Token exists but expired: expires_at=${tokenExists.expires_at}, current=${currentTime}`);
-    } else {
-      console.log('Token does not exist in database');
+  let session;
+  if (usePostgres && pgPool) {
+    const result = await pgPool.query(
+      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > $2',
+      [token, currentTime]
+    );
+    session = result.rows[0] || null;
+    
+    if (!session) {
+      const tokenCheck = await pgPool.query('SELECT * FROM web_sessions WHERE token = $1', [token]);
+      if (tokenCheck.rows[0]) {
+        console.log(`Token exists but expired: expires_at=${tokenCheck.rows[0].expires_at}, current=${currentTime}`);
+      } else {
+        console.log('Token does not exist in database');
+      }
+    }
+  } else {
+    session = db.query('SELECT * FROM web_sessions WHERE token = ? AND expires_at > ?')
+      .get(token, currentTime);
+    
+    if (!session) {
+      console.log(`Token verification failed: token=${token}, current_time=${currentTime}`);
+      const tokenExists = db.query('SELECT * FROM web_sessions WHERE token = ?').get(token);
+      if (tokenExists) {
+        console.log(`Token exists but expired: expires_at=${tokenExists.expires_at}, current=${currentTime}`);
+      } else {
+        console.log('Token does not exist in database');
+      }
     }
   }
   
@@ -120,10 +158,17 @@ export const api = {
     
     const token = crypto.randomUUID();
     const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
-    
     const sessionId = crypto.randomUUID();
-    db.query('INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES (?, ?, ?, ?)')
-      .run(sessionId, token, discord_user_id || null, expiresAt);
+    
+    if (usePostgres && pgPool) {
+      await pgPool.query(
+        'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
+        [sessionId, token, discord_user_id || null, expiresAt]
+      );
+    } else {
+      db.query('INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES (?, ?, ?, ?)')
+        .run(sessionId, token, discord_user_id || null, expiresAt);
+    }
     
     return jsonResponse({ 
       sessionId, 
@@ -147,8 +192,15 @@ export const api = {
     }
 
     try {
-      db.query('UPDATE web_sessions SET discord_user_id = ? WHERE token = ?')
-        .run(discord_user_id, session.token);
+      if (usePostgres && pgPool) {
+        await pgPool.query(
+          'UPDATE web_sessions SET discord_user_id = $1 WHERE token = $2',
+          [discord_user_id, session.token]
+        );
+      } else {
+        db.query('UPDATE web_sessions SET discord_user_id = ? WHERE token = ?')
+          .run(discord_user_id, session.token);
+      }
       
       console.log(`Updated session ${session.session_id} with Discord user ID ${discord_user_id}`);
       return jsonResponse({ success: true });
@@ -194,54 +246,63 @@ export const api = {
     
     // If sessionCode provided, look up guild_id and category_id from sessions table
     if (sessionCode) {
-      // Note: This requires PostgreSQL connection in production
-      // For local SQLite, we'll allow null guild_id for testing
       try {
-        // TODO: Query sessions table when PostgreSQL is connected
-        // SELECT guild_id, category_id FROM sessions WHERE session_code = ? AND storyteller_user_id = ?
-        // For now in SQLite dev mode, allow web-only games
         console.log('Session code provided:', sessionCode);
         
-        // In production PostgreSQL, validate session ownership:
-        // const sessionData = await pgPool.query(
-        //   'SELECT guild_id, category_id FROM sessions WHERE session_code = $1 AND storyteller_user_id = $2',
-        //   [sessionCode, session.discord_user_id]
-        // );
-        // if (!sessionData.rows.length) {
-        //   return jsonResponse({ error: 'Invalid session code or not authorized' }, 403);
-        // }
-        // guildId = sessionData.rows[0].guild_id;
-        // categoryId = sessionData.rows[0].category_id;
+        if (usePostgres && pgPool) {
+          // Production: Validate session ownership
+          const sessionData = await pgPool.query(
+            'SELECT guild_id, category_id FROM sessions WHERE session_code = $1 AND storyteller_user_id = $2',
+            [sessionCode, session.discord_user_id]
+          );
+          if (!sessionData.rows.length) {
+            return jsonResponse({ error: 'Invalid session code or not authorized' }, 403);
+          }
+          guildId = sessionData.rows[0].guild_id;
+          categoryId = sessionData.rows[0].category_id;
+        } else {
+          // Development: Allow web-only games with null guild_id
+          console.log('Dev mode: allowing web-only game with session code', sessionCode);
+        }
       } catch (error) {
         console.error('Failed to lookup session:', error);
         return jsonResponse({ error: 'Failed to validate session code' }, 500);
       }
     }
 
-    // Use grimkeeper's games table structure
-    const result = db.query(`
-      INSERT INTO games (
-        guild_id, category_id, script, custom_name, start_time, 
-        players, player_count, storyteller_id, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) 
-      RETURNING game_id
-    `).get(
-      guildId,  // guild_id from sessions lookup
-      categoryId || null,  // category_id from user input
-      script || null,
-      customName || null,
-      Date.now() / 1000,  // Unix timestamp
-      JSON.stringify(players || []),
-      players?.length || 0,
-      session.discord_user_id || storytellerId || null
-    );
+    // Insert game using grimkeeper's table structure
+    let gameId;
+    const startTime = Date.now() / 1000;  // Unix timestamp
+    const playersJson = JSON.stringify(players || []);
+    const playerCount = players?.length || 0;
+    const finalStorytellerId = session.discord_user_id || storytellerId || null;
+
+    if (usePostgres && pgPool) {
+      const result = await pgPool.query(`
+        INSERT INTO games (
+          guild_id, category_id, script, custom_name, start_time, 
+          players, player_count, storyteller_id, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true) 
+        RETURNING game_id
+      `, [guildId, categoryId || null, script || null, customName || null, startTime, playersJson, playerCount, finalStorytellerId]);
+      gameId = result.rows[0].game_id;
+    } else {
+      const result = db.query(`
+        INSERT INTO games (
+          guild_id, category_id, script, custom_name, start_time, 
+          players, player_count, storyteller_id, is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) 
+        RETURNING game_id
+      `).get(guildId, categoryId || null, script || null, customName || null, startTime, playersJson, playerCount, finalStorytellerId);
+      gameId = result.game_id;
+    }
     
-    return jsonResponse({ gameId: result.game_id });
+    return jsonResponse({ gameId });
   },
 
   // POST /api/game/end - End game and record winner
   endGame: async (req) => {
-    const session = verifyToken(req);
+    const session = await verifyToken(req);
     if (!session) {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
@@ -249,24 +310,37 @@ export const api = {
     const body = await parseBody(req);
     const { gameId, winningTeam } = body;
 
-    // Update using grimkeeper's schema
-    db.query(`
-      UPDATE games 
-      SET end_time = ?, winner = ?, is_active = 0, completed_at = ?
-      WHERE game_id = ?
-    `).run(
-      Date.now() / 1000,
-      winningTeam,  // 'Good' or 'Evil'
-      Date.now() / 1000,
-      gameId
-    );
+    const endTime = Date.now() / 1000;
+    
+    if (usePostgres && pgPool) {
+      // Update game in PostgreSQL
+      await pgPool.query(`
+        UPDATE games 
+        SET end_time = $1, winner = $2, is_active = false, completed_at = $3
+        WHERE game_id = $4
+      `, [endTime, winningTeam, endTime, gameId]);
 
-    // Update winning team flag for all players
-    db.query(`
-      UPDATE game_players 
-      SET winning_team = (team = ?)
-      WHERE game_id = ?
-    `).run(winningTeam, gameId);
+      // Update winning team flag for all players
+      await pgPool.query(`
+        UPDATE game_players 
+        SET winning_team = (team = $1)
+        WHERE game_id = $2
+      `, [winningTeam, gameId]);
+    } else {
+      // Update game in SQLite
+      db.query(`
+        UPDATE games 
+        SET end_time = ?, winner = ?, is_active = 0, completed_at = ?
+        WHERE game_id = ?
+      `).run(endTime, winningTeam, endTime, gameId);
+
+      // Update winning team flag for all players
+      db.query(`
+        UPDATE game_players 
+        SET winning_team = (team = ?)
+        WHERE game_id = ?
+      `).run(winningTeam, gameId);
+    }
     
     return jsonResponse({ success: true });
   },
@@ -317,22 +391,28 @@ export const api = {
     }
 
     try {
-      // For now, always use mock data during development
-      // TODO: When ready for production, implement PostgreSQL query:
-      // SELECT s.session_code, c.name as category_name, g.name as guild_name 
-      // FROM sessions s 
-      // JOIN guilds g ON s.guild_id = g.guild_id
-      // WHERE s.storyteller_user_id = $1
-      
-      // Mock data for development
-      console.log('Returning mock sessions for development');
-      const mockSessions = [
-        { session_code: 's1', category_name: 'Blood on the Clocktower', guild_name: 'Test Server' },
-        { session_code: 's2', category_name: 'BotC Games', guild_name: 'Test Server' },
-        { session_code: 's3', category_name: 'Practice Games', guild_name: 'Another Server' }
-      ];
-      console.log('Mock sessions:', mockSessions);
-      return jsonResponse({ sessions: mockSessions });
+      if (usePostgres && pgPool) {
+        // Production: Query grimkeeper's PostgreSQL database
+        console.log('Fetching sessions from PostgreSQL for user:', session.discord_user_id);
+        const result = await pgPool.query(
+          `SELECT s.session_code, g.name as guild_name 
+           FROM sessions s 
+           JOIN guilds g ON s.guild_id = g.guild_id
+           WHERE s.storyteller_user_id = $1`,
+          [session.discord_user_id]
+        );
+        console.log('PostgreSQL sessions found:', result.rows.length);
+        return jsonResponse({ sessions: result.rows });
+      } else {
+        // Development: Return mock data
+        console.log('Returning mock sessions for local development');
+        const mockSessions = [
+          { session_code: 's1', guild_name: 'Test Server' },
+          { session_code: 's2', guild_name: 'Test Server' },
+          { session_code: 's3', guild_name: 'Another Server' }
+        ];
+        return jsonResponse({ sessions: mockSessions });
+      }
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
       return jsonResponse({ error: 'Failed to fetch sessions' }, 500);
