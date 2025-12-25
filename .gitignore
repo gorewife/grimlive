@@ -6,15 +6,12 @@ dev
 *.pem
 .DS_Store
 src/assets/icons
+deploy.sh
 
 # Database files
 *.db
 *.db-shm
 *.db-wal
-
-# Personal docs
-BUN_MIGRATION.md
-TECHNICAL_ANALYSIS.md
 
 # Vite cache
 .vite

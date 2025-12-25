@@ -138,6 +138,7 @@
               <input 
                 v-model="sessionCode"
                 @input="onSessionCodeInput"
+                :style="{ borderColor: sessionCodeConfirmed && sessionCode ? '#57F287' : '' }"
                 placeholder="e.g., s1, s2 (from *game in discord)"
                 title="get code from *game command in discord"
                 style="width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px;"
@@ -154,13 +155,13 @@
             <li @click="joinSession">Join (Player)<em>[J]</em></li>
           </template>
           <template v-else>
-            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && !currentGameId" @click="startGame">
-              <small>Start Game</small>
-              <em><font-awesome-icon icon="play" /></em>
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && !currentGameId" @click="startGame" :class="{ disabled: isStartingGame }">
+              <small>{{ isStartingGame ? 'Starting...' : 'Start Game' }}</small>
+              <em><font-awesome-icon :icon="isStartingGame ? 'spinner' : 'play'" :spin="isStartingGame" /></em>
             </li>
-            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="endGame">
-              <small>End Game</small>
-              <em><font-awesome-icon icon="stop" /></em>
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="endGame" :class="{ disabled: isEndingGame }">
+              <small>{{ isEndingGame ? 'Ending...' : 'End Game' }}</small>
+              <em><font-awesome-icon :icon="isEndingGame ? 'spinner' : 'stop'" :spin="isEndingGame" /></em>
             </li>
             <li v-if="session.ping">
               <small>
@@ -366,6 +367,9 @@ export default {
       tab: "grimoire",
       updateKey: 0, // Force computed property updates
       sessionCode: '',
+      sessionCodeConfirmed: false,
+      isStartingGame: false,
+      isEndingGame: false,
     };
   },
   async mounted() {
@@ -556,10 +560,14 @@ export default {
     },
     onSessionCodeInput() {
       const code = this.sessionCode.trim();
+      if (code && !this.sessionCodeConfirmed) {
+        this.sessionCodeConfirmed = true;
+      }
       stats.setSelectedSessionCode(code);
     },
     clearSessionCode() {
       this.sessionCode = '';
+      this.sessionCodeConfirmed = false;
       stats.setSelectedSessionCode('');
     },
     async startGame() {
@@ -567,40 +575,60 @@ export default {
       
       const sessionCode = stats.getSelectedSessionCode();
       if (!sessionCode) {
-        alert('enter session code (from *game in discord) to link stats, or continue without linking');
+        alert('Enter session code from Discord (*game command) to link stats');
+        return;
+      }
+
+      if (!this.sessionCodeConfirmed) {
+        const confirmed = confirm(`Start game with session code "${sessionCode}"?`);
+        if (!confirmed) return;
+        this.sessionCodeConfirmed = true;
       }
       
-      let script = 'Custom Script';
-      let customName = '';
+      this.isStartingGame = true;
       
-      if (this.edition.isOfficial) {
-        script = this.edition.name || this.edition.id;
-      } else {
-        customName = this.edition.name || this.edition.id || 'Unnamed Script';
-      }
-      
-      const playerNames = this.players.map(p => p.name);
-      
-      const gameId = await stats.startGame(script, customName, playerNames, sessionCode);
-      if (gameId) {
-        const playerPromises = this.players
-          .map((player, i) => {
-            if (player.role && player.role.id) {
-              return stats.addPlayer(
-                player.name,
-                i + 1,
-                player.role.id,
-                player.role.name,
-                player.role.team,
-                false,
-                player.discord_id
-              );
-            }
-            return null;
-          })
-          .filter(p => p !== null);
+      try {
+        let script = 'Custom Script';
+        let customName = '';
         
-        await Promise.all(playerPromises);
+        if (this.edition.isOfficial) {
+          script = this.edition.name || this.edition.id;
+        } else {
+          customName = this.edition.name || this.edition.id || 'Unnamed Script';
+        }
+        
+        const playerNames = this.players.map(p => p.name);
+        
+        const gameId = await stats.startGame(script, customName, playerNames, sessionCode);
+        
+        if (gameId) {
+          const playerPromises = this.players
+            .map((player, i) => {
+              if (player.role && player.role.id) {
+                return stats.addPlayer(
+                  player.name,
+                  i + 1,
+                  player.role.id,
+                  player.role.name,
+                  player.role.team,
+                  false,
+                  player.discord_id
+                );
+              }
+              return null;
+            })
+            .filter(p => p !== null);
+          
+          await Promise.all(playerPromises);
+          alert(`✓ Game started! ID: ${gameId}`);
+        } else {
+          alert('Failed to start game. Check session code and try again.');
+        }
+      } catch (error) {
+        console.error('Start game error:', error);
+        alert(`Error starting game: ${error.message || 'Unknown error'}`);
+      } finally {
+        this.isStartingGame = false;
       }
     },
     async endGame() {
@@ -611,25 +639,35 @@ export default {
     async confirmEndGame(winningTeam) {
       if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
       
-      const playerPromises = this.players
-        .map((player, i) => {
-          if (player.role && player.role.id) {
-            return stats.addPlayer(
-              player.name,
-              i + 1,
-              player.role.id,
-              player.role.name,
-              player.role.team,
-              true,
-              player.discord_id
-            );
-          }
-          return null;
-        })
-        .filter(p => p !== null);
+      this.isEndingGame = true;
       
-      await Promise.all(playerPromises);
-      await stats.endGame(winningTeam);
+      try {
+        const playerPromises = this.players
+          .map((player, i) => {
+            if (player.role && player.role.id) {
+              return stats.addPlayer(
+                player.name,
+                i + 1,
+                player.role.id,
+                player.role.name,
+                player.role.team,
+                true,
+                player.discord_id
+              );
+            }
+            return null;
+          })
+          .filter(p => p !== null);
+        
+        await Promise.all(playerPromises);
+        await stats.endGame(winningTeam);
+        alert(`✓ Game ended! ${winningTeam} wins.`);
+      } catch (error) {
+        console.error('End game error:', error);
+        alert(`Error ending game: ${error.message || 'Unknown error'}`);
+      } finally {
+        this.isEndingGame = false;
+      }
     },
     ...mapMutations([
       "toggleGrimoire",
@@ -805,6 +843,12 @@ export default {
       &:not(.headline):not(.tabs):hover {
         cursor: pointer;
         color: red;
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+        pointer-events: none;
       }
 
       em {

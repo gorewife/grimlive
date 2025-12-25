@@ -159,7 +159,7 @@
         <span>{{ player.name }}</span>
         <img 
           v-if="isStatsLinked" 
-          src="../assets/icons/discord-white-icon.webp" 
+          src="../assets/discord-white-icon.webp" 
           class="discord-indicator"
           title="Stats tracking enabled"
         />
