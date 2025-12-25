@@ -2,7 +2,7 @@
 class StatsService {
   constructor() {
     this.baseUrl = import.meta.env.PROD
-      ? 'http://api.hystericca.dev/api'  // or 'https://hystericca.dev/api'
+      ? 'https://api.hystericca.dev/api'
       : 'http://localhost:8001/api';
     this.token = localStorage.getItem('statsToken');
     this.sessionId = localStorage.getItem('statsSessionId');
