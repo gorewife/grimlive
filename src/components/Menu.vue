@@ -577,8 +577,8 @@ export default {
       this.updateKey++; // Trigger computed property updates
     },
     async loginWithDiscord() {
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://clocktower.live:8001'
+      const baseUrl = import.meta.env.PROD
+        ? 'https://api.hystericca.dev'
         : 'http://localhost:8001';
       const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback.html');
       window.location.href = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
