@@ -86,8 +86,14 @@ export default {
     };
   },
   methods: {
-    keyup({ key, ctrlKey, metaKey }) {
+    keyup({ key, ctrlKey, metaKey, target }) {
       if (ctrlKey || metaKey) return;
+      
+      // Ignore keyboard shortcuts if user is typing in an input field
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      
       switch (key.toLocaleLowerCase()) {
         case "g":
           this.$store.commit("toggleGrimoire");

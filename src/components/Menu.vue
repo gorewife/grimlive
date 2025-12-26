@@ -133,16 +133,26 @@
           <li v-if="isDiscordLinked && !session.isSpectator">
             <small style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
               <label style="font-size: 0.75em; color: rgba(255,255,255,0.6); margin-bottom: 2px;">
-                session code
+                session code (press Enter to save)
               </label>
-              <input 
-                v-model="sessionCode"
-                @input="onSessionCodeInput"
-                :style="{ borderColor: sessionCodeConfirmed && sessionCode ? '#57F287' : '' }"
-                placeholder="e.g., s1, s2 (from *game in discord)"
-                title="get code from *game command in discord"
-                style="width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px;"
-              />
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <input 
+                  v-model="tempSessionCode"
+                  @keyup.enter="confirmSessionCode"
+                  :style="{ borderColor: sessionCodeConfirmed ? '#57F287' : '' }"
+                  placeholder="e.g., s1, s2"
+                  title="Type session code from *game in Discord, then press Enter"
+                  style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 3px;"
+                />
+                <button 
+                  @click="confirmSessionCode" 
+                  :disabled="!tempSessionCode.trim()"
+                  style="background: #5865F2; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
+                  :style="{ opacity: tempSessionCode.trim() ? 1 : 0.5 }"
+                >
+                  ✓
+                </button>
+              </div>
             </small>
           </li>
           <li v-if="sessionCode && !session.isSpectator" style="color: #57F287; font-size: 0.85em;">
@@ -357,6 +367,7 @@ export default {
       return localStorage.getItem('discordUsername') || 'Unknown';
     },
     currentGameId() {
+      this.updateKey; // eslint-disable-line no-unused-expressions
       return stats.currentGameId;
     },
     ...mapState(["grimoire", "session", "edition"]),
@@ -366,7 +377,8 @@ export default {
     return {
       tab: "grimoire",
       updateKey: 0, // Force computed property updates
-      sessionCode: '',
+      tempSessionCode: '', // Temporary input value before confirmation
+      sessionCode: '', // Confirmed session code
       sessionCodeConfirmed: false,
       isStartingGame: false,
       isEndingGame: false,
@@ -375,6 +387,13 @@ export default {
   async mounted() {
     // Load selected session from stats service
     if (stats.isDiscordLinked()) {
+      const savedCode = stats.getSelectedSessionCode();
+      if (savedCode) {
+        this.sessionCode = savedCode;
+        this.tempSessionCode = savedCode;
+        this.sessionCodeConfirmed = true;
+      }
+      
       // Update session with Discord ID if not already set
       const discordId = localStorage.getItem('discordUserId');
       const discordUsername = localStorage.getItem('discordUsername');
@@ -558,19 +577,28 @@ export default {
         window.location.reload();
       }
     },
-    onSessionCodeInput() {
-      const code = this.sessionCode.trim();
-      if (code && !this.sessionCodeConfirmed) {
-        this.sessionCodeConfirmed = true;
+    confirmSessionCode() {
+      const code = this.tempSessionCode.trim();
+      if (!code) return;
+      
+      if (!this.sessionCodeConfirmed) {
+        const confirmed = confirm(`Save session code "${code}"?\n\nThis links your game to the Discord bot.`);
+        if (!confirmed) return;
       }
+      
+      this.sessionCode = code;
+      this.sessionCodeConfirmed = true;
       stats.setSelectedSessionCode(code);
     },
     clearSessionCode() {
+      this.tempSessionCode = '';
       this.sessionCode = '';
       this.sessionCodeConfirmed = false;
       stats.setSelectedSessionCode('');
     },
     async startGame() {
+      // Prevent double-clicks and check if game already started
+      if (this.isStartingGame || stats.currentGameId) return;
       if (this.session.isSpectator || !stats.isEnabled() || !stats.isDiscordLinked()) return;
       
       const sessionCode = stats.getSelectedSessionCode();
@@ -620,6 +648,7 @@ export default {
             .filter(p => p !== null);
           
           await Promise.all(playerPromises);
+          this.updateKey++; // Trigger button visibility update
           alert(`✓ Game started! ID: ${gameId}`);
         } else {
           alert('Failed to start game. Check session code and try again.');
@@ -637,6 +666,8 @@ export default {
       this.$store.commit("toggleModal", "endGame");
     },
     async confirmEndGame(winningTeam) {
+      // Prevent double-clicks
+      if (this.isEndingGame) return;
       if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
       
       this.isEndingGame = true;
@@ -661,6 +692,7 @@ export default {
         
         await Promise.all(playerPromises);
         await stats.endGame(winningTeam);
+        this.updateKey++; // Trigger button visibility update
         alert(`✓ Game ended! ${winningTeam} wins.`);
       } catch (error) {
         console.error('End game error:', error);

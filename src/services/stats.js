@@ -138,7 +138,7 @@ class StatsService {
         body: JSON.stringify({
           script,
           customName,
-          players: players.map(p => p.id || p.name),
+          players, // Already an array of player name strings
           storytellerId: this.discordUserId,
           sessionCode: sessionCode || this.selectedSessionCode  // Use session code instead of categoryId
         })
