@@ -180,6 +180,14 @@
               <small>{{ isEndingGame ? 'Ending...' : 'End Game' }}</small>
               <em><font-awesome-icon :icon="isEndingGame ? 'spinner' : 'stop'" :spin="isEndingGame" /></em>
             </li>
+            <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }">
+              <small>{{ isMuting ? 'Muting...' : 'Mute All' }}</small>
+              <em><font-awesome-icon :icon="isMuting ? 'spinner' : 'microphone-slash'" :spin="isMuting" /></em>
+            </li>
+            <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="unmuteAll" :class="{ disabled: isUnmuting }">
+              <small>{{ isUnmuting ? 'Unmuting...' : 'Unmute All' }}</small>
+              <em><font-awesome-icon :icon="isUnmuting ? 'spinner' : 'microphone'" :spin="isUnmuting" /></em>
+            </li>
             <li v-if="session.ping">
               <small>
                 Delay to {{ session.isSpectator ? "Host" : "Players" }}
@@ -389,6 +397,8 @@ export default {
       sessionCodeConfirmed: false,
       isStartingGame: false,
       isEndingGame: false,
+      isMuting: false,
+      isUnmuting: false,
     };
   },
   async mounted() {
@@ -713,6 +723,84 @@ export default {
         alert(`Error ending game: ${error.message || 'Unknown error'}`);
       } finally {
         this.isEndingGame = false;
+      }
+    },
+    async muteAll() {
+      if (this.isMuting) return;
+      if (this.session.isSpectator || !stats.isDiscordLinked() || !this.sessionCodeConfirmed) return;
+      
+      const sessionCode = stats.getSelectedSessionCode();
+      if (!sessionCode) {
+        alert('Session code required');
+        return;
+      }
+      
+      this.isMuting = true;
+      
+      try {
+        const baseUrl = import.meta.env.PROD
+          ? 'https://api.hystericca.dev'
+          : 'http://localhost:8001';
+        
+        const response = await fetch(`${baseUrl}/api/mute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionCode })
+        });
+        
+        if (response.ok) {
+          console.log('Mute command sent successfully');
+        } else {
+          const data = await response.json();
+          console.error('Failed to mute:', data.error);
+          alert(`Failed to mute: ${data.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Mute error:', error);
+        alert(`Error sending mute command: ${error.message || 'Unknown error'}`);
+      } finally {
+        this.isMuting = false;
+      }
+    },
+    async unmuteAll() {
+      if (this.isUnmuting) return;
+      if (this.session.isSpectator || !stats.isDiscordLinked() || !this.sessionCodeConfirmed) return;
+      
+      const sessionCode = stats.getSelectedSessionCode();
+      if (!sessionCode) {
+        alert('Session code required');
+        return;
+      }
+      
+      this.isUnmuting = true;
+      
+      try {
+        const baseUrl = import.meta.env.PROD
+          ? 'https://api.hystericca.dev'
+          : 'http://localhost:8001';
+        
+        const response = await fetch(`${baseUrl}/api/unmute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionCode })
+        });
+        
+        if (response.ok) {
+          console.log('Unmute command sent successfully');
+        } else {
+          const data = await response.json();
+          console.error('Failed to unmute:', data.error);
+          alert(`Failed to unmute: ${data.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Unmute error:', error);
+        alert(`Error sending unmute command: ${error.message || 'Unknown error'}`);
+      } finally {
+        this.isUnmuting = false;
       }
     },
     handleMenuToggle() {

@@ -102,6 +102,10 @@ const requestHandler = async (req, res) => {
         response = await api.timerPause(req);
       } else if (path === 'timer/resume' && req.method === 'POST') {
         response = await api.timerResume(req);
+      } else if (path === 'mute' && req.method === 'POST') {
+        response = await api.mute(req);
+      } else if (path === 'unmute' && req.method === 'POST') {
+        response = await api.unmute(req);
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);
@@ -291,6 +295,15 @@ wss.on("connection", function connection(ws, req) {
   channels[ws.channel].push(ws);
   ws.ping(noop);
   ws.on("pong", heartbeat);
+  ws.on("close", function close() {
+    if (channels[ws.channel]) {
+      channels[ws.channel] = channels[ws.channel].filter(client => client !== ws);
+      if (channels[ws.channel].length === 0) {
+        metrics.channels_list.remove({ name: ws.channel });
+        delete channels[ws.channel];
+      }
+    }
+  });
   ws.on("message", function incoming(data) {
     metrics.messages_incoming.inc();
     ws.counter++;

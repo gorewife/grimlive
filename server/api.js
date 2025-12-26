@@ -490,5 +490,79 @@ export const api = {
       success: true,
       message: 'Timer resume broadcast to WebSocket clients'
     });
+  },
+
+  mute: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists and get guild/category info
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    const { guild_id, category_id } = sessionResult.rows[0];
+
+    // Queue announcement for Discord bot to process
+    try {
+      await pool.query(`
+        INSERT INTO announcements (guild_id, category_id, announcement_type)
+        VALUES ($1, $2, 'mute')
+      `, [guild_id, category_id]);
+
+      return jsonResponse({
+        success: true,
+        message: 'Mute announcement queued'
+      });
+    } catch (error) {
+      console.error('Failed to queue mute announcement:', error);
+      return jsonResponse({ error: 'Failed to queue mute announcement' }, 500);
+    }
+  },
+
+  unmute: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists and get guild/category info
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    const { guild_id, category_id } = sessionResult.rows[0];
+
+    // Queue announcement for Discord bot to process
+    try {
+      await pool.query(`
+        INSERT INTO announcements (guild_id, category_id, announcement_type)
+        VALUES ($1, $2, 'unmute')
+      `, [guild_id, category_id]);
+
+      return jsonResponse({
+        success: true,
+        message: 'Unmute announcement queued'
+      });
+    } catch (error) {
+      console.error('Failed to queue unmute announcement:', error);
+      return jsonResponse({ error: 'Failed to queue unmute announcement' }, 500);
+    }
   }
 };
