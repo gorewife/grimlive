@@ -279,7 +279,7 @@ wss.on("connection", function connection(ws, req) {
       console.log(
         ws.channel,
         ws.playerId,
-        ws._socket.remoteAddress,
+        ws._socket?.remoteAddress || 'unknown',
         "possible player impersonation rejected",
       );
       ws.close(1000, "Player secret failed to validate.");
@@ -340,7 +340,7 @@ wss.on("connection", function connection(ws, req) {
           wss.clients.size,
           ws.channel,
           ws.playerId,
-          ws._socket.remoteAddress,
+          ws._socket?.remoteAddress || 'unknown',
           message,
         );
         try {
