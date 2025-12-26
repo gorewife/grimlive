@@ -153,6 +153,7 @@ export default new Vuex.Store({
       reminder: false,
       role: false,
       roles: false,
+      timer: false,
       voteHistory: false,
     },
     edition: editionJSONbyId.get("tb"),

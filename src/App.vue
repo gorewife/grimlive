@@ -27,10 +27,12 @@
       <Vote v-if="session.nomination" ref="vote"></Vote>
     </transition>
     <TownSquare></TownSquare>
+    <Timer></Timer>
     <Menu ref="menu"></Menu>
     <EditionModal />
     <EndGameModal @winner-selected="handleWinnerSelected" />
     <JournalModal />
+    <TimerModal />
     <NpcModal />
     <RolesModal />
     <ReferenceModal />
@@ -47,6 +49,7 @@ import { mapState } from "vuex";
 import { version } from "../package.json";
 import TownSquare from "./components/TownSquare";
 import TownInfo from "./components/TownInfo";
+import Timer from "./components/Timer";
 import Menu from "./components/Menu";
 import RolesModal from "./components/modals/RolesModal";
 import EditionModal from "./components/modals/EditionModal";
@@ -60,18 +63,21 @@ import NpcModal from "@/components/modals/NpcModal";
 import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
 import GameStateModal from "@/components/modals/GameStateModal";
 import JournalModal from "@/components/modals/JournalModal";
+import TimerModal from "@/components/modals/TimerModal";
 
 export default {
   components: {
     GameStateModal,
     VoteHistoryModal,
     JournalModal,
+    TimerModal,
     NpcModal,
     NightOrderModal,
     Vote,
     ReferenceModal,
     Intro,
     TownInfo,
+    Timer,
     TownSquare,
     Menu,
     EditionModal,
@@ -113,6 +119,10 @@ export default {
           break;
         case "w":
           this.$store.commit("toggleModal", "journal");
+          break;
+        case "t":
+          if (this.session.isSpectator) return;
+          this.$store.commit("toggleModal", "timer");
           break;
         case "r":
           this.$store.commit("toggleModal", "reference");

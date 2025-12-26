@@ -223,6 +223,9 @@ class LiveSession {
       case "name":
         this._updatePlayerName(params);
         break;
+      case "timer":
+        this._handleTimer(params);
+        break;
     }
   }
 
@@ -634,6 +637,47 @@ class LiveSession {
       return;
     const index = this._store.state.players.players.indexOf(player);
     this._send("name", [index, value]);
+  }
+
+  /**
+   * Send timer update to all clients
+   * @param timerData - { action: 'start'|'stop'|'complete'|'pause'|'resume', duration?, endTime?, startedBy?, pausedRemaining? }
+   */
+  sendTimer(timerData) {
+    if (!this._socket || this._isSpectator) return;
+    this._send("timer", timerData);
+  }
+
+  /**
+   * Handle incoming timer message
+   * @param timerData
+   * @private
+   */
+  _handleTimer(timerData) {
+    const { action, duration, endTime, startedBy, pausedRemaining } = timerData;
+    
+    switch (action) {
+      case "start":
+        this._store.commit("session/startTimer", { duration, endTime, startedBy });
+        break;
+      case "stop":
+        this._store.commit("session/stopTimer");
+        break;
+      case "complete":
+        // Timer completed on another client
+        this._store.commit("session/stopTimer");
+        break;
+      case "pause":
+        this._store.commit("session/pauseTimer");
+        break;
+      case "resume":
+        this._store.commit("session/resumeTimer");
+        break;
+      case "sync":
+        // Sync timer state (for late-joining clients)
+        this._store.commit("session/syncTimer", timerData);
+        break;
+    }
   }
 
   /**
@@ -1066,7 +1110,8 @@ export default (store) => {
   // setup
   const session = new LiveSession(store);
 
-  // listen to mutations
+  store.state.grimoire.sendTimer = session.sendTimer.bind(session);
+
   store.subscribe(({ type, payload }, state) => {
     switch (type) {
       case "session/setSessionId":

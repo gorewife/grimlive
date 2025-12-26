@@ -72,6 +72,10 @@
               />
             </em>
           </li>
+          <li @click="toggleModal('timer')" v-if="!session.isSpectator">
+            Timer
+            <em>[T]</em>
+          </li>
           <li v-if="players.length">
             Zoom
             <em>
@@ -133,7 +137,7 @@
             <em @click="logoutDiscord" style="cursor: pointer;" title="Logout"><font-awesome-icon icon="sign-out-alt" /></em>
           </li>
 
-          <li v-if="isDiscordLinked && !session.isSpectator && statTrackingEnabled">
+          <li v-if="isDiscordLinked && !session.isSpectator && isStatTrackingEnabled">
             <small style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
               <label style="font-size: 0.75em; color: rgba(255,255,255,0.6); margin-bottom: 2px;">
                 session code (press Enter to save)

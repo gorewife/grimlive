@@ -33,6 +33,15 @@ const state = () => ({
   isTwoVotesEnabled: false,
   isRolesDistributed: false,
   messages: [],
+  timer: {
+    isActive: false,
+    duration: 0,
+    endTime: null,
+    startedBy: null,
+    isPaused: false,
+    pausedTime: null,
+    pausedRemaining: 0,
+  },
 });
 
 const getters = {};
@@ -118,6 +127,41 @@ const mutations = {
   voteSync: handleVote,
   lockVote(state, lock) {
     state.lockedVote = lock !== undefined ? lock : state.lockedVote + 1;
+  },
+  startTimer(state, { duration, endTime, startedBy }) {
+    state.timer.isActive = true;
+    state.timer.duration = duration;
+    state.timer.endTime = endTime;
+    state.timer.startedBy = startedBy;
+  },
+  stopTimer(state) {
+    state.timer.isActive = false;
+    state.timer.duration = 0;
+    state.timer.endTime = null;
+    state.timer.startedBy = null;
+    state.timer.isPaused = false;
+    state.timer.pausedTime = null;
+    state.timer.pausedRemaining = 0;
+  },
+  pauseTimer(state) {
+    if (!state.timer.isActive || state.timer.isPaused) return;
+    const remaining = Math.max(0, Math.floor((state.timer.endTime - Date.now()) / 1000));
+    state.timer.isPaused = true;
+    state.timer.pausedTime = Date.now();
+    state.timer.pausedRemaining = remaining;
+  },
+  resumeTimer(state) {
+    if (!state.timer.isActive || !state.timer.isPaused) return;
+    const newEndTime = Date.now() + (state.timer.pausedRemaining * 1000);
+    state.timer.endTime = newEndTime;
+    state.timer.isPaused = false;
+    state.timer.pausedTime = null;
+  },
+  updateTimer(state, { endTime }) {
+    state.timer.endTime = endTime;
+  },
+  syncTimer(state, timerData) {
+    Object.assign(state.timer, timerData);
   },
 };
 

@@ -94,6 +94,14 @@ const requestHandler = async (req, res) => {
         response = await api.addPlayer(req);
       } else if (path === 'player/death' && req.method === 'POST') {
         response = await api.addDeath(req);
+      } else if (path === 'timer/start' && req.method === 'POST') {
+        response = await api.timerStart(req);
+      } else if (path === 'timer/stop' && req.method === 'POST') {
+        response = await api.timerStop(req);
+      } else if (path === 'timer/pause' && req.method === 'POST') {
+        response = await api.timerPause(req);
+      } else if (path === 'timer/resume' && req.method === 'POST') {
+        response = await api.timerResume(req);
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);

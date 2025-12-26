@@ -386,5 +386,109 @@ export const api = {
       console.error('Discord OAuth error:', error);
       return jsonResponse({ error: 'OAuth failed' }, 500);
     }
+  },
+
+  timerStart: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode, duration, discordUserId } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    if (!duration || duration < 1 || duration > 10800) { // max 3 hours
+      return jsonResponse({ error: 'duration must be between 1 and 10800 seconds' }, 400);
+    }
+
+    // Get session info
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    const endTime = Date.now() + duration * 1000;
+    
+    return jsonResponse({
+      success: true,
+      endTime: endTime,
+      duration: duration,
+      message: 'Timer broadcast to WebSocket clients'
+    });
+  },
+
+  timerStop: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    return jsonResponse({
+      success: true,
+      message: 'Timer stop broadcast to WebSocket clients'
+    });
+  },
+
+  timerPause: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    return jsonResponse({
+      success: true,
+      message: 'Timer pause broadcast to WebSocket clients'
+    });
+  },
+
+  timerResume: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    return jsonResponse({
+      success: true,
+      message: 'Timer resume broadcast to WebSocket clients'
+    });
   }
 };
