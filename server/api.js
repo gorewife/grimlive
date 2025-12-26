@@ -154,6 +154,20 @@ export const api = {
     
     const gameId = result.rows[0].game_id;
     
+    // Update session grimoire link if session code was provided
+    if (guildId && categoryId && sessionCode) {
+      // Generate grimoire link with session ID format
+      const grimoireLink = `https://grim.hystericca.dev/#${sessionCode}`;
+      
+      await pool.query(`
+        UPDATE sessions 
+        SET grimoire_link = $1, active_game_id = $2, last_active = $3
+        WHERE guild_id = $4 AND category_id = $5
+      `, [grimoireLink, gameId, Math.floor(Date.now() / 1000), guildId, categoryId]);
+      
+      console.log(`Updated grimoire link for session ${sessionCode}: ${grimoireLink}`);
+    }
+    
     if (guildId && categoryId) {
       await pool.query(`
         INSERT INTO announcements (
