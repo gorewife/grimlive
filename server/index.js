@@ -312,7 +312,8 @@ wss.on("connection", function connection(ws, req) {
       metrics.connection_terminated_spam.inc();
       return;
     }
-    const messageType = data.toLocaleLowerCase().substr(1).split(",", 1).pop();
+    const message = data.toString();
+    const messageType = message.toLocaleLowerCase().substr(1).split(",", 1).pop();
     switch (messageType) {
       case '"ping"':
         // ping messages will only be sent host -> all or all -> host
@@ -323,7 +324,7 @@ wss.on("connection", function connection(ws, req) {
             (ws.playerId === "host" || client.playerId === "host")
           ) {
             client.send(
-              data.replace(
+              message.replace(
                 /latency/,
                 (client.latency || 0) + (ws.latency || 0),
               ),
@@ -340,10 +341,10 @@ wss.on("connection", function connection(ws, req) {
           ws.channel,
           ws.playerId,
           ws._socket.remoteAddress,
-          data,
+          message,
         );
         try {
-          const dataToPlayer = JSON.parse(data)[1];
+          const dataToPlayer = JSON.parse(message)[1];
           channels[ws.channel].forEach(function each(client) {
             if (
               client !== ws &&
@@ -365,11 +366,11 @@ wss.on("connection", function connection(ws, req) {
           wss.clients.size,
           ws.channel,
           ws.playerId,
-          data,
+          message,
         );
         channels[ws.channel].forEach(function each(client) {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(data);
+            client.send(message);
             metrics.messages_outgoing.inc();
           }
         });
