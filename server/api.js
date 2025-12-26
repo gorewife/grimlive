@@ -179,6 +179,7 @@ export const api = {
     const body = await parseBody(req);
     const { gameId, winningTeam } = body;
     const endTime = Date.now() / 1000;
+    const completedAt = new Date(); // PostgreSQL timestamp format
     
     const gameData = await pool.query(
       'SELECT guild_id, category_id, script, custom_name, start_time, player_count FROM games WHERE game_id = $1',
@@ -189,7 +190,7 @@ export const api = {
       UPDATE games 
       SET end_time = $1, winner = $2, is_active = false, completed_at = $3
       WHERE game_id = $4
-    `, [endTime, winningTeam, endTime, gameId]);
+    `, [endTime, winningTeam, completedAt, gameId]);
 
     await pool.query(`
       UPDATE game_players 
