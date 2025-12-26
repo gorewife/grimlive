@@ -625,7 +625,14 @@ export default {
           customName = this.edition.name || this.edition.id || 'Unnamed Script';
         }
         
-        const playerNames = this.players.map(p => p.name);
+        const playerNames = this.players
+          .filter(p => p.name && p.name.trim())
+          .map(p => p.name);
+        
+        if (playerNames.length < 2) {
+          alert('At least 2 players with names are required to start a game.');
+          return;
+        }
         
         const gameId = await stats.startGame(script, customName, playerNames, sessionCode);
         
