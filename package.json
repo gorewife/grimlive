@@ -4,10 +4,9 @@
   "description": "Blood on the Clocktower Town Square",
   "author": "Steffen Baumgart",
   "scripts": {
-    "clone-images": "rimraf ./tmp/botc-icons/ && git clone https://github.com/tomozbot/botc-icons.git --depth 1 ./tmp/botc-icons",
-    "copy-images": "copyfiles -u 3 './tmp/botc-icons/WEBP/**/*' ./src/assets/icons/ && copyfiles -u 3 './tmp/botc-icons/WEBP/*' ./src/assets/icons/",
-    "dev": "bun run clone-images && bun run copy-images && vite",
-    "build": "bun run clone-images && bun run copy-images && vite build",
+    "copy-images": "cp /Users/viktorluna/Documents/grimkeeper/assets/wiki_images/*.webp ./src/assets/icons/",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.vue src",
     "lint-fix": "eslint --ext .js,.vue src --fix"

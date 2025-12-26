@@ -231,7 +231,7 @@ ul.editions .edition {
   text-align: center;
   padding-top: 20%;
   background-position: center center;
-  background-size: 80% auto;
+  background-size: 50%;
   background-repeat: no-repeat;
   width: 45%;
   margin: 5px;

@@ -302,8 +302,8 @@ ul {
     width: 420px;
     .icon {
       width: 8vh;
-      background-size: cover;
-      background-position: 0 -5px;
+      background-size: 65%;
+      background-position: center center;
       flex-shrink: 0;
       flex-grow: 0;
       &:after {

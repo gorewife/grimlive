@@ -451,7 +451,7 @@ ul {
     margin-bottom: 3px;
     .icon {
       width: 5vh;
-      background-size: 100%;
+      background-size: 65%;
       background-position: 50%;
       background-repeat: no-repeat;
       flex-grow: 0;

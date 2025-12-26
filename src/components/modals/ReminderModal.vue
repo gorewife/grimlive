@@ -220,7 +220,7 @@ ul.reminders .reminder {
     top: 0;
     width: 90%;
     height: 90%;
-    background-size: 100%;
+    background-size: 65%;
     background-position: center center;
     background-repeat: no-repeat;
   }

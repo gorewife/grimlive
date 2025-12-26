@@ -181,7 +181,7 @@ export default {
     height: 200px;
     max-width: 100%;
     max-height: 100%;
-    background-position: 0 center;
+    background-position: center center;
     background-repeat: no-repeat;
     background-size: 100% auto;
     position: absolute;

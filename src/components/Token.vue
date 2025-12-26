@@ -135,9 +135,9 @@ export default {
 
   .icon,
   &:before {
-    background-size: 100%;
+    background-size: 65%;
     background-repeat: no-repeat;
-    background-position: center 30%;
+    background-position: center center;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -201,7 +201,7 @@ export default {
       stroke: white;
       stroke-width: 2px;
       paint-order: stroke;
-      font-family: "Papyrus", serif;
+      font-family: "Sorts Mill Goudy", serif;
       font-weight: bold;
       text-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
       letter-spacing: 1px;
@@ -223,8 +223,8 @@ export default {
     position: absolute;
     right: 0;
     bottom: 5px;
-    width: 30px;
-    height: 30px;
+    width: 23px;
+    height: 23px;
     background-size: 100%;
     display: none;
   }
