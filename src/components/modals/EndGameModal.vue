@@ -4,11 +4,17 @@
     <p>Select the winning team:</p>
     <div class="winner-buttons">
       <button class="good-button" @click="selectWinner('Good')">
-        <span class="team-icon good">👼</span>
+        <span 
+          class="team-icon"
+          :style="{ backgroundImage: `url(${mayorIcon})` }"
+        ></span>
         <span>Good Wins</span>
       </button>
       <button class="evil-button" @click="selectWinner('Evil')">
-        <span class="team-icon evil">😈</span>
+        <span 
+          class="team-icon"
+          :style="{ backgroundImage: `url(${impIcon})` }"
+        ></span>
         <span>Evil Wins</span>
       </button>
     </div>
@@ -17,12 +23,19 @@
 
 <script>
 import Modal from "./Modal";
+import { iconImages } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 export default {
   components: { Modal },
   computed: {
     ...mapState(["modals"]),
+    mayorIcon() {
+      return iconImages["../assets/icons/mayor.webp"];
+    },
+    impIcon() {
+      return iconImages["../assets/icons/imp.webp"];
+    },
   },
   methods: {
     async selectWinner(team) {
@@ -97,7 +110,11 @@ button {
 }
 
 .team-icon {
-  font-size: 3em;
-  line-height: 1;
+  width: 6em;
+  height: 6em;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 0, 0, 0.3);
 }
 </style>
