@@ -28,6 +28,7 @@
         <li v-for="(rule, index) in edition.bootlegger" :key="index">
           <span
             class="icon"
+            :key="'bootlegger-' + index"
             :style="{
               backgroundImage: `url(${iconImages['../../assets/icons/bootlegger.webp']})`,
             }"
@@ -54,6 +55,7 @@
           <span
             class="icon"
             v-if="role.id"
+            :key="'icon-' + role.id"
             :style="{
               backgroundImage: `url(${getImage(role)})`,
             }"
@@ -79,12 +81,14 @@
         <li v-for="(jinx, index) in jinxed" :key="index">
           <span
             class="icon"
+            :key="'jinx-first-' + index"
             :style="{
               backgroundImage: `url(${getImage(jinx.first)})`,
             }"
           ></span>
           <span
             class="icon"
+            :key="'jinx-second-' + index"
             :style="{
               backgroundImage: `url(${getImage(jinx.second)})`,
             }"

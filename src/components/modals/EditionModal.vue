@@ -42,7 +42,7 @@
       <br />
       To play with custom characters, please read
       <a
-        href="https://github.com/nicholas-eden/townsquare#custom-character-support"
+        href="https://github.com/gorewife/grimlive#custom-character-support"
         target="_blank"
         >the documentation</a
       >

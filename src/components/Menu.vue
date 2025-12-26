@@ -133,8 +133,7 @@
             <em @click="logoutDiscord" style="cursor: pointer;" title="Logout"><font-awesome-icon icon="sign-out-alt" /></em>
           </li>
 
-          <!-- Discord Session Code Input (only when Discord linked and hosting/storyteller) -->
-          <li v-if="isDiscordLinked && !session.isSpectator">
+          <li v-if="isDiscordLinked && !session.isSpectator && statTrackingEnabled">
             <small style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
               <label style="font-size: 0.75em; color: rgba(255,255,255,0.6); margin-bottom: 2px;">
                 session code (press Enter to save)
@@ -324,14 +323,14 @@
           </li>
           <li>
             <a
-              href="https://github.com/nicholas-eden/townsquare"
+              href="https://github.com/gorewife/grimlive"
               target="_blank"
             >
               Source Code
             </a>
             <em>
               <a
-                href="https://github.com/nicholas-eden/townsquare"
+                href="https://github.com/gorewife/grimlive"
                 target="_blank"
               >
                 <font-awesome-icon :icon="['fab', 'github']" />
