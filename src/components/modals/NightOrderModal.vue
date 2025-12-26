@@ -315,7 +315,7 @@ export default {
         role.id === "minioninfo" ||
         role.id === "demoninfo"
       ) {
-        return assetImages[`../../assets/${role.id}.webp`];
+        return assetImages[`../assets/${role.id}.webp`];
       }
 
       if (role.image && this.grimoire.isImageOptIn) {
@@ -327,7 +327,7 @@ export default {
       }
 
       return iconImages[
-        "../../assets/icons/" + (role.imageAlt || role.id) + ".webp"
+        "../assets/icons/" + (role.imageAlt || role.id) + ".webp"
       ];
     },
     setResponded(player, roleId) {

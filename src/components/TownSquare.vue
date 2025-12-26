@@ -150,7 +150,7 @@ export default {
       } else {
         this.$store.commit("session/claimSeat", playerIndex);
         // Link Discord ID to the claimed seat (cached in stats service)
-        const discordUserId = stats.discordUserId || localStorage.getItem("discord_user_id");
+        const discordUserId = stats.discordUserId || localStorage.getItem("discordUserId");
         if (discordUserId) {
           this.$store.commit("players/update", {
             player: this.players[playerIndex],

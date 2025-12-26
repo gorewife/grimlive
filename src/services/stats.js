@@ -163,7 +163,16 @@ class StatsService {
   }
 
   async endGame(winningTeam) {
-    if (!this.enabled || !this.token || !this.currentGameId) return;
+    if (!this.enabled || !this.token || !this.currentGameId) {
+      console.warn('Cannot end game:', { 
+        enabled: this.enabled, 
+        hasToken: !!this.token, 
+        gameId: this.currentGameId 
+      });
+      return;
+    }
+
+    console.log('Ending game:', this.currentGameId, 'Winner:', winningTeam);
 
     try {
       const response = await fetch(`${this.baseUrl}/game/end`, {
@@ -179,11 +188,18 @@ class StatsService {
       });
 
       const data = await response.json();
-      console.log('Game ended:', this.currentGameId, winningTeam);
+      
+      if (data.error) {
+        console.error('End game API error:', data.error);
+        throw new Error(data.error);
+      }
+      
+      console.log('Game ended successfully:', this.currentGameId, winningTeam);
       this.currentGameId = null;
       return data;
     } catch (error) {
       console.error('Failed to end game tracking:', error);
+      throw error;
     }
   }
 
