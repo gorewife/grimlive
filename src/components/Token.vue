@@ -112,13 +112,38 @@ export default {
   background: url("../assets/token.webp") center center;
   background-size: 100%;
   text-align: center;
-  border: 3px solid black;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  border: 3px solid #2a1a3d;
+  box-shadow: 
+    0 0 20px rgba(123, 44, 191, 0.3),
+    0 4px 15px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(139, 0, 0, 0.1);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 250ms;
+  transition: all 350ms ease;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    pointer-events: none;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    border-color: #4a2a5d;
+    box-shadow: 
+      0 0 30px rgba(123, 44, 191, 0.5),
+      0 6px 20px rgba(0, 0, 0, 0.8),
+      inset 0 0 40px rgba(139, 0, 0, 0.15);
+  }
 
   &:hover .name .label {
     stroke: black;
@@ -197,23 +222,29 @@ export default {
     height: 100%;
     font-size: 24px; // svg fonts are relative to document font size
     .label {
-      fill: black;
-      stroke: white;
-      stroke-width: 2px;
+      fill: #f5e6d3;
+      stroke: #000000;
+      stroke-width: 3px;
       paint-order: stroke;
       font-family: "Sorts Mill Goudy", serif;
       font-weight: bold;
-      text-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-      letter-spacing: 1px;
+      text-shadow: 
+        0 0 10px rgba(0, 0, 0, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.9);
+      letter-spacing: 1.5px;
+      filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
 
       @-moz-document url-prefix() {
         &.mozilla {
           // Vue doesn't support scoped media queries, so we have to use a second css class
           stroke: none;
-          text-shadow: none;
-          filter: drop-shadow(0 1.5px 0 white) drop-shadow(0 -1.5px 0 white)
-            drop-shadow(1.5px 0 0 white) drop-shadow(-1.5px 0 0 white)
-            drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+          text-shadow: 
+            0 2px 0 black,
+            0 -2px 0 black,
+            2px 0 0 black,
+            -2px 0 0 black,
+            0 3px 3px rgba(0, 0, 0, 0.8);
+          filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
         }
       }
     }

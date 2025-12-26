@@ -352,8 +352,13 @@ export default {
   left: 20px;
   top: 15px;
   cursor: pointer;
+  color: rgba(212, 175, 55, 0.7);
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+  transition: all 250ms ease;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+    transform: scale(1.1);
   }
 }
 
@@ -492,10 +497,11 @@ ul {
       bottom: 0;
       width: 500px;
       z-index: 25;
-      background: rgba(0, 0, 0, 0.75);
+      background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+      backdrop-filter: blur(4px);
       border-radius: 10px;
-      border: 3px solid black;
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+      border: 2px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 0 20px rgba(123, 44, 191, 0.4), 0 8px 15px rgba(0, 0, 0, 0.7);
       text-align: left;
       pointer-events: none;
       opacity: 0;

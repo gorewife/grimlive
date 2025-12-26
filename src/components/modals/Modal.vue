@@ -51,22 +51,56 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(0, 0, 0, 0.3);
+  background: radial-gradient(ellipse at center, rgba(42, 26, 61, 0.7) 0%, rgba(0, 0, 0, 0.85) 100%);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
+  animation: backdropFadeIn 0.3s ease;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
-  background: rgba(0, 0, 0, 0.8);
-  padding: 10px 20px;
-  border-radius: 10px;
-  box-shadow: 2px 2px 20px 1px #000;
+  background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+  padding: 20px 30px;
+  border-radius: 15px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 
+    0 0 40px rgba(123, 44, 191, 0.4),
+    0 8px 32px rgba(0, 0, 0, 0.8),
+    inset 0 0 60px rgba(139, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   max-height: 80%;
   max-width: 80%;
+  position: relative;
+  animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      transform: translateY(-20px) scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
 
   @media (orientation: portrait) {
     max-width: 90%;
@@ -113,8 +147,13 @@ export default {
     > .top-right-button {
       cursor: pointer;
       width: 28px;
+      color: rgba(212, 175, 55, 0.6);
+      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.3));
+      transition: all 250ms ease;
       &:hover {
-        color: red;
+        color: rgba(212, 175, 55, 1);
+        filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
+        transform: scale(1.1);
       }
     }
 

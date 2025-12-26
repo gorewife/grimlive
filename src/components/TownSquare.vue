@@ -422,14 +422,18 @@ export default {
     top: 10px;
   }
   left: 10px;
-  background: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+  backdrop-filter: blur(4px);
   border-radius: 10px;
-  border: 3px solid black;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 
+    0 0 30px rgba(123, 44, 191, 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.7),
+    inset 0 0 40px rgba(139, 0, 0, 0.1);
   transform-origin: bottom left;
   transform: scale(1);
   opacity: 1;
-  transition: all 200ms ease-in-out;
+  transition: all 350ms ease;
   z-index: 50;
 
   > svg {
@@ -437,8 +441,13 @@ export default {
     top: 10px;
     right: 10px;
     cursor: pointer;
+    color: rgba(212, 175, 55, 0.7);
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+    transition: all 250ms ease;
     &:hover {
-      color: red;
+      color: rgba(212, 175, 55, 1);
+      filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+      transform: scale(1.1);
     }
   }
   h3 {

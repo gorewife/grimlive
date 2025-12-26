@@ -108,13 +108,12 @@ export default {
 .info {
   position: absolute;
   display: flex;
+  flex-direction: column;
   width: 20%;
   height: 20%;
-  padding: 50px 0 0;
+  padding: 0;
   align-items: center;
-  align-content: center;
-  justify-content: center;
-  flex-wrap: wrap;
+  justify-content: flex-start;
   background: url("../assets/demon-head.webp") center center no-repeat;
   background-size: auto 100%;
 
@@ -142,8 +141,10 @@ export default {
     .meta {
       text-align: center;
       flex-basis: 100%;
-      font-family: PiratesBay, sans-serif;
-      font-weight: normal;
+      font-family: "Playfair Display", "Cinzel", serif;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 1px;
     }
 
     svg {
@@ -177,15 +178,16 @@ export default {
   }
 
   li.edition {
-    width: 220px;
-    height: 200px;
-    max-width: 100%;
-    max-height: 100%;
+    width: 210px;
+    height: 190px;
+    max-width: 90%;
+    max-height: 90%;
     background-position: center center;
     background-repeat: no-repeat;
-    background-size: 100% auto;
-    position: absolute;
-    top: -25%;
+    background-size: contain;
+    position: relative;
+    flex-shrink: 0;
+    margin-bottom: 10px;
   }
 }
 </style>

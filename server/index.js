@@ -11,7 +11,6 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env from current directory
 const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf-8');
@@ -27,14 +26,13 @@ if (fs.existsSync(envPath)) {
   console.log('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
 }
 
-// Create a Registry which registers the metrics
 const register = new client.Registry();
-// Add a default label which is added to all metrics
 register.setDefaultLabels({
   app: "clocktower-online",
 });
 
-const PING_INTERVAL = 30000; // 30 seconds
+const PING_INTERVAL = 30000;
+const MAX_BODY_SIZE = 1024 * 100;
 
 const options = {};
 
@@ -47,12 +45,13 @@ if (process.env.NODE_ENV !== "development") {
   );
 }
 
-// HTTP request handler for REST API
 const requestHandler = async (req, res) => {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
   
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -62,7 +61,6 @@ const requestHandler = async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host}`);
   
-  // Route OAuth requests (not under /api/)
   if (url.pathname === '/auth/discord') {
     const response = await api.discordOAuth(req);
     if (response.headers?.Location) {
@@ -78,7 +76,6 @@ const requestHandler = async (req, res) => {
     return;
   }
   
-  // Route API requests
   if (url.pathname.startsWith('/api/')) {
     const path = url.pathname.slice(5); // Remove '/api/'
     
@@ -115,17 +112,14 @@ const requestHandler = async (req, res) => {
     return;
   }
   
-  // Default response for non-API requests
   res.writeHead(404);
   res.end('Not Found');
 };
 
-// Create HTTP or HTTPS server depending on environment
 const server = process.env.NODE_ENV === "development"
   ? http.createServer(requestHandler)
   : https.createServer(options, requestHandler);
 
-// Start server listening
 if (process.env.NODE_ENV === "development") {
   server.listen(8001, () => {
     console.log('HTTP server listening on port 8001 (development mode)');
@@ -146,17 +140,14 @@ console.log(`Port: ${process.env.NODE_ENV === "development" ? "8001" : "8001 (vi
 
 function noop() {}
 
-// calculate latency on heartbeat
 function heartbeat() {
   this.latency = Math.round((new Date().getTime() - this.pingStart) / 2);
   this.counter = 0;
   this.isAlive = true;
 }
 
-// map of channels currently in use
 const channels = {};
 
-// metrics
 const metrics = {
   players_concurrent: new client.Gauge({
     name: "players_concurrent",
@@ -216,21 +207,17 @@ const metrics = {
   }),
 };
 
-// register metrics
 for (let metric in metrics) {
   register.registerMetric(metrics[metric]);
 }
 
-// a new client connects
 wss.on("connection", function connection(ws, req) {
-  // url pattern: clocktower.live/<channel>/<playerId|host>
   const url = new URL(req.url, "wss://clocktower.live/");
   [ws.channel, ws.playerId] = url.pathname
     .replace(/^\//, "")
     .split("/")
     .map((c) => decodeURIComponent(c));
   ws.channel = ws.channel.toLowerCase();
-  // check for another host on this channel
   if (
     ws.playerId === "host" &&
     channels[ws.channel] &&
@@ -290,18 +277,14 @@ wss.on("connection", function connection(ws, req) {
   ws.isAlive = true;
   ws.pingStart = new Date().getTime();
   ws.counter = 0;
-  // add channel to list
   if (!channels[ws.channel]) {
     channels[ws.channel] = [];
   }
   channels[ws.channel].push(ws);
-  // start ping pong
   ws.ping(noop);
   ws.on("pong", heartbeat);
-  // handle message
   ws.on("message", function incoming(data) {
     metrics.messages_incoming.inc();
-    // check rate limit (max 5msg/second)
     ws.counter++;
     if (ws.counter > (5 * PING_INTERVAL) / 1000) {
       console.log(ws.channel, "disconnecting user due to spam");
@@ -316,7 +299,6 @@ wss.on("connection", function connection(ws, req) {
     const messageType = message.toLocaleLowerCase().substr(1).split(",", 1).pop();
     switch (messageType) {
       case '"ping"':
-        // ping messages will only be sent host -> all or all -> host
         channels[ws.channel].forEach(function each(client) {
           if (
             client !== ws &&
@@ -334,7 +316,6 @@ wss.on("connection", function connection(ws, req) {
         });
         break;
       case '"direct"':
-        // handle "direct" messages differently
         console.log(
           new Date(),
           wss.clients.size,
@@ -360,7 +341,6 @@ wss.on("connection", function connection(ws, req) {
         }
         break;
       default:
-        // all other messages
         console.log(
           new Date(),
           wss.clients.size,
@@ -379,9 +359,7 @@ wss.on("connection", function connection(ws, req) {
   });
 });
 
-// start ping interval timer
 const interval = setInterval(function ping() {
-  // ping each client
   wss.clients.forEach(function each(ws) {
     if (ws.isAlive === false) {
       metrics.connection_terminated_timeout.inc();
@@ -391,7 +369,6 @@ const interval = setInterval(function ping() {
     ws.pingStart = new Date().getTime();
     ws.ping(noop);
   });
-  // clean up empty channels
   for (let channel in channels) {
     if (
       !channels[channel].length ||
@@ -408,12 +385,32 @@ const interval = setInterval(function ping() {
   }
 }, PING_INTERVAL);
 
-// handle server shutdown
 wss.on("close", function close() {
   clearInterval(interval);
 });
 
-// prod mode with stats API
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server gracefully...');
+  wss.close(() => {
+    console.log('WebSocket server closed');
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, closing server gracefully...');
+  wss.close(() => {
+    console.log('WebSocket server closed');
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
+  });
+});
+
 if (process.env.NODE_ENV !== "development") {
   console.log("server starting");
   server.listen(8001);

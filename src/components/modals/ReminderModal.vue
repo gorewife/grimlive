@@ -209,11 +209,14 @@ ul.reminders .reminder {
   margin: 1%;
 
   border-radius: 50%;
-  border: 3px solid black;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  border: 3px solid #2a1a3d;
+  box-shadow: 
+    0 0 20px rgba(123, 44, 191, 0.3),
+    0 4px 15px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(139, 0, 0, 0.1);
   cursor: pointer;
   line-height: 100%;
-  transition: transform 500ms ease;
+  transition: transform 350ms ease;
 
   .icon {
     position: absolute;

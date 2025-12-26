@@ -146,6 +146,7 @@ export default new Vuex.Store({
       endGame: false,
       npc: false,
       gameState: false,
+      journal: false,
       messages: false,
       nightOrder: false,
       reference: false,

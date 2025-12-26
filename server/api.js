@@ -15,17 +15,32 @@ function jsonResponse(data, status = 200) {
   };
 }
 
+const MAX_BODY_SIZE = 1024 * 100;
+
 async function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    let size = 0;
+    
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > MAX_BODY_SIZE) {
+        req.connection.destroy();
+        reject(new Error('Request body too large'));
+        return;
+      }
+      body += chunk;
+    });
+    
     req.on('end', () => {
       try {
-        resolve(JSON.parse(body));
+        resolve(body ? JSON.parse(body) : {});
       } catch (e) {
+        console.error('JSON parse error:', e.message);
         resolve({});
       }
     });
+    
     req.on('error', reject);
   });
 }
@@ -33,33 +48,43 @@ async function parseBody(req) {
 async function verifyToken(req) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
-    console.log('No auth header or invalid format');
+    console.log('[AUTH] No auth header or invalid format from', req.socket?.remoteAddress);
     return null;
   }
   const token = auth.slice(7);
-  const currentTime = Math.floor(Date.now() / 1000);
   
-  const result = await pool.query(
-    'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > $2',
-    [token, currentTime]
-  );
-  const session = result.rows[0] || null;
-  
-  if (!session) {
-    console.log('Token invalid or expired');
+  if (token.length < 16 || token.length > 256) {
+    console.log('[AUTH] Invalid token format from', req.socket?.remoteAddress);
+    return null;
   }
   
-  return session;
+  const currentTime = Math.floor(Date.now() / 1000);
+  
+  try {
+    const result = await pool.query(
+      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > $2',
+      [token, currentTime]
+    );
+    const session = result.rows[0] || null;
+    
+    if (!session) {
+      console.log('[AUTH] Token invalid or expired from', req.socket?.remoteAddress);
+    }
+    
+    return session;
+  } catch (error) {
+    console.error('[AUTH] Database error during token verification:', error.message);
+    return null;
+  }
 }
 
 export const api = {
-  // create web auth session (24hr token)
   createSession: async (req) => {
     const body = await parseBody(req);
     const { discord_user_id } = body;
     
     const token = crypto.randomUUID();
-    const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
+    const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
     const sessionId = crypto.randomUUID();
     
     await pool.query(

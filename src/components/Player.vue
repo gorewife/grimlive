@@ -561,10 +561,12 @@ export default {
     width: 100%;
     background: url("../assets/life.webp") center center;
     background-size: 100%;
-    border: 3px solid black;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    border: 3px solid #2a1a3d;
+    box-shadow: 
+      0 0 20px rgba(123, 44, 191, 0.3),
+      0 4px 15px rgba(0, 0, 0, 0.6);
     cursor: pointer;
-    transition: transform 200ms ease-in-out;
+    transition: transform 350ms ease;
     transform: perspective(400px) rotateY(180deg);
     backface-visibility: hidden;
     position: absolute;
@@ -874,7 +876,8 @@ li.move:not(.from) .player .overlay svg.move {
   }
 
   &.disconnected {
-    color: red;
+    color: #8b0000;
+    text-shadow: 0 0 8px rgba(139, 0, 0, 0.5);
   }
 }
 
@@ -903,11 +906,12 @@ li.move:not(.from) .player .overlay svg.move {
   cursor: pointer;
   white-space: nowrap;
   width: 120%;
-  background: rgba(0, 0, 0, 0.5);
-  border: 3px solid black;
+  background: linear-gradient(135deg, rgba(42, 26, 61, 0.85) 0%, rgba(26, 15, 40, 0.9) 100%);
+  backdrop-filter: blur(4px);
+  border: 2px solid rgba(212, 175, 55, 0.3);
   border-radius: 10px;
   top: 5px;
-  box-shadow: 0 0 5px black;
+  box-shadow: 0 0 15px rgba(123, 44, 191, 0.3), 0 4px 10px rgba(0, 0, 0, 0.7);
   padding: 0 4px;
 
   svg {
@@ -933,7 +937,8 @@ li.move:not(.from) .player .overlay svg.move {
 
   &:hover,
   &.active {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
   }
 
   .pronouns {
@@ -955,13 +960,14 @@ li.move:not(.from) .player .overlay svg.move {
   text-align: left;
   font-size: 90%;
   white-space: nowrap;
-  background: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+  backdrop-filter: blur(4px);
   padding: 2px 5px;
   border-radius: 10px;
-  border: 3px solid #000;
+  border: 2px solid rgba(212, 175, 55, 0.3);
   margin-left: 15px;
   cursor: pointer;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 20px rgba(123, 44, 191, 0.3), 0 4px 10px rgba(0, 0, 0, 0.6);
 
   &:before {
     content: " ";
@@ -969,14 +975,15 @@ li.move:not(.from) .player .overlay svg.move {
     height: 0;
     position: absolute;
     border: 10px solid transparent;
-    border-right-color: black;
+    border-right-color: rgba(212, 175, 55, 0.3);
     right: 100%;
     bottom: 5px;
     margin-right: 2px;
   }
 
   li:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
   }
 
   li.disabled {
@@ -1013,8 +1020,8 @@ li.move:not(.from) .player .overlay svg.move {
 }
 
 .player.dead .night-order em {
-  color: #ddd;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, gray 100%);
+  color: #b8a8c8;
+  background: linear-gradient(180deg, rgba(26, 15, 40, 1) 0%, #5a4a6a 100%);
 }
 
 /***** Reminder token *****/
@@ -1030,9 +1037,11 @@ li.move:not(.from) .player .overlay svg.move {
   justify-content: center;
   margin: 5px 0 0 -25%;
   border-radius: 50%;
-  border: 3px solid black;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  transition: all 200ms;
+  border: 3px solid #2a1a3d;
+  box-shadow: 
+    0 0 20px rgba(123, 44, 191, 0.3),
+    0 4px 15px rgba(0, 0, 0, 0.6);
+  transition: all 350ms ease;
   cursor: pointer;
 
   .text {

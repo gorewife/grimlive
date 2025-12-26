@@ -279,7 +279,8 @@ ul.tokens {
         cursor: pointer;
         &:hover {
           opacity: 1;
-          color: red;
+          color: rgba(212, 175, 55, 1);
+          text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
         }
       }
     }
@@ -326,7 +327,8 @@ ul.tokens {
     cursor: pointer;
     &.checked,
     &:hover {
-      color: red;
+      color: rgba(212, 175, 55, 1);
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
     &.checked {
       margin-top: 10px;
@@ -360,10 +362,12 @@ ul.tokens {
         right: -20px;
         bottom: 30px;
         width: 420px;
-        background: rgba(0, 0, 0, 0.75);
+        background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+        backdrop-filter: blur(4px);
         padding: 5px;
         border-radius: 10px;
-        border: 2px solid black;
+        border: 2px solid rgba(212, 175, 55, 0.3);
+        box-shadow: 0 0 20px rgba(123, 44, 191, 0.4), 0 8px 15px rgba(0, 0, 0, 0.7);
       }
       &:hover span {
         display: block;

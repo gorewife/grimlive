@@ -27,7 +27,7 @@
       {{ session.playerCount }}
     </span>
     <div class="menu" :class="{ open: grimoire.isMenuOpen }">
-      <font-awesome-icon icon="cog" @click="toggleMenu" />
+      <font-awesome-icon icon="cog" @click="handleMenuToggle" />
       <ul>
         <li class="tabs" :class="tab">
           <font-awesome-icon icon="book-open" @click="tab = 'grimoire'" />
@@ -44,6 +44,10 @@
         <template v-if="tab === 'grimoire'">
           <!-- Grimoire -->
           <li class="headline">Grimoire</li>
+          <li @click="toggleModal('journal')">
+            Journal
+            <em>[W]</em>
+          </li>
           <li @click="toggleGrimoire" v-if="players.length">
             <template v-if="!grimoire.isPublic">Hide</template>
             <template v-if="grimoire.isPublic">Show</template>
@@ -708,6 +712,11 @@ export default {
         this.isEndingGame = false;
       }
     },
+    handleMenuToggle() {
+      console.log('Menu toggle clicked, current state:', this.grimoire.isMenuOpen);
+      this.toggleMenu();
+      console.log('After toggle:', this.grimoire.isMenuOpen);
+    },
     ...mapMutations([
       "toggleGrimoire",
       "toggleMenu",
@@ -785,36 +794,51 @@ export default {
 }
 
 .menu {
-  width: 220px;
-  transform-origin: 200px 22px;
-  transition: transform 500ms cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  transform: rotate(-90deg);
-  position: absolute;
-  right: 0;
-  top: 0;
-
-  &.open {
-    transform: rotate(0deg);
-  }
+  width: 280px;
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  z-index: 80;
+  pointer-events: none;
 
   > svg {
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.5);
-    border: 3px solid black;
-    width: 40px;
-    height: 50px;
-    margin-bottom: -8px;
-    border-bottom: 0;
-    border-radius: 10px 10px 0 0;
-    padding: 5px 5px 15px;
-    font-size: 1.5em;
+    background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+    border: 2px solid rgba(212, 175, 55, 0.4);
+    box-shadow: 
+      0 0 25px rgba(123, 44, 191, 0.4),
+      0 4px 15px rgba(0, 0, 0, 0.6);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    color: rgba(212, 175, 55, 0.8);
+    transition: all 300ms ease;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 10;
+    pointer-events: all;
+    
+    &:hover {
+      color: rgba(212, 175, 55, 1);
+      box-shadow: 
+        0 0 35px rgba(123, 44, 191, 0.6),
+        0 6px 20px rgba(0, 0, 0, 0.7);
+      transform: rotate(90deg) scale(1.05);
+    }
   }
 
   a {
-    color: white;
+    color: #f5e6d3;
     text-decoration: none;
+    transition: all 250ms ease;
     &:hover {
-      color: red;
+      color: rgba(212, 175, 55, 1);
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
   }
 
@@ -823,23 +847,78 @@ export default {
     list-style-type: none;
     padding: 0;
     margin: 0;
+    margin-top: 58px;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 0 10px black;
-    border: 3px solid black;
-    border-radius: 10px 0 10px 10px;
+    background: 
+      linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(212, 175, 55, 0.03) 2px,
+        rgba(212, 175, 55, 0.03) 4px
+      );
+    backdrop-filter: blur(8px);
+    box-shadow: 
+      0 0 40px rgba(123, 44, 191, 0.5),
+      0 10px 30px rgba(0, 0, 0, 0.8),
+      inset 0 0 60px rgba(139, 0, 0, 0.15),
+      inset 0 1px 0 rgba(212, 175, 55, 0.2);
+    border: 2px solid rgba(212, 175, 55, 0.4);
+    border-radius: 12px;
+    position: relative;
+    transform: translateX(calc(100% + 20px));
+    opacity: 0;
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    &::before {
+      top: -2px;
+      left: -2px;
+      border-right: none;
+      border-bottom: none;
+      border-radius: 12px 0 0 0;
+    }
+    
+    &::after {
+      bottom: -2px;
+      right: -2px;
+      border-left: none;
+      border-top: none;
+      border-radius: 0 0 12px 0;
+    }
 
     li {
       padding: 2px 5px;
-      color: white;
+      color: #f5e6d3;
       text-align: left;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(26, 15, 40, 0.5);
       display: flex;
       align-items: center;
       justify-content: space-between;
       min-height: 30px;
       font-size: 0.95em;
       font-weight: 300;
+      transition: all 250ms ease;
+      pointer-events: all;
+      
+      &:first-child {
+        margin-top: 8px;
+      }
+      
+      &:last-child {
+        margin-bottom: 8px;
+      }
 
       @media (orientation: portrait) {
         font-size: 15px;
@@ -852,14 +931,15 @@ export default {
           flex-grow: 1;
           flex-shrink: 0;
           height: 35px;
-          border-bottom: 3px solid black;
-          border-right: 3px solid black;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+          border-right: 2px solid rgba(212, 175, 55, 0.3);
           padding: 5px 0;
           cursor: pointer;
-          transition: color 250ms;
+          transition: all 250ms ease;
           font-size: 1.2em;
           &:hover {
-            color: red;
+            color: rgba(212, 175, 55, 1);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
           }
           &:last-child {
             border-right: 0;
@@ -881,7 +961,9 @@ export default {
 
       &:not(.headline):not(.tabs):hover {
         cursor: pointer;
-        color: red;
+        color: rgba(212, 175, 55, 1);
+        background: rgba(42, 26, 61, 0.7);
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
       }
 
       &.disabled {
@@ -899,10 +981,11 @@ export default {
     }
 
     .headline {
-      font-family: "Cinzel", "IM Fell English", serif;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-family: "Playfair Display", "Cinzel", serif;
+      font-weight: 700;
+      letter-spacing: 1.5px;
       padding: 5px 10px;
+      font-style: italic;
       text-align: center;
       justify-content: center;
       font-size: 1.05em;
@@ -919,6 +1002,12 @@ export default {
         font-size: 15px;
       }
     }
+  }
+  
+  &.open ul {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
   }
 }
 </style>

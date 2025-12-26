@@ -30,6 +30,7 @@
     <Menu ref="menu"></Menu>
     <EditionModal />
     <EndGameModal @winner-selected="handleWinnerSelected" />
+    <JournalModal />
     <NpcModal />
     <RolesModal />
     <ReferenceModal />
@@ -58,11 +59,13 @@ import NightOrderModal from "./components/modals/NightOrderModal";
 import NpcModal from "@/components/modals/NpcModal";
 import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
 import GameStateModal from "@/components/modals/GameStateModal";
+import JournalModal from "@/components/modals/JournalModal";
 
 export default {
   components: {
     GameStateModal,
     VoteHistoryModal,
+    JournalModal,
     NpcModal,
     NightOrderModal,
     Vote,
@@ -86,7 +89,8 @@ export default {
     };
   },
   methods: {
-    keyup({ key, ctrlKey, metaKey, target }) {
+    keyup(event) {
+      const { key, ctrlKey, metaKey, target, shiftKey } = event;
       if (ctrlKey || metaKey) return;
       
       // Ignore keyboard shortcuts if user is typing in an input field
@@ -106,6 +110,9 @@ export default {
           break;
         case "j":
           this.$refs.menu.joinSession();
+          break;
+        case "w":
+          this.$store.commit("toggleModal", "journal");
           break;
         case "r":
           this.$store.commit("toggleModal", "reference");
@@ -185,7 +192,7 @@ body {
   background-size: cover;
   color: white;
   height: 100%;
-  font-family: "Roboto Condensed", "Segoe UI", Tahoma, sans-serif;
+  font-family: "Crimson Text", "IM Fell English", Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -216,8 +223,9 @@ h4,
 h5 {
   margin: 0;
   text-align: center;
-  font-family: PiratesBay, sans-serif;
-  letter-spacing: 1px;
+  font-family: "Playfair Display", "Cinzel", serif;
+  letter-spacing: 1.5px;
+  font-weight: 700;
   font-weight: normal;
 }
 
@@ -286,31 +294,37 @@ ul {
 }
 .button {
   padding: 0;
-  border: solid 0.125em transparent;
+  border: solid 0.125em rgba(212, 175, 55, 0.3);
   border-radius: 15px;
   box-shadow:
-    inset 0 1px 1px #9c9c9c,
-    0 0 10px #000;
+    inset 0 1px 1px rgba(212, 175, 55, 0.2),
+    0 0 15px rgba(123, 44, 191, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.6);
   background:
-    radial-gradient(at 0 -15%, rgba(#fff, 0.07) 70%, rgba(#fff, 0) 71%) 0 0/ 80%
+    radial-gradient(at 0 -15%, rgba(212, 175, 55, 0.1) 70%, rgba(255, 255, 255, 0) 71%) 0 0/ 80%
       90% no-repeat content-box,
-    linear-gradient(#4e4e4e, #040404) content-box,
-    linear-gradient(#292929, #010101) border-box;
-  color: white;
+    linear-gradient(#3a2a4a, #1a0a2a) content-box,
+    linear-gradient(#2a1a3d, #0d0515) border-box;
+  color: #f5e6d3;
   font-weight: bold;
-  text-shadow: 1px 1px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 8px rgba(123, 44, 191, 0.5), 1px 1px rgba(0, 0, 0, 0.8);
   line-height: 170%;
   margin: 5px auto;
   cursor: pointer;
-  transition: all 200ms;
+  transition: all 350ms ease;
   white-space: nowrap;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    box-shadow:
+      inset 0 1px 1px rgba(212, 175, 55, 0.3),
+      0 0 25px rgba(123, 44, 191, 0.5),
+      0 4px 15px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 1px 1px rgba(0, 0, 0, 0.8);
   }
   &.disabled {
-    color: gray;
+    color: #6a5a7a;
     cursor: default;
-    opacity: 0.75;
+    opacity: 0.5;
   }
   &:before,
   &:after {
@@ -323,32 +337,45 @@ ul {
     background:
       radial-gradient(
           at 0 -15%,
-          rgba(255, 255, 255, 0.07) 70%,
+          rgba(212, 175, 55, 0.1) 70%,
           rgba(255, 255, 255, 0) 71%
         )
         0 0/80% 90% no-repeat content-box,
-      linear-gradient(#0031ad, rgba(5, 0, 0, 0.22)) content-box,
-      linear-gradient(#292929, #001142) border-box;
+      linear-gradient(#4a5fc1, rgba(26, 15, 40, 0.8)) content-box,
+      linear-gradient(#2a1a3d, #1a2d5f) border-box;
     box-shadow:
-      inset 0 1px 1px #002c9c,
-      0 0 10px #000;
+      inset 0 1px 1px rgba(74, 95, 193, 0.4),
+      0 0 15px rgba(74, 95, 193, 0.3),
+      0 4px 10px rgba(0, 0, 0, 0.6);
     &:hover:not(.disabled) {
-      color: #008cf7;
+      color: rgba(212, 175, 55, 1);
+      box-shadow:
+        inset 0 1px 1px rgba(74, 95, 193, 0.5),
+        0 0 25px rgba(74, 95, 193, 0.5),
+        0 4px 15px rgba(0, 0, 0, 0.7);
     }
   }
   &.demon {
     background:
       radial-gradient(
           at 0 -15%,
-          rgba(255, 255, 255, 0.07) 70%,
+          rgba(212, 175, 55, 0.1) 70%,
           rgba(255, 255, 255, 0) 71%
         )
         0 0/80% 90% no-repeat content-box,
-      linear-gradient(#ad0000, rgba(5, 0, 0, 0.22)) content-box,
-      linear-gradient(#292929, #420000) border-box;
+      linear-gradient(#8b0000, rgba(26, 15, 40, 0.8)) content-box,
+      linear-gradient(#2a1a3d, #5f0000) border-box;
     box-shadow:
-      inset 0 1px 1px #9c0000,
-      0 0 10px #000;
+      inset 0 1px 1px rgba(139, 0, 0, 0.4),
+      0 0 15px rgba(139, 0, 0, 0.3),
+      0 4px 10px rgba(0, 0, 0, 0.6);
+    &:hover:not(.disabled) {
+      color: rgba(212, 175, 55, 1);
+      box-shadow:
+        inset 0 1px 1px rgba(139, 0, 0, 0.5),
+        0 0 25px rgba(139, 0, 0, 0.5),
+        0 4px 15px rgba(0, 0, 0, 0.7);
+    }
   }
 }
 

@@ -226,8 +226,10 @@ export default {
 
 <style scoped lang="scss">
 ul.editions .edition {
-  font-family: PiratesBay, sans-serif;
-  letter-spacing: 1px;
+  font-family: "Playfair Display", "Cinzel", serif;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  font-style: italic;
   text-align: center;
   padding-top: 20%;
   background-position: center center;
@@ -243,8 +245,17 @@ ul.editions .edition {
     1px 1px 0 #000,
     0 0 5px rgba(0, 0, 0, 0.75);
   cursor: pointer;
+  transition: all 250ms ease;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    text-shadow: 
+      1px 1px 0 #000,
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 0 15px rgba(212, 175, 55, 0.6);
+    transform: scale(1.02);
   }
 }
 
@@ -262,7 +273,8 @@ ul.editions .edition {
     text-align: left;
     margin: 10px auto;
     li:hover {
-      color: red;
+      color: rgba(212, 175, 55, 1);
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
   }
 }

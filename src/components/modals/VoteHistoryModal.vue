@@ -117,8 +117,13 @@ export default {
   left: 20px;
   top: 15px;
   cursor: pointer;
+  color: rgba(212, 175, 55, 0.7);
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+  transition: all 250ms ease;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+    transform: scale(1.1);
   }
 }
 
@@ -131,11 +136,13 @@ export default {
 }
 
 .option {
-  color: white;
+  color: #f5e6d3;
   text-decoration: none;
   margin: 0 15px;
+  transition: all 250ms ease;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     cursor: pointer;
   }
 }

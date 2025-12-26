@@ -188,8 +188,13 @@ export default {
   left: 20px;
   top: 15px;
   cursor: pointer;
+  color: rgba(212, 175, 55, 0.7);
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+  transition: all 250ms ease;
   &:hover {
-    color: red;
+    color: rgba(212, 175, 55, 1);
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+    transform: scale(1.1);
   }
 }
 
@@ -258,7 +263,8 @@ h3 {
     display: block;
     width: 25%;
     height: 1px;
-    background: linear-gradient(90deg, #ffffffaa, transparent);
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.5), transparent);
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
     position: absolute;
     left: 0;
     bottom: 0;
