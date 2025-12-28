@@ -1,210 +1,121 @@
+/**
+ * Stats Service - Thin wrapper around Vuex stats module
+ * Maintains backward compatibility while delegating state management to Vuex
+ * 
+ * DEPRECATED: Direct usage of this service is discouraged.
+ * New code should use Vuex store directly: this.$store.state.stats or useStore()
+ */
+
+import store from '../store';
+
 class StatsService {
   constructor() {
-    this.baseUrl = import.meta.env.PROD
-      ? 'https://api.hystericca.dev/api'
-      : 'http://localhost:8001/api';
-    this.token = localStorage.getItem('statsToken');
-    this.sessionId = localStorage.getItem('statsSessionId');
-    this.discordUserId = localStorage.getItem('discordUserId');
-    this.discordUsername = localStorage.getItem('discordUsername');
-    this.selectedSessionCode = localStorage.getItem('selectedSessionCode');
-    this.currentGameId = null;
-    this.enabled = localStorage.getItem('statTrackingEnabled') === 'true';
+    this.store = store;
+  }
+
+  get baseUrl() {
+    return this.store.state.stats.baseUrl;
+  }
+
+  get token() {
+    return this.store.state.stats.statsToken;
+  }
+
+  get sessionId() {
+    return this.store.state.stats.statsSessionId;
+  }
+
+  get discordUserId() {
+    return this.store.state.stats.discordUserId;
+  }
+
+  get discordUsername() {
+    return this.store.state.stats.discordUsername;
+  }
+
+  get selectedSessionCode() {
+    return this.store.state.stats.sessionCode;
+  }
+
+  get currentGameId() {
+    return this.store.state.stats.currentGameId;
+  }
+
+  get enabled() {
+    return this.store.state.stats.trackingEnabled;
   }
 
   isEnabled() {
-    return this.enabled;
+    return this.store.getters['stats/isTrackingEnabled'];
   }
 
   isDiscordLinked() {
-    return !!this.discordUserId;
+    return this.store.getters['stats/isDiscordLinked'];
   }
 
   getDiscordUsername() {
-    return this.discordUsername;
+    return this.store.state.stats.discordUsername;
   }
 
   async setDiscordUser(userId, username) {
-    this.discordUserId = userId;
-    this.discordUsername = username;
-    localStorage.setItem('discordUserId', userId);
-    localStorage.setItem('discordUsername', username);
-    
-    if (this.token && this.sessionId) {
-      await this.updateSessionDiscordUser(userId);
-    }
-  }
-
-  async updateSessionDiscordUser(userId) {
-    try {
-      const response = await fetch(`${this.baseUrl}/session/update-discord`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ discord_user_id: userId })
-      });
-      
-      if (response.ok) {
-        console.log('Updated session with Discord user ID');
-      }
-    } catch (error) {
-      console.error('Failed to update session with Discord ID:', error);
-    }
+    await this.store.dispatch('stats/setDiscordUser', { userId, username });
   }
 
   setDiscordUserId(userId) {
-    this.discordUserId = userId;
-    localStorage.setItem('discordUserId', userId);
+    this.store.commit('stats/setDiscordUserId', userId);
   }
 
   logout() {
-    this.discordUserId = null;
-    this.discordUsername = null;
-    this.enabled = false;
-    this.token = null;
-    this.sessionId = null;
-    this.selectedSessionCode = null;
-    this.currentGameId = null;
-    localStorage.removeItem('discordUserId');
-    localStorage.removeItem('discordUsername');
-    localStorage.removeItem('statTrackingEnabled');
-    localStorage.removeItem('statsToken');
-    localStorage.removeItem('statsSessionId');
-    localStorage.removeItem('selectedSessionCode');
+    this.store.dispatch('stats/logout');
   }
 
   getSelectedSessionCode() {
-    return this.selectedSessionCode;
+    return this.store.state.stats.sessionCode;
   }
 
   setSelectedSessionCode(code) {
-    this.selectedSessionCode = code;
-    localStorage.setItem('selectedSessionCode', code);
+    this.store.commit('stats/setSessionCode', code);
   }
 
   async enable() {
-    this.enabled = true;
-    localStorage.setItem('statTrackingEnabled', 'true');
-    
-    if (!this.token) {
-      await this.createSession();
-    }
+    await this.store.dispatch('stats/enableTracking');
   }
 
   disable() {
-    this.enabled = false;
-    localStorage.setItem('statTrackingEnabled', 'false');
+    this.store.dispatch('stats/disableTracking');
   }
 
   async createSession() {
-    try {
-      const response = await fetch(`${this.baseUrl}/session/create`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          discord_user_id: this.discordUserId
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.token) {
-        this.token = data.token;
-        this.sessionId = data.sessionId;
-        localStorage.setItem('statsToken', this.token);
-        localStorage.setItem('statsSessionId', this.sessionId);
-        console.log('Stats session created:', this.sessionId);
-        return data;
-      }
-    } catch (error) {
-      console.error('Failed to create stats session:', error);
-    }
+    return await this.store.dispatch('stats/createStatsSession');
   }
 
   async startGame(script, customName, players, sessionCode) {
-    if (!this.enabled || !this.token) return;
-
     try {
-      const response = await fetch(`${this.baseUrl}/game/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({
-          script,
-          customName,
-          players, // Already an array of player name strings
-          storytellerId: this.discordUserId,
-          sessionCode: sessionCode || this.selectedSessionCode  // Use session code instead of categoryId
-        })
+      const result = await this.store.dispatch('stats/startGame', {
+        script,
+        customName,
+        players,
+        sessionCode
       });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        alert(data.error);
-        return null;
-      }
-      
-      if (data.gameId) {
-        this.currentGameId = data.gameId;
-        console.log('Game started:', this.currentGameId);
-        return data.gameId;
-      }
+      return result.game_id;
     } catch (error) {
-      console.error('Failed to start game tracking:', error);
-      alert('Failed to start game tracking');
+      console.error('Failed to start game:', error);
+      alert(error.message || 'Failed to start game tracking');
+      return null;
     }
   }
 
   async endGame(winningTeam) {
-    if (!this.enabled || !this.token || !this.currentGameId) {
-      console.warn('Cannot end game:', { 
-        enabled: this.enabled, 
-        hasToken: !!this.token, 
-        gameId: this.currentGameId 
-      });
-      return;
-    }
-
-    console.log('Ending game:', this.currentGameId, 'Winner:', winningTeam);
-
     try {
-      const response = await fetch(`${this.baseUrl}/game/end`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({
-          gameId: this.currentGameId,
-          winningTeam // 'Good' or 'Evil'
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('End game API error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      console.log('Game ended successfully:', this.currentGameId, winningTeam);
-      this.currentGameId = null;
-      return data;
+      await this.store.dispatch('stats/endGame', { winner: winningTeam });
     } catch (error) {
-      console.error('Failed to end game tracking:', error);
+      console.error('Failed to end game:', error);
       throw error;
     }
   }
 
   async addPlayer(playerName, seatNumber, roleId, roleName, team, isFinal = false, discordId = null) {
-    if (!this.enabled || !this.token || !this.currentGameId) return;
+    if (!this.isEnabled() || !this.token || !this.currentGameId) return;
 
     try {
       const response = await fetch(`${this.baseUrl}/player/add`, {
@@ -233,8 +144,16 @@ class StatsService {
     }
   }
 
+  async updatePlayerRole(playerName, role, finalRole) {
+    await this.store.dispatch('stats/updatePlayerRole', {
+      playerName,
+      role,
+      finalRole
+    });
+  }
+
   async getGameStats(gameId) {
-    if (!this.enabled) return;
+    if (!this.isEnabled()) return;
 
     try {
       const response = await fetch(`${this.baseUrl}/stats/game/${gameId || this.currentGameId}`);
@@ -246,5 +165,5 @@ class StatsService {
   }
 }
 
-
 export default new StatsService();
+

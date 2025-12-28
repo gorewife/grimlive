@@ -28,7 +28,6 @@
         <li v-for="(rule, index) in edition.bootlegger" :key="index">
           <span
             class="icon"
-            :key="'bootlegger-' + index"
             :style="{
               backgroundImage: `url(${iconImages['../../assets/icons/bootlegger.webp']})`,
             }"
@@ -55,7 +54,6 @@
           <span
             class="icon"
             v-if="role.id"
-            :key="'icon-' + role.id"
             :style="{
               backgroundImage: `url(${getImage(role)})`,
             }"
@@ -81,14 +79,12 @@
         <li v-for="(jinx, index) in jinxed" :key="index">
           <span
             class="icon"
-            :key="'jinx-first-' + index"
             :style="{
               backgroundImage: `url(${getImage(jinx.first)})`,
             }"
           ></span>
           <span
             class="icon"
-            :key="'jinx-second-' + index"
             :style="{
               backgroundImage: `url(${getImage(jinx.second)})`,
             }"
@@ -141,16 +137,23 @@ export default {
       });
       return jinxed;
     },
-    rolesGrouped: function () {
-      const rolesGrouped = {};
+    rolesGrouped() {
+      const grouped = {
+        townsfolk: [],
+        outsider: [],
+        minion: [],
+        demon: [],
+        fabled: []
+      };
       this.roles.forEach((role) => {
-        if (!rolesGrouped[role.team]) {
-          rolesGrouped[role.team] = [];
+        if (role.team && grouped[role.team] && role.team !== 'traveller') {
+          grouped[role.team].push(role);
         }
-        rolesGrouped[role.team].push(role);
       });
-      delete rolesGrouped["traveller"];
-      return rolesGrouped;
+      // Return only teams with roles
+      return Object.fromEntries(
+        Object.entries(grouped).filter(([_, roles]) => roles.length > 0)
+      );
     },
     playersByRole: function () {
       const players = {};

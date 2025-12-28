@@ -18,7 +18,7 @@
             <font-awesome-icon :icon="session.timer.isPaused ? 'play' : 'pause'" />
           </button>
           <button @click="stopTimer" class="stop-button" title="Stop Timer">
-            <font-awesome-icon icon="stop" />
+            <font-awesome-icon icon="times" />
           </button>
         </div>
       </div>

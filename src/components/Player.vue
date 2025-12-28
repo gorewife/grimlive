@@ -290,7 +290,6 @@
 import Token from "./Token";
 import { getRoleIcon } from "@/utils/images";
 import { mapGetters, mapState } from "vuex";
-import stats from "@/services/stats";
 
 export default {
   components: {
@@ -308,6 +307,10 @@ export default {
   computed: {
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
+    ...mapState("stats", {
+      statsEnabled: state => state.trackingEnabled,
+      isDiscordLinked: state => !!state.discordUserId,
+    }),
     ...mapGetters({ nightOrder: "players/nightOrder" }),
     index: function () {
       return this.players.indexOf(this.player);
@@ -332,8 +335,9 @@ export default {
         return { width: 12 + this.grimoire.zoom + unit };
       }
     },
+    // Fixed: Now properly reactive from Vuex!
     isStatsLinked: function () {
-      return stats.isEnabled() && stats.isDiscordLinked() && !!this.player.discord_id;
+      return this.statsEnabled && this.isDiscordLinked && !!this.player.discord_id;
     },
   },
   data() {
@@ -484,7 +488,7 @@ export default {
   transform: perspective(200px);
 }
 
-.fold-enter,
+.fold-enter-from,
 .fold-leave-to {
   transform: perspective(200px) rotateY(90deg);
 }

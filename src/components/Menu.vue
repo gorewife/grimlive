@@ -356,8 +356,7 @@
 </template>
 
 <script>
-import { mapMutations, mapState } from "vuex";
-import stats from "../services/stats";
+import { mapMutations, mapState, mapGetters } from "vuex";
 
 export default {
   computed: {
@@ -367,33 +366,21 @@ export default {
         !this.npcs.some((npc) => npc.id === "tor")
       );
     },
-    isStatTrackingEnabled() {
-      // Force reactivity
-      this.updateKey; // eslint-disable-line no-unused-expressions
-      return localStorage.getItem('statTrackingEnabled') === 'true';
-    },
-    isDiscordLinked() {
-      // Force reactivity
-      this.updateKey; // eslint-disable-line no-unused-expressions
-      return !!localStorage.getItem('discordUserId');
-    },
-    discordUsername() {
-      this.updateKey; // eslint-disable-line no-unused-expressions
-      return localStorage.getItem('discordUsername') || 'Unknown';
-    },
-    currentGameId() {
-      this.updateKey; // eslint-disable-line no-unused-expressions
-      return stats.currentGameId;
-    },
+    // Now properly reactive from Vuex - no updateKey needed!
+    ...mapState("stats", {
+      isStatTrackingEnabled: state => state.trackingEnabled,
+      discordUsername: state => state.discordUsername || 'Unknown',
+      currentGameId: state => state.currentGameId,
+      sessionCode: state => state.sessionCode || '',
+    }),
+    ...mapGetters("stats", ['isDiscordLinked']),
     ...mapState(["grimoire", "session", "edition"]),
     ...mapState("players", ["players", "npcs"]),
   },
   data() {
     return {
       tab: "grimoire",
-      updateKey: 0, // Force computed property updates
       tempSessionCode: '', // Temporary input value before confirmation
-      sessionCode: '', // Confirmed session code
       sessionCodeConfirmed: false,
       isStartingGame: false,
       isEndingGame: false,
@@ -402,24 +389,13 @@ export default {
     };
   },
   async mounted() {
-    // Load selected session from stats service
-    if (stats.isDiscordLinked()) {
-      const savedCode = stats.getSelectedSessionCode();
+    // Load selected session from Vuex store
+    if (this.isDiscordLinked) {
+      const savedCode = this.sessionCode;
       if (savedCode) {
-        this.sessionCode = savedCode;
         this.tempSessionCode = savedCode;
         this.sessionCodeConfirmed = true;
       }
-      
-      // Update session with Discord ID if not already set
-      const discordId = localStorage.getItem('discordUserId');
-      const discordUsername = localStorage.getItem('discordUsername');
-      if (discordId && discordUsername) {
-        await stats.setDiscordUser(discordId, discordUsername);
-      }
-      
-      // Load saved session code
-      this.sessionCode = stats.getSelectedSessionCode() || '';
     }
   },
   watch: {
@@ -569,17 +545,16 @@ export default {
       if (this.session.isSpectator) return;
       
       // Can only enable if Discord is linked
-      if (!stats.isEnabled() && !stats.isDiscordLinked()) {
+      if (!this.isStatTrackingEnabled && !this.isDiscordLinked) {
         alert('Please log in with Discord first to enable stat tracking.');
         return;
       }
       
-      if (stats.isEnabled()) {
-        stats.disable();
+      if (this.isStatTrackingEnabled) {
+        await this.$store.dispatch('stats/disableTracking');
       } else {
-        await stats.enable();
+        await this.$store.dispatch('stats/enableTracking');
       }
-      this.updateKey++; // Trigger computed property updates
     },
     async loginWithDiscord() {
       const baseUrl = import.meta.env.PROD
@@ -590,7 +565,7 @@ export default {
     },
     logoutDiscord() {
       if (confirm('Log out of Discord? This will disable stat tracking.')) {
-        stats.logout();
+        this.$store.dispatch('stats/logout');
         window.location.reload();
       }
     },
@@ -603,22 +578,20 @@ export default {
         if (!confirmed) return;
       }
       
-      this.sessionCode = code;
       this.sessionCodeConfirmed = true;
-      stats.setSelectedSessionCode(code);
+      this.$store.commit('stats/setSessionCode', code);
     },
     clearSessionCode() {
       this.tempSessionCode = '';
-      this.sessionCode = '';
       this.sessionCodeConfirmed = false;
-      stats.setSelectedSessionCode('');
+      this.$store.commit('stats/setSessionCode', null);
     },
     async startGame() {
       // Prevent double-clicks and check if game already started
-      if (this.isStartingGame || stats.currentGameId) return;
-      if (this.session.isSpectator || !stats.isEnabled() || !stats.isDiscordLinked()) return;
+      if (this.isStartingGame || this.currentGameId) return;
+      if (this.session.isSpectator || !this.isStatTrackingEnabled || !this.isDiscordLinked) return;
       
-      const sessionCode = stats.getSelectedSessionCode();
+      const sessionCode = this.sessionCode;
       if (!sessionCode) {
         alert('Enter session code from Discord (*game command) to link stats');
         return;
@@ -651,28 +624,32 @@ export default {
           return;
         }
         
-        const gameId = await stats.startGame(script, customName, playerNames, sessionCode);
+        const gameId = await this.$store.dispatch('stats/startGame', {
+          script,
+          customName,
+          playerNames,
+          sessionCode
+        });
         
         if (gameId) {
           const playerPromises = this.players
             .map((player, i) => {
               if (player.role && player.role.id) {
-                return stats.addPlayer(
-                  player.name,
-                  i + 1,
-                  player.role.id,
-                  player.role.name,
-                  player.role.team,
-                  false,
-                  player.discord_id
-                );
+                return this.$store.dispatch('stats/updatePlayerRole', {
+                  playerName: player.name,
+                  playerNumber: i + 1,
+                  roleId: player.role.id,
+                  roleName: player.role.name,
+                  roleTeam: player.role.team,
+                  isFinal: false,
+                  discordId: player.discord_id
+                });
               }
               return null;
             })
             .filter(p => p !== null);
           
           await Promise.all(playerPromises);
-          this.updateKey++; // Trigger button visibility update
           alert(`✓ Game started! ID: ${gameId}`);
         } else {
           alert('Failed to start game. Check session code and try again.');
@@ -685,14 +662,14 @@ export default {
       }
     },
     async endGame() {
-      if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
+      if (this.session.isSpectator || !this.isStatTrackingEnabled || !this.currentGameId) return;
       
       this.$store.commit("toggleModal", "endGame");
     },
     async confirmEndGame(winningTeam) {
       // Prevent double-clicks
       if (this.isEndingGame) return;
-      if (this.session.isSpectator || !stats.isEnabled() || !stats.currentGameId) return;
+      if (this.session.isSpectator || !this.isStatTrackingEnabled || !this.currentGameId) return;
       
       this.isEndingGame = true;
       
@@ -700,23 +677,22 @@ export default {
         const playerPromises = this.players
           .map((player, i) => {
             if (player.role && player.role.id) {
-              return stats.addPlayer(
-                player.name,
-                i + 1,
-                player.role.id,
-                player.role.name,
-                player.role.team,
-                true,
-                player.discord_id
-              );
+              return this.$store.dispatch('stats/updatePlayerRole', {
+                playerName: player.name,
+                playerNumber: i + 1,
+                roleId: player.role.id,
+                roleName: player.role.name,
+                roleTeam: player.role.team,
+                isFinal: true,
+                discordId: player.discord_id
+              });
             }
             return null;
           })
           .filter(p => p !== null);
         
         await Promise.all(playerPromises);
-        await stats.endGame(winningTeam);
-        this.updateKey++; // Trigger button visibility update
+        await this.$store.dispatch('stats/endGame', winningTeam);
         alert(`✓ Game ended! ${winningTeam} wins.`);
       } catch (error) {
         console.error('End game error:', error);

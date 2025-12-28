@@ -21,10 +21,10 @@
       loop
     ></video>
     <div class="backdrop"></div>
-    <transition name="blur">
-      <Intro v-if="!players.length"></Intro>
-      <TownInfo v-if="players.length && !session.nomination"></TownInfo>
-      <Vote v-if="session.nomination" ref="vote"></Vote>
+    <transition name="blur" mode="out-in">
+      <Intro v-if="!players.length" key="intro"></Intro>
+      <TownInfo v-else-if="players.length && !session.nomination" key="towninfo"></TownInfo>
+      <Vote v-else key="vote" ref="vote"></Vote>
     </transition>
     <TownSquare></TownSquare>
     <Timer></Timer>
@@ -247,12 +247,10 @@ ul {
 
 #app {
   height: 100%;
+  width: 100%;
+  position: relative;
   background-position: center center;
   background-size: cover;
-  display: flex;
-  align-items: center;
-  align-content: center;
-  justify-content: center;
 
   // disable all animations
   &.static *,
@@ -277,7 +275,7 @@ ul {
   transition: all 250ms;
   filter: blur(0);
 }
-.blur-enter,
+.blur-enter-from,
 .blur-leave-to {
   opacity: 0;
   filter: blur(20px);

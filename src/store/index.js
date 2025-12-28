@@ -1,16 +1,14 @@
-import Vue from "vue";
-import Vuex from "vuex";
+import { createStore } from "vuex";
 import persistence from "./persistence";
 import socket from "./socket";
 import players from "./modules/players";
 import session from "./modules/session";
+import stats from "./modules/stats";
 import editionJSON from "../editions.json";
 import rolesJSON from "../characters.json";
 import nightJSON from "../nightsheet.json";
 import npcJSON from "../non_player_characters.json";
 import jinxesJSON from "../jinxes.json";
-
-Vue.use(Vuex);
 
 // helper functions
 const clean = (id) => id.toLocaleLowerCase().replace(/[^a-z0-9]/g, "");
@@ -120,10 +118,11 @@ const customRole = {
   isCustom: true,
 };
 
-export default new Vuex.Store({
+export default createStore({
   modules: {
     players,
     session,
+    stats,
   },
   state: {
     grimoire: {

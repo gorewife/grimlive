@@ -107,27 +107,37 @@ export default {
 
 .info {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  width: 20%;
-  height: 20%;
+  width: 25%;
+  height: 25%;
+  min-width: 300px;
+  min-height: 300px;
   padding: 0;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   background: url("../assets/demon-head.webp") center center no-repeat;
-  background-size: auto 100%;
+  background-size: contain;
+  z-index: 1;
+  pointer-events: none;
 
   @media (orientation: portrait) {
-    width: 30%;
+    width: 40%;
+    height: 40%;
     background-size: contain;
   }
   li {
     font-weight: bold;
+    font-size: 1.1em;
     width: 100%;
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
+    gap: 15px;
     text-shadow:
       0 2px 1px black,
       0 -2px 1px black,
@@ -178,16 +188,17 @@ export default {
   }
 
   li.edition {
-    width: 210px;
-    height: 190px;
-    max-width: 90%;
-    max-height: 90%;
+    width: 100%;
+    height: 60%;
+    max-width: 280px;
+    max-height: 280px;
     background-position: center center;
     background-repeat: no-repeat;
     background-size: contain;
     position: relative;
     flex-shrink: 0;
-    margin-bottom: 10px;
+    margin: 0;
+    padding: 0;
   }
 }
 </style>

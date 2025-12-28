@@ -1,5 +1,5 @@
-import Vue from "vue";
-import App from "./App";
+import { createApp } from "vue";
+import App from "./App.vue";
 import store from "./store";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fas } from "@fortawesome/free-solid-svg-icons";
@@ -30,6 +30,8 @@ const faIcons = [
   "HourglassHalf",
   "Image",
   "Link",
+  "Microphone",
+  "MicrophoneSlash",
   "MinusCircle",
   "PeopleArrows",
   "PlusCircle",
@@ -42,6 +44,7 @@ const faIcons = [
   "Seedling",
   "SignLanguage",
   "Skull",
+  "Spinner",
   "Square",
   "TheaterMasks",
   "Times",
@@ -63,16 +66,16 @@ const faIcons = [
   "SignOutAlt",
   "Stop",
   "Play",
+  "Pause",
 ];
 const fabIcons = ["Github", "Discord"];
 library.add(
   ...faIcons.map((i) => fas["fa" + i]),
   ...fabIcons.map((i) => fab["fa" + i]),
 );
-Vue.component("font-awesome-icon", FontAwesomeIcon);
-Vue.config.productionTip = false;
 
-new Vue({
-  render: (h) => h(App),
-  store,
-}).$mount("#app");
+const app = createApp(App);
+app.component("font-awesome-icon", FontAwesomeIcon);
+app.use(store);
+app.mount("#app");
+

@@ -122,10 +122,10 @@ export default {
       this.roleSelection = {};
       this.roles.forEach((role) => {
         if (!this.roleSelection[role.team]) {
-          this.$set(this.roleSelection, role.team, []);
+          this.roleSelection[role.team] = [];
         }
         this.roleSelection[role.team].push(role);
-        this.$set(role, "selected", 0);
+        role.selected = 0;
       });
       delete this.roleSelection["traveller"];
       const playerCount = Math.max(5, this.nonTravellers);
