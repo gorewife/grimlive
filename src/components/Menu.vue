@@ -693,11 +693,12 @@ export default {
           .filter(p => p.name && p.name.trim())
           .map(p => p.name);
         
-        if (playerNames.length < 2) {
-          alert('At least 2 players with names are required to start a game.');
-          this.isStartingGame = false;
-          return;
-        }
+        // Temporarily disabled for testing
+        // if (playerNames.length < 2) {
+        //   alert('At least 2 players with names are required to start a game.');
+        //   this.isStartingGame = false;
+        //   return;
+        // }
         
         const data = await this.$store.dispatch('stats/startGame', {
           script,
@@ -743,6 +744,7 @@ export default {
           }
         }
         this.$store.commit('stats/setCurrentGameId', null);
+        // Keep menu open on error so user can try again
       } finally {
         this.isStartingGame = false;
       }

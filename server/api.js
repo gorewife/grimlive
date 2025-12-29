@@ -146,8 +146,9 @@ export const api = {
       return jsonResponse({ error: 'Script required' }, 400);
     }
 
-    if (!players || !Array.isArray(players) || players.length < 2) {
-      return jsonResponse({ error: 'At least 2 players required' }, 400);
+    // Temporarily allow 0 players for testing
+    if (!players || !Array.isArray(players)) {
+      return jsonResponse({ error: 'Players must be an array' }, 400);
     }
 
     let guildId = null;
