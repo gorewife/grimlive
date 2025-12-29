@@ -3,7 +3,7 @@
     <img src="/static/apple-icon.png" alt="" class="logo" />
     <div>
       Welcome to the (unofficial)
-      <b>Virtual Town Square and Grimoire</b> for Blood on the Clocktower!
+      <b>Virtual Grimoire</b> for Grim!
       Please add more players through the
       <span class="button" @click="toggleMenu">
         <font-awesome-icon icon="cog" /> Menu

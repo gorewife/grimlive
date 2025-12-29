@@ -1,8 +1,6 @@
 export default (store) => {
   const updatePagetitle = (isPublic) =>
-    (document.title = `Blood on the Clocktower ${
-      isPublic ? "Town Square" : "Grimoire"
-    }`);
+    (document.title = isPublic ? "Grim Town Square" : "Grim");
 
   // Helper to load localStorage boolean flags
   const loadFlag = (key, mutation) => {

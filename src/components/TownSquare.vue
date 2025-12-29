@@ -103,10 +103,10 @@
 import { ref, computed, defineComponent } from 'vue';
 import { useStore } from 'vuex';
 import type { Player as PlayerType, Role } from '@/types/player';
-import Player from "./Player";
-import Token from "./Token";
-import ReminderModal from "./modals/ReminderModal";
-import RoleModal from "./modals/RoleModal";
+import Player from "./Player.vue";
+import Token from "./Token.vue";
+import ReminderModal from "./modals/ReminderModal.vue";
+import RoleModal from "./modals/RoleModal.vue";
 
 export default defineComponent({
   name: 'TownSquare',
@@ -240,7 +240,7 @@ export default defineComponent({
         if (session.value.nomination) {
           // update nomination if one of the involved players is swapped
           const swapTo = players.value.indexOf(to);
-          const updatedNomination = session.value.nomination.map((nom) => {
+          const updatedNomination = session.value.nomination.map((nom: number) => {
             if (nom === swap.value) return swapTo;
             if (nom === swapTo) return swap.value;
             return nom;
@@ -269,7 +269,7 @@ export default defineComponent({
         if (session.value.nomination) {
           // update nomination if it is affected by the move
           const moveTo = players.value.indexOf(to);
-          const updatedNomination = session.value.nomination.map((nom) => {
+          const updatedNomination = session.value.nomination.map((nom: number) => {
             if (nom === move.value) return moveTo;
             if (nom > move.value && nom <= moveTo) return nom - 1;
             if (nom < move.value && nom >= moveTo) return nom + 1;
@@ -470,7 +470,7 @@ export default defineComponent({
         }
       } @else {
         .player {
-          margin-bottom: -10% + 20% * (($x % $q) / $q);
+          margin-bottom: -10% + 20% * math.div($x % $q, $q);
         }
       }
     }

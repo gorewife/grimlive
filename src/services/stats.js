@@ -7,6 +7,8 @@
  */
 
 import store from '../store';
+import { logger } from '../utils/logger';
+import { fetchWithTimeout } from '../utils/fetch';
 
 class StatsService {
   constructor() {
@@ -99,7 +101,7 @@ class StatsService {
       });
       return result.game_id;
     } catch (error) {
-      console.error('Failed to start game:', error);
+      logger.error('Failed to start game:', error);
       alert(error.message || 'Failed to start game tracking');
       return null;
     }
@@ -109,7 +111,7 @@ class StatsService {
     try {
       await this.store.dispatch('stats/endGame', { winner: winningTeam });
     } catch (error) {
-      console.error('Failed to end game:', error);
+      logger.error('Failed to end game:', error);
       throw error;
     }
   }
@@ -118,7 +120,7 @@ class StatsService {
     if (!this.isEnabled() || !this.token || !this.currentGameId) return;
 
     try {
-      const response = await fetch(`${this.baseUrl}/player/add`, {
+      const response = await fetchWithTimeout(`${this.baseUrl}/player/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,10 +139,10 @@ class StatsService {
       });
 
       const data = await response.json();
-      console.log('Player added:', playerName, roleId, isFinal ? '(final)' : '(starting)');
+      logger.debug('Player added:', playerName, roleId, isFinal ? '(final)' : '(starting)');
       return data.playerId;
     } catch (error) {
-      console.error('Failed to add player:', error);
+      logger.error('Failed to add player:', error);
     }
   }
 
@@ -156,11 +158,11 @@ class StatsService {
     if (!this.isEnabled()) return;
 
     try {
-      const response = await fetch(`${this.baseUrl}/stats/game/${gameId || this.currentGameId}`);
+      const response = await fetchWithTimeout(`${this.baseUrl}/stats/game/${gameId || this.currentGameId}`);
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Failed to get game stats:', error);
+      logger.error('Failed to get game stats:', error);
     }
   }
 }

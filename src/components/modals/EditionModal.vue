@@ -218,6 +218,7 @@ export default {
       this.$store.commit("players/setNpcs", {});
       this.$store.commit("players/setNpcs", { npcs });
       this.isCustom = false;
+      this.toggleModal("edition");
     },
     ...mapMutations(["toggleModal"]),
   },

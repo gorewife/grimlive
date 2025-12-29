@@ -3,6 +3,8 @@
     id="app"
     @keyup="keyup"
     tabindex="-1"
+    role="application"
+    aria-label="Grim Online Grimoire"
     :class="{
       night: grimoire.isNight,
       static: grimoire.isStatic,
@@ -19,34 +21,49 @@
       :src="grimoire.background"
       autoplay
       loop
+      aria-hidden="true"
     ></video>
-    <div class="backdrop"></div>
+    <div class="backdrop" aria-hidden="true"></div>
     <transition name="blur" mode="out-in">
       <Intro v-if="!players.length" key="intro"></Intro>
       <TownInfo v-else-if="players.length && !session.nomination" key="towninfo"></TownInfo>
       <Vote v-else key="vote" ref="vote"></Vote>
     </transition>
-    <TownSquare></TownSquare>
-    <Timer></Timer>
-    <Menu ref="menu"></Menu>
-    <EditionModal />
-    <EndGameModal @winner-selected="handleWinnerSelected" />
-    <JournalModal />
-    <TimerModal />
-    <NpcModal />
-    <RolesModal />
-    <ReferenceModal />
-    <NightOrderModal />
-    <VoteHistoryModal />
-    <GameStateModal />
+    
+    <ErrorBoundary fallback-title="Town Square Error">
+      <TownSquare></TownSquare>
+    </ErrorBoundary>
+    
+    <ErrorBoundary fallback-title="Timer Error">
+      <Timer></Timer>
+    </ErrorBoundary>
+    
+    <ErrorBoundary fallback-title="Menu Error">
+      <Menu ref="menu"></Menu>
+    </ErrorBoundary>
+    
+    <ErrorBoundary fallback-title="Modal Error">
+      <EditionModal />
+      <EndGameModal @winner-selected="handleWinnerSelected" />
+      <JournalModal />
+      <TimerModal />
+      <NpcModal />
+      <RolesModal />
+      <ReferenceModal />
+      <NightOrderModal />
+      <VoteHistoryModal />
+      <GameStateModal />
+    </ErrorBoundary>
+    
     <Gradients />
-    <span id="version">v{{ version }}</span>
+    <span id="version" aria-label="Version">v{{ version }}</span>
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { version } from "../package.json";
+import ErrorBoundary from "./components/ErrorBoundary";
 import TownSquare from "./components/TownSquare";
 import TownInfo from "./components/TownInfo";
 import Timer from "./components/Timer";
@@ -62,11 +79,12 @@ import NightOrderModal from "./components/modals/NightOrderModal";
 import NpcModal from "@/components/modals/NpcModal";
 import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
 import GameStateModal from "@/components/modals/GameStateModal";
-import JournalModal from "@/components/modals/JournalModal";
-import TimerModal from "@/components/modals/TimerModal";
+import JournalModal from "./components/modals/JournalModal";
+import TimerModal from "./components/modals/TimerModal";
 
 export default {
   components: {
+    ErrorBoundary,
     GameStateModal,
     VoteHistoryModal,
     JournalModal,
@@ -174,7 +192,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "vars";
 
 @font-face {
   font-family: "Papyrus";
@@ -201,6 +218,42 @@ body {
   background: url("assets/background.webp") center center;
   background-size: cover;
   color: white;
+}
+
+/* Global focus styles for accessibility */
+*:focus-visible {
+  outline: 3px solid $gold;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 3px solid $gold;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.2);
+}
+
+/* Skip to main content link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: $gold;
+  color: #000;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 10000;
+  
+  &:focus {
+    top: 0;
+  }
+}
+
+html,
+body {
   height: 100%;
   font-family: "Crimson Text", "IM Fell English", Georgia, serif;
   -webkit-font-smoothing: antialiased;
@@ -210,8 +263,6 @@ body {
   margin: 0;
   overflow: hidden;
 }
-
-@import "media";
 
 * {
   box-sizing: border-box;

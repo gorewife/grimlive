@@ -3,6 +3,9 @@
  * Replaces the external stats service with proper Vuex reactivity.
  */
 
+import { logger } from '../../utils/logger';
+import { fetchWithTimeout } from '../../utils/fetch';
+
 const state = () => ({
   // Discord OAuth state
   discordUserId: localStorage.getItem('discordUserId') || null,
@@ -66,10 +69,10 @@ const actions = {
       });
       
       if (response.ok) {
-        console.log('Updated session with Discord user ID');
+        logger.info('Updated session with Discord user ID');
       }
     } catch (error) {
-      console.error('Failed to update session with Discord ID:', error);
+      logger.error('Failed to update session with Discord ID:', error);
     }
   },
 
@@ -118,7 +121,7 @@ const actions = {
    */
   async createStatsSession({ commit, state }) {
     try {
-      const response = await fetch(`${state.baseUrl}/session/create`, {
+      const response = await fetchWithTimeout(`${state.baseUrl}/session/create`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
@@ -133,11 +136,11 @@ const actions = {
       if (data.token) {
         commit('setStatsToken', data.token);
         commit('setStatsSessionId', data.sessionId);
-        console.log('Stats session created:', data.sessionId);
+        logger.info('Stats session created:', data.sessionId);
         return data;
       }
     } catch (error) {
-      console.error('Failed to create stats session:', error);
+      logger.error('Failed to create stats session:', error);
       throw error;
     }
   },
@@ -151,7 +154,7 @@ const actions = {
     }
 
     try {
-      const response = await fetch(`${state.baseUrl}/game/start`, {
+      const response = await fetchWithTimeout(`${state.baseUrl}/game/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,11 +177,11 @@ const actions = {
       
       if (data.game_id) {
         commit('setCurrentGameId', data.game_id);
-        console.log('Game started:', data.game_id);
+        logger.info('Game started:', data.game_id);
         return data;
       }
     } catch (error) {
-      console.error('Failed to start game:', error);
+      logger.error('Failed to start game:', error);
       throw error;
     }
   },
@@ -192,7 +195,7 @@ const actions = {
     }
 
     try {
-      const response = await fetch(`${state.baseUrl}/game/end`, {
+      const response = await fetchWithTimeout(`${state.baseUrl}/game/end`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,11 +213,43 @@ const actions = {
         throw new Error(data.error);
       }
       
-      console.log('Game ended');
+      logger.info('Game ended');
       commit('setCurrentGameId', null);
       return data;
     } catch (error) {
-      console.error('Failed to end game:', error);
+      logger.error('Failed to end game:', error);
+      throw error;
+    }
+  },
+
+  async cancelGame({ commit, state }) {
+    if (!state.currentGameId || !state.statsToken) {
+      throw new Error('No active game or no token');
+    }
+
+    try {
+      const response = await fetchWithTimeout(`${state.baseUrl}/game/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.statsToken}`
+        },
+        body: JSON.stringify({
+          game_id: state.currentGameId
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      logger.info('Game canceled');
+      commit('setCurrentGameId', null);
+      return data;
+    } catch (error) {
+      logger.error('Failed to cancel game:', error);
       throw error;
     }
   },
@@ -228,7 +263,7 @@ const actions = {
     }
 
     try {
-      await fetch(`${state.baseUrl}/game/update-role`, {
+      await fetchWithTimeout(`${state.baseUrl}/game/update-role`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +277,7 @@ const actions = {
         })
       });
     } catch (error) {
-      console.error('Failed to update player role:', error);
+      logger.error('Failed to update player role:', error);
     }
   },
 };

@@ -110,7 +110,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
 
 .clear {
   position: absolute;

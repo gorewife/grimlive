@@ -51,11 +51,22 @@ export default {
   props: {
     role: {
       type: Object,
-      default: () => ({}),
+      required: true,
+      validator: (role) => {
+        // Allow empty role object for placeholder tokens
+        if (!role.id) return true;
+        // Validate required role properties
+        return (
+          typeof role.id === 'string' &&
+          typeof role.name === 'string' &&
+          (!role.team || ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled'].includes(role.team))
+        );
+      }
     },
     alignmentIndex: {
       type: Number,
       default: 0,
+      validator: (val) => val >= 0 && val <= 2
     },
   },
   computed: {

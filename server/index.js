@@ -8,6 +8,7 @@ import client from "prom-client";
 import { api } from "./api.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from "./logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,7 +24,7 @@ if (fs.existsSync(envPath)) {
       }
     }
   });
-  console.log('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
+  logger.info('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
 }
 
 const register = new client.Registry();
@@ -90,6 +91,8 @@ const requestHandler = async (req, res) => {
         response = await api.startGame(req);
       } else if (path === 'game/end' && req.method === 'POST') {
         response = await api.endGame(req);
+      } else if (path === 'game/cancel' && req.method === 'POST') {
+        response = await api.cancelGame(req);
       } else if (path === 'player/add' && req.method === 'POST') {
         response = await api.addPlayer(req);
       } else if (path === 'player/death' && req.method === 'POST') {
@@ -117,7 +120,7 @@ const requestHandler = async (req, res) => {
       const body = await response.text();
       res.end(body);
     } catch (error) {
-      console.error('API error:', error);
+      logger.error('API error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Internal server error' }));
     }
@@ -134,7 +137,7 @@ const server = process.env.NODE_ENV === "development"
 
 if (process.env.NODE_ENV === "development") {
   server.listen(8001, () => {
-    console.log('HTTP server listening on port 8001 (development mode)');
+    logger.info('HTTP server listening on port 8001 (development mode)');
   });
 }
 
@@ -147,8 +150,8 @@ const wss = new WebSocketServer({
     ),
 });
 
-console.log(`WebSocket server starting in ${process.env.NODE_ENV || 'production'} mode...`);
-console.log(`Port: ${process.env.NODE_ENV === "development" ? "8001" : "8001 (via HTTPS server)"}`);
+logger.info(`WebSocket server starting in ${process.env.NODE_ENV || 'production'} mode...`);
+logger.info(`Port: ${process.env.NODE_ENV === "development" ? "8001" : "8001 (via HTTPS server)"}`);
 
 function noop() {}
 
@@ -240,7 +243,7 @@ wss.on("connection", function connection(ws, req) {
         client.playerId === "host",
     )
   ) {
-    console.log(ws.channel, "duplicate host");
+    logger.warn(ws.channel, 'duplicate host');
     ws.close(1000, `The channel "${ws.channel}" already has a host`);
     metrics.connection_terminated_host.inc();
     return;
@@ -275,7 +278,7 @@ wss.on("connection", function connection(ws, req) {
         crypto.createHash("sha256").update(digestInput).digest("base64url");
     }
     if (ws.playerId !== correctPlayerId) {
-      console.log(
+      logger.warn(
         ws.channel,
         ws.playerId,
         ws._socket?.remoteAddress || 'unknown',
@@ -308,7 +311,7 @@ wss.on("connection", function connection(ws, req) {
     metrics.messages_incoming.inc();
     ws.counter++;
     if (ws.counter > (5 * PING_INTERVAL) / 1000) {
-      console.log(ws.channel, "disconnecting user due to spam");
+      logger.warn(ws.channel, 'disconnecting user due to spam');
       ws.close(
         1000,
         "Your app seems to be malfunctioning, please clear your browser cache.",
@@ -337,7 +340,7 @@ wss.on("connection", function connection(ws, req) {
         });
         break;
       case '"direct"':
-        console.log(
+        logger.debug(
           new Date(),
           wss.clients.size,
           ws.channel,
@@ -358,11 +361,11 @@ wss.on("connection", function connection(ws, req) {
             }
           });
         } catch (e) {
-          console.log("error parsing direct message JSON", e);
+          logger.error("error parsing direct message JSON", e);
         }
         break;
       default:
-        console.log(
+        logger.debug(
           new Date(),
           wss.clients.size,
           ws.channel,
@@ -411,29 +414,29 @@ wss.on("close", function close() {
 });
 
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server gracefully...');
+  logger.info('SIGTERM received, closing server gracefully...');
   wss.close(() => {
-    console.log('WebSocket server closed');
+    logger.info('WebSocket server closed');
     server.close(() => {
-      console.log('HTTP server closed');
+      logger.info('HTTP server closed');
       process.exit(0);
     });
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, closing server gracefully...');
+  logger.info('SIGINT received, closing server gracefully...');
   wss.close(() => {
-    console.log('WebSocket server closed');
+    logger.info('WebSocket server closed');
     server.close(() => {
-      console.log('HTTP server closed');
+      logger.info('HTTP server closed');
       process.exit(0);
     });
   });
 });
 
 if (process.env.NODE_ENV !== "development") {
-  console.log("server starting");
+  logger.info("server starting");
   server.listen(8001);
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", register.contentType);

@@ -188,7 +188,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
 
 .toggle {
   position: absolute;

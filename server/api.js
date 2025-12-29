@@ -254,6 +254,33 @@ export const api = {
     return jsonResponse({ success: true });
   },
 
+  cancelGame: async (req) => {
+    const session = await verifyToken(req);
+    if (!session) {
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await parseBody(req);
+    const { game_id } = body;
+    
+    try {
+      // Mark game as canceled (not completed, no winner)
+      await pool.query(`
+        UPDATE games 
+        SET is_active = false, end_time = $1
+        WHERE game_id = $2
+      `, [Date.now() / 1000, game_id]);
+      
+      // Optionally delete game players to clean up
+      await pool.query('DELETE FROM game_players WHERE game_id = $1', [game_id]);
+      
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Cancel game error:', error);
+      return jsonResponse({ error: 'Failed to cancel game' }, 500);
+    }
+  },
+
   addPlayer: async (req) => {
     const session = await verifyToken(req);
     if (!session) {

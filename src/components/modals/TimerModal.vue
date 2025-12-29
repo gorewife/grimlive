@@ -140,7 +140,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../../vars.scss";
 
 h3 {
   margin: 0 0 24px;

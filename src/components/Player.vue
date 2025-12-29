@@ -299,9 +299,18 @@ export default {
     player: {
       type: Object,
       required: true,
+      validator: (player) => {
+        return (
+          player &&
+          typeof player.name === 'string' &&
+          typeof player.role === 'object' &&
+          typeof player.isDead === 'boolean'
+        );
+      }
     },
     isNominating: {
       type: Boolean,
+      default: false
     },
   },
   computed: {
@@ -479,7 +488,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../vars.scss";
 
 .fold-enter-active,
 .fold-leave-active {

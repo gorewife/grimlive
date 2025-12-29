@@ -1,17 +1,20 @@
 <template>
-  <div id="controls">
-    <span
+  <div id="controls" role="toolbar" aria-label="Game controls">
+    <button
       class="nomlog-summary"
       v-show="session.voteHistory.length && session.sessionId"
       @click="toggleModal('voteHistory')"
+      :aria-label="`View ${session.voteHistory.length} recent ${
+        session.voteHistory.length == 1 ? 'nomination' : 'nominations'
+      }`"
       :title="`${session.voteHistory.length} recent ${
         session.voteHistory.length == 1 ? 'nomination' : 'nominations'
       }`"
     >
-      <font-awesome-icon icon="book-dead" />
-      {{ session.voteHistory.length }}
-    </span>
-    <span
+      <font-awesome-icon icon="book-dead" aria-hidden="true" />
+      <span aria-live="polite">{{ session.voteHistory.length }}</span>
+    </button>
+    <button
       class="session"
       :class="{
         spectator: session.isSpectator,
@@ -19,26 +22,78 @@
       }"
       v-if="session.sessionId"
       @click="leaveSession"
+      :aria-label="`${session.playerCount} players in session. Click to leave.${
+        session.ping ? ' ' + session.ping + ' milliseconds latency' : ''
+      }`"
       :title="`${session.playerCount} other players in this session${
         session.ping ? ' (' + session.ping + 'ms latency)' : ''
       }`"
     >
-      <font-awesome-icon icon="broadcast-tower" />
-      {{ session.playerCount }}
-    </span>
-    <div class="menu" :class="{ open: grimoire.isMenuOpen }">
-      <font-awesome-icon icon="cog" @click="handleMenuToggle" />
-      <ul>
+      <font-awesome-icon icon="broadcast-tower" aria-hidden="true" />
+      <span aria-live="polite">{{ session.playerCount }}</span>
+    </button>
+    <nav class="menu" :class="{ open: grimoire.isMenuOpen }" role="navigation" aria-label="Main menu">
+      <button 
+        @click="handleMenuToggle" 
+        aria-label="Toggle menu"
+        :aria-expanded="grimoire.isMenuOpen"
+        class="menu-toggle"
+      >
+        <font-awesome-icon icon="cog" aria-hidden="true" />
+      </button>
+      <ul role="tablist">
         <li class="tabs" :class="tab">
-          <font-awesome-icon icon="book-open" @click="tab = 'grimoire'" />
-          <font-awesome-icon icon="broadcast-tower" @click="tab = 'session'" />
-          <font-awesome-icon
-            icon="users"
+          <button 
+            role="tab" 
+            :aria-selected="tab === 'grimoire'"
+            @click="tab = 'grimoire'"
+            @keydown.enter="tab = 'grimoire'"
+            @keydown.space.prevent="tab = 'grimoire'"
+            aria-label="Grimoire tab"
+          >
+            <font-awesome-icon icon="book-open" aria-hidden="true" />
+          </button>
+          <button 
+            role="tab" 
+            :aria-selected="tab === 'session'"
+            @click="tab = 'session'"
+            @keydown.enter="tab = 'session'"
+            @keydown.space.prevent="tab = 'session'"
+            aria-label="Session tab"
+          >
+            <font-awesome-icon icon="broadcast-tower" aria-hidden="true" />
+          </button>
+          <button 
+            role="tab" 
             v-if="!session.isSpectator"
+            :aria-selected="tab === 'players'"
             @click="tab = 'players'"
-          />
-          <font-awesome-icon icon="theater-masks" @click="tab = 'characters'" />
-          <font-awesome-icon icon="question" @click="tab = 'help'" />
+            @keydown.enter="tab = 'players'"
+            @keydown.space.prevent="tab = 'players'"
+            aria-label="Players tab"
+          >
+            <font-awesome-icon icon="users" aria-hidden="true" />
+          </button>
+          <button 
+            role="tab" 
+            :aria-selected="tab === 'characters'"
+            @click="tab = 'characters'"
+            @keydown.enter="tab = 'characters'"
+            @keydown.space.prevent="tab = 'characters'"
+            aria-label="Characters tab"
+          >
+            <font-awesome-icon icon="theater-masks" aria-hidden="true" />
+          </button>
+          <button 
+            role="tab" 
+            :aria-selected="tab === 'help'"
+            @click="tab = 'help'"
+            @keydown.enter="tab = 'help'"
+            @keydown.space.prevent="tab = 'help'"
+            aria-label="Help tab"
+          >
+            <font-awesome-icon icon="question" aria-hidden="true" />
+          </button>
         </li>
 
         <template v-if="tab === 'grimoire'">
@@ -179,6 +234,14 @@
             <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="endGame" :class="{ disabled: isEndingGame }">
               <small>{{ isEndingGame ? 'Ending...' : 'End Game' }}</small>
               <em><font-awesome-icon :icon="isEndingGame ? 'spinner' : 'stop'" :spin="isEndingGame" /></em>
+            </li>
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="cancelGame" :class="{ disabled: isCancelingGame }">
+              <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
+              <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
+            </li>
+            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="cancelGame" :class="{ disabled: isCancelingGame }">
+              <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
+              <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
             </li>
             <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }">
               <small>{{ isMuting ? 'Muting...' : 'Mute All' }}</small>
@@ -351,7 +414,7 @@
           </li>
         </template>
       </ul>
-    </div>
+    </nav>
   </div>
 </template>
 
@@ -384,6 +447,7 @@ export default {
       sessionCodeConfirmed: false,
       isStartingGame: false,
       isEndingGame: false,
+      isCancelingGame: false,
       isMuting: false,
       isUnmuting: false,
     };
@@ -655,7 +719,7 @@ export default {
           alert('Failed to start game. Check session code and try again.');
         }
       } catch (error) {
-        console.error('Start game error:', error);
+        logger.error('Start game error:', error);
         alert(`Error starting game: ${error.message || 'Unknown error'}`);
       } finally {
         this.isStartingGame = false;
@@ -699,6 +763,24 @@ export default {
         alert(`Error ending game: ${error.message || 'Unknown error'}`);
       } finally {
         this.isEndingGame = false;
+      }
+    },
+    async cancelGame() {
+      if (this.isCancelingGame) return;
+      if (this.session.isSpectator || !this.isStatTrackingEnabled || !this.currentGameId) return;
+      
+      if (!confirm('Cancel this game? Stats will not be recorded.')) return;
+      
+      this.isCancelingGame = true;
+      
+      try {
+        await this.$store.dispatch('stats/cancelGame');
+        alert('✓ Game canceled.');
+      } catch (error) {
+        console.error('Cancel game error:', error);
+        alert(`Error canceling game: ${error.message || 'Unknown error'}`);
+      } finally {
+        this.isCancelingGame = false;
       }
     },
     async muteAll() {
@@ -800,7 +882,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../vars.scss";
 
 // success animation
 @keyframes greenToWhite {
@@ -830,18 +911,31 @@ export default {
     }
   }
 
+  > button,
   > span {
     display: inline-block;
     cursor: pointer;
     z-index: 5;
     margin-top: 7px;
     margin-left: 10px;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+    
+    &:hover {
+      filter: brightness(1.2);
+    }
   }
 
+  button.nomlog-summary,
   span.nomlog-summary {
     color: $townsfolk;
   }
 
+  button.session,
   span.session {
     color: $demon;
     &.spectator {
@@ -868,7 +962,8 @@ export default {
   z-index: 80;
   pointer-events: none;
 
-  > svg {
+  > svg,
+  > .menu-toggle {
     cursor: pointer;
     background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
     border: 2px solid rgba(212, 175, 55, 0.4);
@@ -881,6 +976,8 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: $gold;
+    padding: 0;
     font-size: 1.4em;
     color: rgba(212, 175, 55, 0.8);
     transition: all 300ms ease;
@@ -994,7 +1091,8 @@ export default {
       &.tabs {
         display: flex;
         padding: 0;
-        svg {
+        svg,
+        button {
           flex-grow: 1;
           flex-shrink: 0;
           height: 35px;
@@ -1004,6 +1102,11 @@ export default {
           cursor: pointer;
           transition: all 250ms ease;
           font-size: 1.2em;
+          background: transparent;
+          border-top: none;
+          border-left: none;
+          color: inherit;
+          
           &:hover {
             color: rgba(212, 175, 55, 1);
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);

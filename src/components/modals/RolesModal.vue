@@ -200,7 +200,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
 
 ul.tokens {
   padding-left: 5%;

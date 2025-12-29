@@ -112,7 +112,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
 
 h3 {
   text-align: center;

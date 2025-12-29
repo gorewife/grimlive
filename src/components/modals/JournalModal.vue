@@ -346,7 +346,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
 
 .journal-window {
   position: fixed;

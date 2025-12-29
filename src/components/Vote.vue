@@ -5,7 +5,6 @@
       <span class="nominator" :style="nominatorStyle"></span>
     </div>
     <div class="overlay">
-      <audio src="../assets/sounds/countdown.mp3" preload="auto"></audio>
       <em class="blue">{{ nominator.name }}</em> nominated
       <em>{{ nominee.name }}</em
       >!
@@ -117,11 +116,6 @@
         <span>2</span>
         <span>1</span>
         <span>GO</span>
-        <audio
-          :autoplay="!grimoire.isMuted"
-          src="../assets/sounds/countdown.mp3"
-          :muted="grimoire.isMuted"
-        ></audio>
       </div>
     </transition>
   </div>
@@ -220,12 +214,26 @@ export default {
   data() {
     return {
       voteTimer: null,
+      countdownAudio: null,
     };
+  },
+  mounted() {
+    // Preload countdown audio
+    this.countdownAudio = new Audio(new URL('@/assets/sounds/countdown.mp3', import.meta.url).href);
   },
   methods: {
     countdown() {
       this.$store.commit("session/lockVote", 0);
       this.$store.commit("session/setVoteInProgress", true);
+      
+      // Play countdown sound
+      if (this.countdownAudio && !this.grimoire.isMuted) {
+        this.countdownAudio.currentTime = 0;
+        this.countdownAudio.play().catch((err) => {
+          console.warn("Audio play prevented by browser policy - ", err);
+        });
+      }
+      
       this.voteTimer = setInterval(() => {
         this.start();
       }, 4000);
@@ -265,11 +273,23 @@ export default {
       this.voteTimer = null;
       this.$store.commit("session/setVoteInProgress", false);
       this.$store.commit("session/lockVote", 0);
+      
+      // Stop countdown audio if playing
+      if (this.countdownAudio) {
+        this.countdownAudio.pause();
+        this.countdownAudio.currentTime = 0;
+      }
     },
     finish() {
       clearInterval(this.voteTimer);
       this.$store.commit("session/addHistory", this.players);
       this.$store.commit("session/nomination");
+      
+      // Stop countdown audio if playing
+      if (this.countdownAudio) {
+        this.countdownAudio.pause();
+        this.countdownAudio.currentTime = 0;
+      }
     },
     vote(vote) {
       if (!this.canVote) return false;
@@ -297,7 +317,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../vars.scss";
 
 #vote {
   position: absolute;
