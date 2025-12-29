@@ -74,23 +74,30 @@ async function verifyToken(req) {
 
 export const api = {
   createSession: async (req) => {
-    const body = await parseBody(req);
-    const { discord_user_id } = body;
-    
-    const token = crypto.randomUUID();
-    const sessionId = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours from now
-    
-    await pool.query(
-      'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
-      [sessionId, token, discord_user_id || null, expiresAt]
-    );
-    
-    return jsonResponse({ 
-      sessionId, 
-      token,
-      expiresAt: expiresAt.toISOString()
-    });
+    try {
+      const body = await parseBody(req);
+      const { discord_user_id } = body;
+      
+      const token = crypto.randomUUID();
+      const sessionId = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours from now
+      
+      await pool.query(
+        'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
+        [sessionId, token, discord_user_id || null, expiresAt]
+      );
+      
+      console.log(`Created session ${sessionId} for Discord user ${discord_user_id || 'anonymous'}`);
+      
+      return jsonResponse({ 
+        sessionId, 
+        token,
+        expiresAt: expiresAt.toISOString()
+      });
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      return jsonResponse({ error: 'Failed to create session' }, 500);
+    }
   },
 
   updateSessionDiscordUser: async (req) => {
