@@ -17,7 +17,7 @@ const state = () => ({
   statsSessionId: localStorage.getItem('statsSessionId') || null,
   
   // Game tracking
-  currentGameId: null,
+  currentGameId: localStorage.getItem('currentGameId') || null,
   trackingEnabled: localStorage.getItem('statTrackingEnabled') === 'true',
   
   // API configuration
@@ -330,6 +330,11 @@ const mutations = {
 
   setCurrentGameId(state, gameId) {
     state.currentGameId = gameId;
+    if (gameId) {
+      localStorage.setItem('currentGameId', gameId);
+    } else {
+      localStorage.removeItem('currentGameId');
+    }
   },
 
   setTrackingEnabled(state, enabled) {

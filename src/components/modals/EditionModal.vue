@@ -194,8 +194,9 @@ export default {
         }
       });
       if (
-        this.roles
-          .values()
+        this.roles &&
+        typeof this.roles.values === 'function' &&
+        Array.from(this.roles.values())
           .some((role) =>
             new Map([
               ...(this.jinxes.get(role.id) || []),
@@ -209,8 +210,9 @@ export default {
         npcs.push(this.$store.state.npcs.get("djinn"));
       }
       if (
-        (this.roles.values().some((role) => role.isCustom) ||
-          this.edition.bootlegger) &&
+        (this.roles && typeof this.roles.values === 'function' && 
+          Array.from(this.roles.values()).some((role) => role.isCustom)) ||
+        this.edition.bootlegger) &&
         !npcs.some((npc) => npc.id === "bootlegger")
       ) {
         npcs.push(this.$store.state.npcs.get("bootlegger"));

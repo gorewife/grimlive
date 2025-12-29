@@ -9,6 +9,7 @@ import { api } from "./api.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
+import { startCleanupTask } from "./cleanup.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -138,6 +139,7 @@ const server = process.env.NODE_ENV === "development"
 if (process.env.NODE_ENV === "development") {
   server.listen(8001, () => {
     logger.info('HTTP server listening on port 8001 (development mode)');
+    startCleanupTask();
   });
 }
 
@@ -438,6 +440,7 @@ process.on('SIGINT', () => {
 if (process.env.NODE_ENV !== "development") {
   logger.info("server starting");
   server.listen(8001);
+  startCleanupTask();
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", register.contentType);
     register.metrics().then((out) => res.end(out));
