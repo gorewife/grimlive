@@ -208,7 +208,7 @@ export const api = {
       ]);
     }
     
-    return jsonResponse({ gameId });
+    return jsonResponse({ game_id: gameId });
   },
 
   endGame: async (req) => {

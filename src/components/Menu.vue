@@ -703,7 +703,7 @@ export default {
         const data = await this.$store.dispatch('stats/startGame', {
           script,
           customName,
-          playerNames,
+          players: playerNames,
           sessionCode
         });
         
