@@ -159,7 +159,7 @@
         <span>{{ player.name }}</span>
         <img 
           v-if="isStatsLinked" 
-          src="../assets/discord-white-icon.webp" 
+          src="../assets/Discord--Streamline-Simple-Icons.webp" 
           class="discord-indicator"
           title="Stats tracking enabled"
         />
@@ -344,9 +344,9 @@ export default {
         return { width: 12 + this.grimoire.zoom + unit };
       }
     },
-    // Fixed: Now properly reactive from Vuex!
+    // Show Discord indicator if player is linked (visible to everyone)
     isStatsLinked: function () {
-      return this.statsEnabled && this.isDiscordLinked && !!this.player.discord_id;
+      return this.statsEnabled && !!this.player.discord_id;
     },
   },
   data() {

@@ -239,11 +239,11 @@
               <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
               <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
             </li>
-            <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }">
+            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }>
               <small>{{ isMuting ? 'Muting...' : 'Mute All' }}</small>
               <em><font-awesome-icon :icon="isMuting ? 'spinner' : 'microphone-slash'" :spin="isMuting" /></em>
             </li>
-            <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="unmuteAll" :class="{ disabled: isUnmuting }">
+            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="unmuteAll" :class="{ disabled: isUnmuting }>
               <small>{{ isUnmuting ? 'Unmuting...' : 'Unmute All' }}</small>
               <em><font-awesome-icon :icon="isUnmuting ? 'spinner' : 'microphone'" :spin="isUnmuting" /></em>
             </li>
@@ -416,7 +416,6 @@
 
 <script>
 import { mapMutations, mapState, mapGetters } from "vuex";
-import stats from "../store/modules/stats.js";
 
 export default {
   computed: {
@@ -810,10 +809,9 @@ export default {
     },
     async muteAll() {
       if (this.isMuting) return;
-      if (this.session.isSpectator || !stats.isDiscordLinked() || !this.sessionCodeConfirmed) return;
+      if (this.session.isSpectator || !this.sessionCodeConfirmed) return;
       
-      const sessionCode = stats.getSelectedSessionCode();
-      if (!sessionCode) {
+      if (!this.sessionCode) {
         alert('Session code required');
         return;
       }
@@ -830,7 +828,7 @@ export default {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ sessionCode })
+          body: JSON.stringify({ sessionCode: this.sessionCode })
         });
         
         if (response.ok) {
@@ -849,10 +847,9 @@ export default {
     },
     async unmuteAll() {
       if (this.isUnmuting) return;
-      if (this.session.isSpectator || !stats.isDiscordLinked() || !this.sessionCodeConfirmed) return;
+      if (this.session.isSpectator || !this.sessionCodeConfirmed) return;
       
-      const sessionCode = stats.getSelectedSessionCode();
-      if (!sessionCode) {
+      if (!this.sessionCode) {
         alert('Session code required');
         return;
       }
@@ -869,7 +866,7 @@ export default {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ sessionCode })
+          body: JSON.stringify({ sessionCode: this.sessionCode })
         });
         
         if (response.ok) {

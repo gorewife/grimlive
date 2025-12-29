@@ -70,7 +70,6 @@
 <script>
 import Modal from "./Modal.vue";
 import { mapMutations, mapState } from "vuex";
-import stats from "../../store/modules/stats.js";
 
 export default {
   components: {
@@ -91,6 +90,9 @@ export default {
   },
   computed: {
     ...mapState(["modals", "session"]),
+    ...mapState("stats", {
+      sessionCode: state => state.sessionCode
+    }),
   },
   methods: {
     ...mapMutations(["toggleModal"]),
@@ -130,28 +132,25 @@ export default {
         startedBy: this.$store.state.session.playerId,
       });
 
-      // Send timer announcement to Discord if linked
-      if (stats.isDiscordLinked()) {
-        const sessionCode = stats.getSelectedSessionCode();
-        if (sessionCode) {
-          try {
-            const baseUrl = import.meta.env.PROD
-              ? 'https://api.hystericca.dev'
-              : 'http://localhost:8001';
-            
-            await fetch(`${baseUrl}/api/timerAnnounce`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                sessionCode,
-                duration: this.duration
-              })
-            });
-          } catch (error) {
-            console.error('Failed to announce timer:', error);
-          }
+      // Send timer announcement to Discord if session is linked
+      if (this.sessionCode) {
+        try {
+          const baseUrl = import.meta.env.PROD
+            ? 'https://api.hystericca.dev'
+            : 'http://localhost:8001';
+          
+          await fetch(`${baseUrl}/api/timerAnnounce`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              sessionCode: this.sessionCode,
+              duration: this.duration
+            })
+          });
+        } catch (error) {
+          console.error('Failed to announce timer:', error);
         }
       }
 
