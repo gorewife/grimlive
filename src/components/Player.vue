@@ -697,7 +697,7 @@ export default {
     }
 
     &:hover *,
-    &.fa-hand-paper * {
+    &.fa-hand * {
       fill: url(#demon);
     }
 
@@ -708,7 +708,7 @@ export default {
 }
 
 // other player voted yes, but is not locked yet
-#townsquare.vote .player.vote-yes .overlay svg.vote.fa-hand-paper {
+#townsquare.vote .player.vote-yes .overlay svg.vote.fa-hand {
   opacity: 0.5;
   transform: scale(1);
 }
@@ -716,21 +716,21 @@ export default {
 #townsquare.vote
   .player:not(.vote-twice)
   .overlay
-  svg.second-vote.fa-hand-paper {
+  svg.second-vote.fa-hand {
   opacity: 0 !important;
 }
 
-#townsquare.vote .player.two-votes .overlay svg.first-vote.fa-hand-paper {
+#townsquare.vote .player.two-votes .overlay svg.first-vote.fa-hand {
   right: 50%;
 }
 
-#townsquare.vote .player.two-votes .overlay svg.second-vote.fa-hand-paper {
+#townsquare.vote .player.two-votes .overlay svg.second-vote.fa-hand {
   left: 50%;
 }
 
 // you voted yes | a locked vote yes | a locked vote no
-#townsquare.vote .player.you.vote-yes .overlay svg.vote.fa-hand-paper,
-#townsquare.vote .player.vote-lock.vote-yes .overlay svg.vote.fa-hand-paper,
+#townsquare.vote .player.you.vote-yes .overlay svg.vote.fa-hand,
+#townsquare.vote .player.vote-lock.vote-yes .overlay svg.vote.fa-hand,
 #townsquare.vote .player.vote-lock:not(.vote-yes) .overlay svg.vote.fa-times {
   opacity: 1;
   transform: scale(1);

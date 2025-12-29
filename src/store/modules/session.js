@@ -7,9 +7,28 @@
  */
 const handleVote = (state, [index, vote]) => {
   if (!state.nomination) return;
-  state.votes = [...state.votes];
+  
+  // Determine expected player count from nomination or existing votes
+  // The nomination indices give us a minimum player count
+  const minPlayerCount = state.nomination ? Math.max(...state.nomination) + 1 : 0;
+  const expectedCount = Math.max(minPlayerCount, index + 1, state.votes.length);
+  
+  // Ensure votes array is properly sized (fill with 0s if needed)
+  if (state.votes.length < expectedCount) {
+    const newVotes = Array(expectedCount).fill(0);
+    // Preserve existing votes
+    state.votes.forEach((v, i) => {
+      newVotes[i] = v || 0;
+    });
+    state.votes = newVotes;
+  } else {
+    state.votes = [...state.votes];
+  }
+  
+  // Handle undefined votes (treat as 0)
+  const currentVote = state.votes[index] || 0;
   state.votes[index] =
-    vote === undefined ? Math.abs(state.votes[index] - 1) : vote;
+    vote === undefined ? (currentVote === 1 ? 0 : 1) : vote;
 };
 
 const state = () => ({
@@ -81,7 +100,13 @@ const mutations = {
     { nomination, votes, votingSpeed, lockedVote, isVoteInProgress } = {},
   ) {
     state.nomination = nomination || false;
-    state.votes = votes || [];
+    // Preserve existing votes array if no new votes provided and we have an array
+    // This prevents losing vote data when only the nomination pair is updated
+    if (votes !== undefined) {
+      state.votes = votes;
+    } else if (!Array.isArray(state.votes)) {
+      state.votes = [];
+    }
     state.votingSpeed = votingSpeed || state.votingSpeed;
     state.lockedVote = lockedVote || 0;
     state.isVoteInProgress = isVoteInProgress || false;
