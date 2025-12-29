@@ -239,13 +239,17 @@
               <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
               <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
             </li>
-            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }>
+            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }">
               <small>{{ isMuting ? 'Muting...' : 'Mute All' }}</small>
               <em><font-awesome-icon :icon="isMuting ? 'spinner' : 'microphone-slash'" :spin="isMuting" /></em>
             </li>
-            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="unmuteAll" :class="{ disabled: isUnmuting }>
+            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="unmuteAll" :class="{ disabled: isUnmuting }">
               <small>{{ isUnmuting ? 'Unmuting...' : 'Unmute All' }}</small>
               <em><font-awesome-icon :icon="isUnmuting ? 'spinner' : 'microphone'" :spin="isUnmuting" /></em>
+            </li>
+            <li v-if="!session.isSpectator && sessionCodeConfirmed && currentGameId" @click="callTownspeople" :class="{ disabled: isCalling }">
+              <small>{{ isCalling ? 'Calling...' : 'Call Townspeople' }}</small>
+              <em><font-awesome-icon :icon="isCalling ? 'spinner' : 'users'" :spin="isCalling" /></em>
             </li>
             <li v-if="session.ping">
               <small>
@@ -446,6 +450,7 @@ export default {
       isCancelingGame: false,
       isMuting: false,
       isUnmuting: false,
+      isCalling: false,
     };
   },
   async mounted() {
@@ -881,6 +886,41 @@ export default {
         alert(`Error sending unmute command: ${error.message || 'Unknown error'}`);
       } finally {
         this.isUnmuting = false;
+      }
+    },
+    async callTownspeople() {
+      if (this.isCalling) return;
+      if (this.session.isSpectator || !this.sessionCodeConfirmed) return;
+      
+      if (!this.sessionCode) {
+        alert('Session code required');
+        return;
+      }
+
+      this.isCalling = true;
+
+      try {
+        const baseUrl = import.meta.env.PROD
+          ? 'https://api.hystericca.dev'
+          : 'http://localhost:8001';
+
+        const response = await fetch(`${baseUrl}/api/call`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionCode: this.sessionCode })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to call townspeople');
+        }
+
+        console.log('Call townspeople successful');
+      } catch (error) {
+        console.error('Call failed:', error);
+        alert(`Failed to call townspeople: ${error.message}`);
+      } finally {
+        this.isCalling = false;
       }
     },
     handleMenuToggle() {

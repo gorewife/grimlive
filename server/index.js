@@ -112,6 +112,8 @@ const requestHandler = async (req, res) => {
         response = await api.mute(req);
       } else if (path === 'unmute' && req.method === 'POST') {
         response = await api.unmute(req);
+      } else if (path === 'call' && req.method === 'POST') {
+        response = await api.call(req);
       } else if (path === 'timerAnnounce' && req.method === 'POST') {
         response = await api.timerAnnounce(req);
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
