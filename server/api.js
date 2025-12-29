@@ -439,6 +439,66 @@ export const api = {
     }
   },
 
+  updateRole: async (req) => {
+    const session = await verifyToken(req);
+    if (!session) {
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await parseBody(req);
+    const { game_id, player_name, role, final_role } = body;
+
+    if (!game_id || !player_name) {
+      return jsonResponse({ error: 'game_id and player_name required' }, 400);
+    }
+
+    try {
+      // Check if player exists in game_players
+      const playerCheck = await pool.query(
+        'SELECT id FROM game_players WHERE game_id = $1 AND player_name = $2',
+        [game_id, player_name]
+      );
+
+      if (playerCheck.rows.length === 0) {
+        // Insert new player if doesn't exist - use starting_role fields
+        await pool.query(
+          `INSERT INTO game_players (game_id, player_name, starting_role_name, final_role_name) 
+           VALUES ($1, $2, $3, $4)`,
+          [game_id, player_name, role, final_role || role]
+        );
+      } else {
+        // Update existing player
+        const updates = [];
+        const values = [];
+        let paramIndex = 1;
+
+        if (role) {
+          updates.push(`starting_role_name = $${paramIndex++}`);
+          values.push(role);
+        }
+
+        if (final_role !== undefined) {
+          updates.push(`final_role_name = $${paramIndex++}`);
+          values.push(final_role);
+        }
+
+        if (updates.length > 0) {
+          values.push(game_id, player_name);
+          await pool.query(
+            `UPDATE game_players SET ${updates.join(', ')} 
+             WHERE game_id = $${paramIndex++} AND player_name = $${paramIndex++}`,
+            values
+          );
+        }
+      }
+
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Failed to update player role:', error);
+      return jsonResponse({ error: 'Failed to update player role' }, 500);
+    }
+  },
+
   timerStart: async (req) => {
     const body = await parseBody(req);
     const { sessionCode, duration, discordUserId } = body;
@@ -614,6 +674,47 @@ export const api = {
     } catch (error) {
       console.error('Failed to queue unmute announcement:', error);
       return jsonResponse({ error: 'Failed to queue unmute announcement' }, 500);
+    }
+  },
+
+  timerAnnounce: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode, duration } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    if (!duration || duration < 1 || duration > 10800) {
+      return jsonResponse({ error: 'duration must be between 1 and 10800 seconds' }, 400);
+    }
+
+    // Verify session exists and get guild/category info
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    const { guild_id, category_id } = sessionResult.rows[0];
+
+    // Queue announcement for Discord bot to process
+    try {
+      await pool.query(`
+        INSERT INTO announcements (guild_id, category_id, announcement_type, data)
+        VALUES ($1, $2, 'timer_start', $3)
+      `, [guild_id, category_id, JSON.stringify({ duration })]);
+
+      return jsonResponse({
+        success: true,
+        message: 'Timer announcement queued'
+      });
+    } catch (error) {
+      console.error('Failed to queue timer announcement:', error);
+      return jsonResponse({ error: 'Failed to queue timer announcement' }, 500);
     }
   }
 };

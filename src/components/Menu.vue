@@ -416,6 +416,7 @@
 
 <script>
 import { mapMutations, mapState, mapGetters } from "vuex";
+import stats from "../store/modules/stats.js";
 
 export default {
   computed: {
@@ -1037,7 +1038,9 @@ export default {
     margin: 0;
     margin-top: 70px;
     flex-direction: column;
-    overflow: hidden;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    overflow-x: hidden;
     background: 
       linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%),
       repeating-linear-gradient(
@@ -1115,7 +1118,6 @@ export default {
       &.tabs {
         display: flex;
         padding: 0;
-        margin-top: 8px;
         svg,
         button {
           flex-grow: 1;

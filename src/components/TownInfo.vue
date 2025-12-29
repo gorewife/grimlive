@@ -155,10 +155,10 @@ export default {
       font-style: italic;
       letter-spacing: 1px;
       position: absolute;
-      top: 40%;
+      top: -100%;
       left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
+      transform: translate(-50%, -50%);
+      width: 80%;
       z-index: 10;
     }
 
@@ -194,9 +194,9 @@ export default {
 
   li.edition {
     width: 100%;
-    height: 60%;
-    max-width: 280px;
-    max-height: 280px;
+    height: 80%;
+    max-width: 400px;
+    max-height: 400px;
     background-position: center center;
     background-repeat: no-repeat;
     background-size: contain;

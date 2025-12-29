@@ -70,6 +70,7 @@
 <script>
 import Modal from "./Modal.vue";
 import { mapMutations, mapState } from "vuex";
+import stats from "../../store/modules/stats.js";
 
 export default {
   components: {
@@ -111,7 +112,7 @@ export default {
       }
       return `${mins}m ${secs}s`;
     },
-    startTimer() {
+    async startTimer() {
       if (this.duration === 0) return;
 
       const endTime = Date.now() + this.duration * 1000;
@@ -128,6 +129,31 @@ export default {
         endTime: endTime,
         startedBy: this.$store.state.session.playerId,
       });
+
+      // Send timer announcement to Discord if linked
+      if (stats.isDiscordLinked()) {
+        const sessionCode = stats.getSelectedSessionCode();
+        if (sessionCode) {
+          try {
+            const baseUrl = import.meta.env.PROD
+              ? 'https://api.hystericca.dev'
+              : 'http://localhost:8001';
+            
+            await fetch(`${baseUrl}/api/timerAnnounce`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                sessionCode,
+                duration: this.duration
+              })
+            });
+          } catch (error) {
+            console.error('Failed to announce timer:', error);
+          }
+        }
+      }
 
       this.toggleModal("timer");
       

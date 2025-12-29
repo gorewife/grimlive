@@ -94,6 +94,8 @@ const requestHandler = async (req, res) => {
         response = await api.endGame(req);
       } else if (path === 'game/cancel' && req.method === 'POST') {
         response = await api.cancelGame(req);
+      } else if (path === 'game/update-role' && req.method === 'POST') {
+        response = await api.updateRole(req);
       } else if (path === 'player/add' && req.method === 'POST') {
         response = await api.addPlayer(req);
       } else if (path === 'player/death' && req.method === 'POST') {
@@ -110,6 +112,8 @@ const requestHandler = async (req, res) => {
         response = await api.mute(req);
       } else if (path === 'unmute' && req.method === 'POST') {
         response = await api.unmute(req);
+      } else if (path === 'timerAnnounce' && req.method === 'POST') {
+        response = await api.timerAnnounce(req);
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);
