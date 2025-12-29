@@ -748,11 +748,18 @@ li.from:not(.nominate) .player .overlay svg.cancel {
 }
 
 li.swap:not(.from) .player .overlay svg.swap,
-li.nominate .player .overlay svg.nominate,
+li.nominate:not(.vote) .player .overlay svg.nominate,
 li.move:not(.from) .player .overlay svg.move {
   opacity: 1;
   transform: scale(1);
   pointer-events: all;
+}
+
+// Ensure vote icons are visible during voting, even if nominate class is present
+#townsquare.vote li.nominate .player .overlay svg.nominate {
+  opacity: 0;
+  transform: scale(0.2);
+  pointer-events: none;
 }
 
 /****** Vote icon ********/

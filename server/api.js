@@ -8,6 +8,10 @@ const pool = new Pool({ connectionString: DATABASE_URL });
 
 console.log(`Using PostgreSQL: ${DATABASE_URL.replace(/:[^:]*@/, ':****@')}`);
 
+pool.on('error', (err) => {
+  console.error('Unexpected database error:', err);
+});
+
 function jsonResponse(data, status = 200) {
   return {
     status,
@@ -48,32 +52,22 @@ async function parseBody(req) {
 async function verifyToken(req) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
-    console.log('[AUTH] No auth header or invalid format from', req.socket?.remoteAddress);
     return null;
   }
   const token = auth.slice(7);
   
   if (token.length < 16 || token.length > 256) {
-    console.log('[AUTH] Invalid token format from', req.socket?.remoteAddress);
     return null;
   }
   
-  const currentTime = Math.floor(Date.now() / 1000);
-  
   try {
     const result = await pool.query(
-      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > $2',
-      [token, currentTime]
+      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > NOW()',
+      [token]
     );
-    const session = result.rows[0] || null;
-    
-    if (!session) {
-      console.log('[AUTH] Token invalid or expired from', req.socket?.remoteAddress);
-    }
-    
-    return session;
+    return result.rows[0] || null;
   } catch (error) {
-    console.error('[AUTH] Database error during token verification:', error.message);
+    console.error('Error verifying token:', error);
     return null;
   }
 }
@@ -84,8 +78,8 @@ export const api = {
     const { discord_user_id } = body;
     
     const token = crypto.randomUUID();
-    const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
     const sessionId = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours from now
     
     await pool.query(
       'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
@@ -95,7 +89,7 @@ export const api = {
     return jsonResponse({ 
       sessionId, 
       token,
-      expiresAt: new Date(expiresAt * 1000).toISOString()
+      expiresAt: expiresAt.toISOString()
     });
   },
 

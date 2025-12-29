@@ -239,10 +239,6 @@
               <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
               <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
             </li>
-            <li v-if="!session.isSpectator && isDiscordLinked && isStatTrackingEnabled && currentGameId" @click="cancelGame" :class="{ disabled: isCancelingGame }">
-              <small>{{ isCancelingGame ? 'Canceling...' : 'Cancel Game' }}</small>
-              <em><font-awesome-icon :icon="isCancelingGame ? 'spinner' : 'times-circle'" :spin="isCancelingGame" /></em>
-            </li>
             <li v-if="!session.isSpectator && isDiscordLinked && sessionCodeConfirmed && currentGameId" @click="muteAll" :class="{ disabled: isMuting }">
               <small>{{ isMuting ? 'Muting...' : 'Mute All' }}</small>
               <em><font-awesome-icon :icon="isMuting ? 'spinner' : 'microphone-slash'" :spin="isMuting" /></em>
@@ -461,6 +457,15 @@ export default {
         this.sessionCodeConfirmed = true;
       }
     }
+    
+    // Listen for Discord login success from popup
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data.type === 'discord-login-success') {
+        console.log('[Menu] Discord login successful, reloading...');
+        window.location.reload();
+      }
+    });
   },
   watch: {
   },
@@ -621,11 +626,15 @@ export default {
       }
     },
     async loginWithDiscord() {
+      console.log('[Menu] loginWithDiscord clicked');
       const baseUrl = import.meta.env.PROD
         ? 'https://api.hystericca.dev'
         : 'http://localhost:8001';
       const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
-      window.location.href = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
+      const authUrl = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
+      
+      console.log('[Menu] Redirecting to OAuth:', authUrl);
+      window.location.href = authUrl;
     },
     logoutDiscord() {
       if (confirm('Log out of Discord? This will disable stat tracking.')) {
@@ -668,6 +677,7 @@ export default {
       }
       
       this.isStartingGame = true;
+      let gameStarted = false;
       
       try {
         let script = 'Custom Script';
@@ -685,17 +695,19 @@ export default {
         
         if (playerNames.length < 2) {
           alert('At least 2 players with names are required to start a game.');
+          this.isStartingGame = false;
           return;
         }
         
-        const gameId = await this.$store.dispatch('stats/startGame', {
+        const data = await this.$store.dispatch('stats/startGame', {
           script,
           customName,
           playerNames,
           sessionCode
         });
         
-        if (gameId) {
+        if (data && data.game_id) {
+          gameStarted = true;
           const playerPromises = this.players
             .map((player, i) => {
               if (player.role && player.role.id) {
@@ -714,13 +726,23 @@ export default {
             .filter(p => p !== null);
           
           await Promise.all(playerPromises);
-          alert(`✓ Game started! ID: ${gameId}`);
+          alert(`✓ Game started! ID: ${data.game_id}`);
         } else {
           alert('Failed to start game. Check session code and try again.');
+          this.$store.commit('stats/setCurrentGameId', null);
         }
       } catch (error) {
         logger.error('Start game error:', error);
         alert(`Error starting game: ${error.message || 'Unknown error'}`);
+        // Rollback game ID if game was started but player updates failed
+        if (gameStarted) {
+          try {
+            await this.$store.dispatch('stats/cancelGame');
+          } catch (rollbackError) {
+            logger.error('Failed to rollback game:', rollbackError);
+          }
+        }
+        this.$store.commit('stats/setCurrentGameId', null);
       } finally {
         this.isStartingGame = false;
       }

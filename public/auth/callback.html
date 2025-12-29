@@ -28,6 +28,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
 
+    console.log('[Callback] Code received:', code ? 'yes' : 'no');
+
     if (!code) {
       document.getElementById('message').textContent = 'Error: No authorization code received';
     } else {
@@ -36,18 +38,55 @@
         ? 'http://localhost:8001'
         : 'https://api.hystericca.dev';
       
+      console.log('[Callback] Fetching user data from:', `${baseUrl}/auth/discord/callback`);
+      
       fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`)
-        .then(response => response.json())
+        .then(response => {
+          console.log('[Callback] Discord callback response status:', response.status);
+          return response.json();
+        })
         .then(data => {
+          console.log('[Callback] Discord user data:', data);
           if (data.userId) {
+            // Save to localStorage
             localStorage.setItem('discordUserId', data.userId);
             localStorage.setItem('discordUsername', `${data.username}${data.discriminator !== '0' ? '#' + data.discriminator : ''}`);
-            window.location.href = '/';
+            localStorage.setItem('statTrackingEnabled', 'true');
+            
+            console.log('[Callback] Creating session...');
+            
+            // Create a session
+            return fetch(`${baseUrl}/api/session/create`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ discord_user_id: data.userId })
+            });
           } else {
-            document.getElementById('message').textContent = 'Error: ' + (data.error || 'Unknown error');
+            throw new Error(data.error || 'Failed to get user data');
+          }
+        })
+        .then(response => {
+          console.log('[Callback] Session create response status:', response.status);
+          return response.json();
+        })
+        .then(sessionData => {
+          console.log('[Callback] Session data:', sessionData);
+          if (sessionData.token) {
+            // Save session token
+            localStorage.setItem('statsToken', sessionData.token);
+            localStorage.setItem('statsSessionId', sessionData.sessionId);
+            document.getElementById('message').textContent = 'Success! Redirecting...';
+            
+            console.log('[Callback] Login complete, redirecting to home...');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          } else {
+            throw new Error('Failed to create session');
           }
         })
         .catch(error => {
+          console.error('[Callback] Error:', error);
           document.getElementById('message').textContent = 'Error: ' + error.message;
         });
     }
