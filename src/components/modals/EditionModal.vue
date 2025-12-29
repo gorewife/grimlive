@@ -210,7 +210,7 @@ export default {
         npcs.push(this.$store.state.npcs.get("djinn"));
       }
       if (
-        (this.roles && typeof this.roles.values === 'function' && 
+        ((this.roles && typeof this.roles.values === 'function' && 
           Array.from(this.roles.values()).some((role) => role.isCustom)) ||
         this.edition.bootlegger) &&
         !npcs.some((npc) => npc.id === "bootlegger")

@@ -1,21 +1,21 @@
 <template>
   <Modal v-if="modals.endGame" @close="toggleModal('endGame')">
-    <h3>End Game</h3>
-    <p>Select the winning team:</p>
+    <h3>📕 The Grimoire Closes</h3>
+    <p>Which team emerged victorious?</p>
     <div class="winner-buttons">
       <button class="good-button" @click="selectWinner('Good')">
         <span 
           class="team-icon"
           :style="{ backgroundImage: `url(${mayorIcon})` }"
         ></span>
-        <span>Good Wins</span>
+        <span>⚖️ Good Wins</span>
       </button>
       <button class="evil-button" @click="selectWinner('Evil')">
         <span 
           class="team-icon"
           :style="{ backgroundImage: `url(${impIcon})` }"
         ></span>
-        <span>Evil Wins</span>
+        <span>🩸 Evil Wins</span>
       </button>
     </div>
   </Modal>
@@ -48,16 +48,20 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@import "../../vars.scss";
+
 h3 {
   margin: 0 0 1em;
   text-align: center;
   font-size: 1.5em;
+  color: $gold;
 }
 
 p {
   text-align: center;
   margin-bottom: 2em;
   font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .winner-buttons {
@@ -74,47 +78,52 @@ button {
   gap: 1em;
   padding: 2em 3em;
   font-size: 1.2em;
-  border: 3px solid transparent;
+  border: 2px solid rgba(0, 0, 0, 0.5);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: bold;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   
   &:hover {
-    transform: scale(1.1);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   }
   
   &:active {
-    transform: scale(0.95);
+    transform: translateY(-2px);
   }
 }
 
 .good-button {
-  background: linear-gradient(135deg, #4a90e2 0%, #67b5ff 100%);
-  color: white;
+  border-color: rgba(103, 181, 255, 0.6);
   
   &:hover {
-    border-color: #2e6fb8;
-    box-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
+    background: rgba(74, 144, 226, 0.3);
+    border-color: #67b5ff;
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
   }
 }
 
 .evil-button {
-  background: linear-gradient(135deg, #e24a4a 0%, #ff6767 100%);
-  color: white;
+  border-color: rgba(255, 103, 103, 0.6);
   
   &:hover {
-    border-color: #b82e2e;
-    box-shadow: 0 0 20px rgba(226, 74, 74, 0.5);
+    background: rgba(226, 74, 74, 0.3);
+    border-color: #ff6767;
+    box-shadow: 0 8px 20px rgba(226, 74, 74, 0.4);
   }
 }
 
 .team-icon {
-  width: 6em;
-  height: 6em;
+  width: 5em;
+  height: 5em;
   background-size: cover;
   background-position: center;
   border-radius: 50%;
-  border: 3px solid rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 </style>

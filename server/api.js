@@ -243,12 +243,13 @@ export const api = {
       const game = gameData.rows[0];
       await pool.query(`
         INSERT INTO announcements (
-          guild_id, category_id, announcement_type, game_id, created_at
-        ) VALUES ($1, $2, 'game_end', $3, $4)
+          guild_id, category_id, announcement_type, game_id, data, created_at
+        ) VALUES ($1, $2, 'game_end', $3, $4, $5)
       `, [
         game.guild_id,
         game.category_id,
         gameId,
+        JSON.stringify({ winner: winningTeam }),
         Math.floor(Date.now() / 1000)
       ]);
     }
@@ -266,6 +267,12 @@ export const api = {
     const { game_id } = body;
     
     try {
+      // Get game data before canceling for announcement
+      const gameData = await pool.query(
+        'SELECT guild_id, category_id FROM games WHERE game_id = $1',
+        [game_id]
+      );
+      
       // Mark game as canceled (not completed, no winner)
       await pool.query(`
         UPDATE games 
@@ -275,6 +282,21 @@ export const api = {
       
       // Optionally delete game players to clean up
       await pool.query('DELETE FROM game_players WHERE game_id = $1', [game_id]);
+      
+      // Create announcement for game cancellation
+      if (gameData.rows.length && gameData.rows[0].guild_id) {
+        const game = gameData.rows[0];
+        await pool.query(`
+          INSERT INTO announcements (
+            guild_id, category_id, announcement_type, game_id, created_at
+          ) VALUES ($1, $2, 'game_cancel', $3, $4)
+        `, [
+          game.guild_id,
+          game.category_id,
+          game_id,
+          Math.floor(Date.now() / 1000)
+        ]);
+      }
       
       return jsonResponse({ success: true });
     } catch (error) {

@@ -202,8 +202,8 @@ const actions = {
           'Authorization': `Bearer ${state.statsToken}`
         },
         body: JSON.stringify({
-          game_id: state.currentGameId,
-          winner
+          gameId: state.currentGameId,
+          winningTeam: winner
         })
       });
 

@@ -780,7 +780,7 @@ export default {
           .filter(p => p !== null);
         
         await Promise.all(playerPromises);
-        await this.$store.dispatch('stats/endGame', winningTeam);
+        await this.$store.dispatch('stats/endGame', { winner: winningTeam });
         alert(`✓ Game ended! ${winningTeam} wins.`);
       } catch (error) {
         console.error('End game error:', error);
@@ -1035,7 +1035,7 @@ export default {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    margin-top: 58px;
+    margin-top: 70px;
     flex-direction: column;
     overflow: hidden;
     background: 
@@ -1115,6 +1115,7 @@ export default {
       &.tabs {
         display: flex;
         padding: 0;
+        margin-top: 8px;
         svg,
         button {
           flex-grow: 1;
@@ -1175,14 +1176,12 @@ export default {
     }
 
     .headline {
-      font-family: "Playfair Display", "Cinzel", serif;
-      font-weight: 700;
-      letter-spacing: 1.5px;
+      font-weight: 600;
+      letter-spacing: 1px;
       padding: 5px 10px;
-      font-style: italic;
       text-align: center;
       justify-content: center;
-      font-size: 1.05em;
+      font-size: 0.9em;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
       background: linear-gradient(
         to right,

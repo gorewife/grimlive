@@ -154,6 +154,12 @@ export default {
       font-weight: 700;
       font-style: italic;
       letter-spacing: 1px;
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      z-index: 10;
     }
 
     svg {
