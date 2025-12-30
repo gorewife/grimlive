@@ -32,8 +32,8 @@
         'alignment-' + player.alignmentIndex,
       ]"
     >
-      <div class="shroud" @click="toggleStatus()"></div>
-      <div class="life" @click="toggleStatus()"></div>
+      <div class="shroud" v-if="!grimoire.isRevealMode" @click="toggleStatus()"></div>
+      <div class="life" v-if="!grimoire.isRevealMode" @click="toggleStatus()"></div>
 
       <div
         class="night-order first"
@@ -62,19 +62,32 @@
         }}</span>
       </div>
 
+      <div 
+        v-if="grimoire.isRevealMode && !player.isRevealed && !session.isSpectator"
+        class="reveal-overlay"
+        @click.stop="revealPlayer"
+        :title="`${player.role.name} - Click to reveal`"
+      ></div>
+
       <Token
-        :role="player.role"
+        :role="grimoire.isRevealMode && !session.isSpectator && player.isRevealed !== true ? {} : player.role"
         :alignmentIndex="
           player.role.team === 'traveller' && grimoire.isPublic
             ? 0
             : player.alignmentIndex
         "
         :class="{ 
-          'reveal-hidden': grimoire.isRevealMode && !player.isRevealed,
-          'reveal-animation': player.isRevealed 
+          'reveal-animation': grimoire.isRevealMode && player.isRevealed
         }"
-        :title="grimoire.isRevealMode && !player.isRevealed && !session.isSpectator ? `${player.role.name} - Click to reveal` : ''"
-        @click="handleRevealClick"
+        :style="grimoire.isRevealMode && !session.isSpectator && player.isRevealed !== true ? {
+          opacity: 0.3,
+          transition: 'opacity 1.5s ease-out',
+          transitionDelay: (index * 0.1) + 's',
+          cursor: 'pointer',
+          transform: 'perspective(400px) rotateY(0deg) !important'
+        } : player.isRevealed && !grimoire.isRevealMode && session.isSpectator ? {
+          transform: 'perspective(400px) rotateY(0deg) !important'
+        } : {}"
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
 
@@ -159,13 +172,19 @@
       </div>
       <div
         class="name"
-        @click="isMenuOpen = !isMenuOpen"
+        @click="grimoire.isRevealMode ? null : (isMenuOpen = !isMenuOpen)"
         :class="{ active: isMenuOpen }"
+        :style="{ 
+          pointerEvents: grimoire.isRevealMode ? 'none' : 'auto',
+          opacity: grimoire.isRevealMode && !player.isRevealed ? 0.3 : 1,
+          transition: 'opacity 1.5s ease-out',
+          transitionDelay: grimoire.isRevealMode && !player.isRevealed ? (index * 0.1) + 's' : '0s'
+        }"
       >
         <div class="name-row">
           <span>{{ player.name }}</span>
           <img 
-            v-if="isStatsLinked" 
+            v-if="isStatsLinked && player.id" 
             src="../assets/Discord--Streamline-Simple-Icons.webp" 
             class="discord-indicator"
             title="Stats tracking enabled"
@@ -365,12 +384,18 @@ export default {
   },
   methods: {
     getRoleIcon,
-    handleRevealClick(event) {
-      // In reveal mode, clicking token reveals it to everyone
-      if (this.grimoire.isRevealMode && !this.player.isRevealed && !this.session.isSpectator) {
-        event.stopPropagation();
-        this.updatePlayer("isRevealed", true, true);
-      }
+    revealPlayer() {
+      // Only used in reveal mode - reveals player to everyone
+      this.updatePlayer("isRevealed", true, true);
+      
+      // Check if all players are now revealed
+      this.$nextTick(() => {
+        const allRevealed = this.players.every(p => p.isRevealed === true);
+        if (allRevealed && this.grimoire.isRevealMode) {
+          // All tokens revealed, exit reveal mode
+          this.$root.$refs.menu.toggleRevealMode();
+        }
+      });
     },
     changeAlignment() {
       let newAlignment = this.player.alignmentIndex + 1;
@@ -666,10 +691,6 @@ export default {
   backface-visibility: hidden;
 }
 
-#townsquare.public .circle .token {
-  transform: perspective(400px) rotateY(-180deg);
-}
-
 /****** Player choice icons *******/
 .player .overlay {
   width: 100%;
@@ -961,10 +982,12 @@ li.move:not(.from) .player .overlay svg.move {
   }
 
   .discord-indicator {
-    width: 1em;
-    height: 1em;
+    width: 1.2em;
+    height: 1.2em;
+    object-fit: contain;
     vertical-align: middle;
     filter: brightness(1.2);
+    flex-shrink: 0;
   }
 
   span {
@@ -1184,6 +1207,17 @@ li.move:not(.from) .player .overlay svg.move {
 }
 
 /***** Grim Reveal Mode *****/
+.reveal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
 @keyframes revealFlip {
   0% {
     transform: rotateY(0deg) scale(1);
@@ -1199,21 +1233,8 @@ li.move:not(.from) .player .overlay svg.move {
   }
 }
 
-.token.reveal-hidden {
-  opacity: 0.15;
-  filter: brightness(0.3) blur(2px);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    opacity: 0.3;
-    filter: brightness(0.5) blur(1px);
-    transform: scale(1.05);
-  }
-}
-
 .token.reveal-animation {
-  animation: revealFlip 0.8s ease-out forwards;
+  animation: revealFlip 1.2s ease-out forwards;
   animation-iteration-count: 1;
 }
 

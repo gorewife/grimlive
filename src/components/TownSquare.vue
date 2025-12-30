@@ -6,6 +6,7 @@
       public: grimoire.isPublic,
       spectator: session.isSpectator,
       vote: session.nomination,
+      'reveal-mode': grimoire.isRevealMode,
     }"
   >
     <ul class="circle" :class="['size-' + players.length]">
@@ -594,6 +595,13 @@ export default defineComponent({
 #townsquare.public > .bluffs {
   opacity: 0;
   transform: scale(0.1);
+}
+
+#townsquare.reveal-mode > .bluffs,
+#townsquare.reveal-mode > .npcs {
+  opacity: 0;
+  transform: scale(0.1);
+  pointer-events: none;
 }
 
 .npcs ul li .token:before {

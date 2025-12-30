@@ -540,13 +540,15 @@ class LiveSession {
     if (property === "role") {
       if (value.team && value.team === "traveller") {
         // update local gamestate to remember this player as a traveller
-        this._gamestate[index].roleId = value.id;
+        if (this._gamestate[index]) {
+          this._gamestate[index].roleId = value.id;
+        }
         this._send("player", {
           index,
           property,
           value: value.id,
         });
-      } else if (this._gamestate[index].roleId) {
+      } else if (this._gamestate[index] && this._gamestate[index].roleId) {
         // player was previously a traveller
         delete this._gamestate[index].roleId;
         this._send("player", { index, property, value: "" });

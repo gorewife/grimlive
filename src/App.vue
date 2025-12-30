@@ -124,7 +124,8 @@ export default {
       
       switch (key.toLocaleLowerCase()) {
         case "g":
-          this.$store.commit("toggleRevealMode");
+          if (this.session.isSpectator) return;
+          this.$refs.menu.toggleRevealMode();
           break;
         case "a":
           this.$refs.menu.addPlayer();

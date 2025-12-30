@@ -103,7 +103,7 @@
             Journal
             <em>[W]</em>
           </li>
-          <li @click="toggleRevealMode" v-if="players.length">
+          <li @click="toggleRevealMode" v-if="players.length && !session.isSpectator">
             <template v-if="!grimoire.isRevealMode">Grim Reveal</template>
             <template v-if="grimoire.isRevealMode">End Reveal</template>
             <em>[G]</em>
@@ -451,6 +451,7 @@ export default {
       isMuting: false,
       isUnmuting: false,
       isCalling: false,
+      grimoireStateBeforeReveal: true,
     };
   },
   async mounted() {
@@ -941,12 +942,17 @@ export default {
       "toggleModal",
     ]),
     toggleRevealMode() {
-      this.$store.commit("toggleRevealMode");
-      // Reset all player reveal states when toggling off
-      if (!this.$store.state.grimoire.isRevealMode) {
-        this.$store.state.players.players.forEach(player => {
-          player.isRevealed = false;
-        });
+      const isCurrentlyRevealing = this.$store.state.grimoire.isRevealMode;
+      
+      if (!isCurrentlyRevealing) {
+        // Entering reveal mode - set grimoire to private (disable old hide mode), reset reveals, toggle mode
+        this.$store.commit("toggleGrimoire", false); // Make grimoire private (no CSS flip)
+        this.$store.commit("players/resetReveals");
+        this.$store.commit("toggleRevealMode"); // Set isRevealMode = true
+      } else {
+        // Exiting reveal mode - just toggle mode off, DON'T reset reveals so they stay visible
+        this.$store.commit("toggleRevealMode"); // Set isRevealMode = false
+        // Don't call resetReveals here - revealed tokens should stay revealed!
       }
     },
   },

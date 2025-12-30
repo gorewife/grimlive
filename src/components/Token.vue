@@ -59,7 +59,7 @@ export default {
         return (
           typeof role.id === 'string' &&
           typeof role.name === 'string' &&
-          (!role.team || ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled'].includes(role.team))
+          (!role.team || ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'].includes(role.team))
         );
       }
     },

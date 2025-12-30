@@ -188,6 +188,11 @@ const mutations = {
       state.npcs = [];
     }
   },
+  resetReveals(state) {
+    state.players.forEach(player => {
+      player.isRevealed = false;
+    });
+  },
 };
 
 export default {
