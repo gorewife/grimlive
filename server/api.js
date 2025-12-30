@@ -753,5 +753,42 @@ export const api = {
       console.error('Failed to queue timer announcement:', error);
       return jsonResponse({ error: 'Failed to queue timer announcement' }, 500);
     }
+  },
+
+  timerCancel: async (req) => {
+    const body = await parseBody(req);
+    const { sessionCode } = body;
+
+    if (!sessionCode) {
+      return jsonResponse({ error: 'sessionCode required' }, 400);
+    }
+
+    // Verify session exists and get guild/category info
+    const sessionResult = await pool.query(
+      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+      [sessionCode]
+    );
+
+    if (!sessionResult.rows.length) {
+      return jsonResponse({ error: 'Invalid session code' }, 404);
+    }
+
+    const { guild_id, category_id } = sessionResult.rows[0];
+
+    // Queue timer cancel announcement
+    try {
+      await pool.query(`
+        INSERT INTO announcements (guild_id, category_id, announcement_type, created_at)
+        VALUES ($1, $2, 'timer_cancel', $3)
+      `, [guild_id, category_id, Math.floor(Date.now() / 1000)]);
+
+      return jsonResponse({
+        success: true,
+        message: 'Timer cancel queued'
+      });
+    } catch (error) {
+      console.error('Failed to queue timer cancel:', error);
+      return jsonResponse({ error: 'Failed to queue timer cancel' }, 500);
+    }
   }
 };

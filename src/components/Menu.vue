@@ -103,9 +103,9 @@
             Journal
             <em>[W]</em>
           </li>
-          <li @click="toggleGrimoire" v-if="players.length">
-            <template v-if="!grimoire.isPublic">Hide</template>
-            <template v-if="grimoire.isPublic">Show</template>
+          <li @click="toggleRevealMode" v-if="players.length">
+            <template v-if="!grimoire.isRevealMode">Grim Reveal</template>
+            <template v-if="grimoire.isRevealMode">End Reveal</template>
             <em>[G]</em>
           </li>
           <li @click="toggleNight" v-if="!session.isSpectator">
@@ -936,9 +936,19 @@ export default {
       "toggleNightOrder",
       "toggleStatic",
       "toggleMockAssignments",
+      "toggleRevealMode",
       "setZoom",
       "toggleModal",
     ]),
+    toggleRevealMode() {
+      this.$store.commit("toggleRevealMode");
+      // Reset all player reveal states when toggling off
+      if (!this.$store.state.grimoire.isRevealMode) {
+        this.$store.state.players.players.forEach(player => {
+          player.isRevealed = false;
+        });
+      }
+    },
   },
 };
 </script>

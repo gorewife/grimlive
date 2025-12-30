@@ -11,6 +11,7 @@ const NEWPLAYER = {
   hasResponded: {},
   isDead: false,
   pronouns: "",
+  isRevealed: false,
 };
 
 const state = () => ({

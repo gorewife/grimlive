@@ -124,7 +124,7 @@ export default {
       
       switch (key.toLocaleLowerCase()) {
         case "g":
-          this.$store.commit("toggleGrimoire");
+          this.$store.commit("toggleRevealMode");
           break;
         case "a":
           this.$refs.menu.addPlayer();

@@ -69,6 +69,12 @@
             ? 0
             : player.alignmentIndex
         "
+        :class="{ 
+          'reveal-hidden': grimoire.isRevealMode && !player.isRevealed,
+          'reveal-animation': player.isRevealed 
+        }"
+        :title="grimoire.isRevealMode && !player.isRevealed && !session.isSpectator ? `${player.role.name} - Click to reveal` : ''"
+        @click="handleRevealClick"
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
 
@@ -156,13 +162,15 @@
         @click="isMenuOpen = !isMenuOpen"
         :class="{ active: isMenuOpen }"
       >
-        <span>{{ player.name }}</span>
-        <img 
-          v-if="isStatsLinked" 
-          src="../assets/Discord--Streamline-Simple-Icons.webp" 
-          class="discord-indicator"
-          title="Stats tracking enabled"
-        />
+        <div class="name-row">
+          <span>{{ player.name }}</span>
+          <img 
+            v-if="isStatsLinked" 
+            src="../assets/Discord--Streamline-Simple-Icons.webp" 
+            class="discord-indicator"
+            title="Stats tracking enabled"
+          />
+        </div>
         <span class="pronouns" v-if="player.pronouns">{{
           player.pronouns
         }}</span>
@@ -357,6 +365,13 @@ export default {
   },
   methods: {
     getRoleIcon,
+    handleRevealClick(event) {
+      // In reveal mode, clicking token reveals it to everyone
+      if (this.grimoire.isRevealMode && !this.player.isRevealed && !this.session.isSpectator) {
+        event.stopPropagation();
+        this.updatePlayer("isRevealed", true, true);
+      }
+    },
     changeAlignment() {
       let newAlignment = this.player.alignmentIndex + 1;
       if (
@@ -938,10 +953,16 @@ li.move:not(.from) .player .overlay svg.move {
     margin-right: 2px;
   }
 
+  .name-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
   .discord-indicator {
     width: 1em;
     height: 1em;
-    margin-left: 4px;
     vertical-align: middle;
     filter: brightness(1.2);
   }
@@ -1160,6 +1181,40 @@ li.move:not(.from) .player .overlay svg.move {
 
 .circle li:hover .reminder.add:before {
   opacity: 1;
+}
+
+/***** Grim Reveal Mode *****/
+@keyframes revealFlip {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: rotateY(90deg) scale(1.1);
+    opacity: 0.1;
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.token.reveal-hidden {
+  opacity: 0.15;
+  filter: brightness(0.3) blur(2px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    opacity: 0.3;
+    filter: brightness(0.5) blur(1px);
+    transform: scale(1.05);
+  }
+}
+
+.token.reveal-animation {
+  animation: revealFlip 0.8s ease-out forwards;
+  animation-iteration-count: 1;
 }
 
 #townsquare.public .reminder {

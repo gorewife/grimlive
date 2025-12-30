@@ -116,6 +116,8 @@ const requestHandler = async (req, res) => {
         response = await api.call(req);
       } else if (path === 'timerAnnounce' && req.method === 'POST') {
         response = await api.timerAnnounce(req);
+      } else if (path === 'timerCancel' && req.method === 'POST') {
+        response = await api.timerCancel(req);
       } else if (path.startsWith('stats/game/') && req.method === 'GET') {
         const gameId = path.split('/')[2];
         response = api.getGameStats(req, gameId);

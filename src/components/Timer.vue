@@ -69,12 +69,34 @@ export default {
     },
   },
   methods: {
-    stopTimer() {
+    async stopTimer() {
       if (confirm("Stop the timer?")) {
         this.$store.commit("session/stopTimer");
         this.$store.state.grimoire.sendTimer({
           action: "stop",
         });
+
+        // Cancel timer in Discord bot if session is linked
+        const sessionCode = this.$store.state.stats.sessionCode;
+        if (sessionCode) {
+          try {
+            const baseUrl = import.meta.env.PROD
+              ? 'https://api.hystericca.dev'
+              : 'http://localhost:8001';
+            
+            await fetch(`${baseUrl}/api/timerCancel`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                sessionCode: sessionCode
+              })
+            });
+          } catch (error) {
+            console.error('Failed to cancel timer:', error);
+          }
+        }
       }
     },
     togglePause() {

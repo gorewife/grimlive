@@ -134,6 +134,7 @@ export default createStore({
       isMuted: false,
       isImageOptIn: false,
       isMockAssignmentsAllowed: false,
+      isRevealMode: false,
       zoom: 0,
       background: "",
       nightNumber: 0,
@@ -204,6 +205,7 @@ export default createStore({
     toggleNightOrder: toggle("isNightOrder"),
     toggleStatic: toggle("isStatic"),
     toggleMockAssignments: toggle("isMockAssignmentsAllowed"),
+    toggleRevealMode: toggle("isRevealMode"),
     toggleNight({ grimoire, players, edition, session }, val) {
       // Reset the hasResponded var for the next night.
       players.players.map((player) => {
