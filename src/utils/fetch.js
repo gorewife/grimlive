@@ -5,13 +5,13 @@ export async function fetchWithTimeout(url, options = {}, timeout = 10000) {
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal
+      signal: controller.signal,
     });
     clearTimeout(id);
     return response;
   } catch (error) {
     clearTimeout(id);
-    if (error.name === 'AbortError') {
+    if (error.name === "AbortError") {
       throw new Error(`Request timeout after ${timeout}ms`);
     }
     throw error;

@@ -195,24 +195,21 @@ export default {
       });
       if (
         this.roles &&
-        typeof this.roles.values === 'function' &&
-        Array.from(this.roles.values())
-          .some((role) =>
-            new Map([
-              ...(this.jinxes.get(role.id) || []),
-              ...(role.jinxes || []),
-            ])
-              .keys()
-              .some((second) => this.roles.get(second)),
-          ) &&
+        typeof this.roles.values === "function" &&
+        Array.from(this.roles.values()).some((role) =>
+          new Map([...(this.jinxes.get(role.id) || []), ...(role.jinxes || [])])
+            .keys()
+            .some((second) => this.roles.get(second)),
+        ) &&
         !npcs.some((npc) => npc.id === "djinn")
       ) {
         npcs.push(this.$store.state.npcs.get("djinn"));
       }
       if (
-        ((this.roles && typeof this.roles.values === 'function' && 
+        ((this.roles &&
+          typeof this.roles.values === "function" &&
           Array.from(this.roles.values()).some((role) => role.isCustom)) ||
-        this.edition.bootlegger) &&
+          this.edition.bootlegger) &&
         !npcs.some((npc) => npc.id === "bootlegger")
       ) {
         npcs.push(this.$store.state.npcs.get("bootlegger"));
@@ -251,7 +248,7 @@ ul.editions .edition {
   transition: all 250ms ease;
   &:hover {
     color: rgba(212, 175, 55, 1);
-    text-shadow: 
+    text-shadow:
       1px 1px 0 #000,
       -1px -1px 0 #000,
       1px -1px 0 #000,

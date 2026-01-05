@@ -220,14 +220,20 @@ export default {
   },
   mounted() {
     // Preload countdown audio
-    this.countdownAudio = new Audio(new URL('@/assets/sounds/countdown.mp3', import.meta.url).href);
-    this.countdownAudio.preload = 'auto';
-    
+    this.countdownAudio = new Audio(
+      new URL("@/assets/sounds/countdown.mp3", import.meta.url).href,
+    );
+    this.countdownAudio.preload = "auto";
+
     // Track when audio is loaded
-    this.countdownAudio.addEventListener('canplaythrough', () => {
-      this.audioLoaded = true;
-    }, { once: true });
-    
+    this.countdownAudio.addEventListener(
+      "canplaythrough",
+      () => {
+        this.audioLoaded = true;
+      },
+      { once: true },
+    );
+
     // Start loading the audio
     this.countdownAudio.load();
   },
@@ -245,16 +251,16 @@ export default {
     countdown() {
       this.$store.commit("session/lockVote", 0);
       this.$store.commit("session/setVoteInProgress", true);
-      
+
       // Play countdown sound
       if (this.countdownAudio && !this.grimoire.isMuted) {
         this.countdownAudio.currentTime = 0;
-        
+
         // If audio isn't fully loaded yet, try to load it first
         if (!this.audioLoaded) {
           this.countdownAudio.load();
         }
-        
+
         const playPromise = this.countdownAudio.play();
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
@@ -262,7 +268,7 @@ export default {
           });
         }
       }
-      
+
       this.voteTimer = setInterval(() => {
         this.start();
       }, 4000);
@@ -302,7 +308,7 @@ export default {
       this.voteTimer = null;
       this.$store.commit("session/setVoteInProgress", false);
       this.$store.commit("session/lockVote", 0);
-      
+
       // Stop countdown audio if playing
       if (this.countdownAudio) {
         this.countdownAudio.pause();
@@ -313,7 +319,7 @@ export default {
       clearInterval(this.voteTimer);
       this.$store.commit("session/addHistory", this.players);
       this.$store.commit("session/nomination");
-      
+
       // Stop countdown audio if playing
       if (this.countdownAudio) {
         this.countdownAudio.pause();
@@ -346,7 +352,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 #vote {
   position: absolute;
   top: 50%;

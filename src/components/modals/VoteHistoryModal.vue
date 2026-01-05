@@ -110,7 +110,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .clear {
   position: absolute;
   left: 20px;

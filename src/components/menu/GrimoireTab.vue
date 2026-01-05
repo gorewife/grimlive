@@ -1,5 +1,5 @@
 <template>
-  <template v-if="isActive">
+  <div v-if="isActive">
     <li class="headline">Grimoire</li>
     <li @click="$emit('toggle-modal', 'journal')">
       Journal
@@ -72,69 +72,69 @@
         />
       </em>
     </li>
-  </template>
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'GrimoireTab',
+  name: "GrimoireTab",
   props: {
     isActive: {
       type: Boolean,
-      required: true
+      required: true,
     },
     playersCount: {
       type: Number,
       required: true,
-      validator: (val) => val >= 0
+      validator: (val) => val >= 0,
     },
     isPublic: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isNight: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isSpectator: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isNightOrder: {
       type: Boolean,
-      required: true
+      required: true,
     },
     zoom: {
       type: Number,
-      required: true
+      required: true,
     },
     isOfficialEdition: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isImageOptIn: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isStatic: {
       type: Boolean,
-      required: true
+      required: true,
     },
     isMuted: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: [
-    'toggle-modal',
-    'toggle-grimoire',
-    'toggle-night',
-    'toggle-night-order',
-    'set-zoom',
-    'set-background',
-    'image-opt-in',
-    'toggle-static',
-    'toggle-muted'
-  ]
+    "toggle-modal",
+    "toggle-grimoire",
+    "toggle-night",
+    "toggle-night-order",
+    "set-zoom",
+    "set-background",
+    "image-opt-in",
+    "toggle-static",
+    "toggle-muted",
+  ],
 };
 </script>

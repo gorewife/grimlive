@@ -105,7 +105,7 @@
 
 <script>
 import Modal from "./Modal";
-import { iconImages, getRoleIcon } from "@/utils/images";
+import { getRoleIcon } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 export default {
@@ -143,16 +143,16 @@ export default {
         outsider: [],
         minion: [],
         demon: [],
-        fabled: []
+        fabled: [],
       };
       this.roles.forEach((role) => {
-        if (role.team && grouped[role.team] && role.team !== 'traveller') {
+        if (role.team && grouped[role.team] && role.team !== "traveller") {
           grouped[role.team].push(role);
         }
       });
       // Return only teams with roles
       return Object.fromEntries(
-        Object.entries(grouped).filter(([_, roles]) => roles.length > 0)
+        Object.entries(grouped).filter(([, roles]) => roles.length > 0),
       );
     },
     playersByRole: function () {
@@ -188,7 +188,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .toggle {
   position: absolute;
   left: 20px;

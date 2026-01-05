@@ -7,32 +7,29 @@
       left: position.x + 'px',
       top: position.y + 'px',
       width: size.width + 'px',
-      height: isCollapsed ? 'auto' : size.height + 'px'
+      height: isCollapsed ? 'auto' : size.height + 'px',
     }"
   >
-    <div 
-      class="journal-header" 
-      @mousedown="startDrag"
-    >
+    <div class="journal-header" @mousedown="startDrag">
       <div class="title">
         <font-awesome-icon icon="book-open" />
         Journal
       </div>
       <div class="window-controls">
-        <font-awesome-icon 
-          icon="undo" 
+        <font-awesome-icon
+          icon="undo"
           @click="resetPosition"
           class="control-btn"
           title="Reset Position"
         />
-        <font-awesome-icon 
-          :icon="isCollapsed ? 'window-maximize' : 'window-minimize'" 
+        <font-awesome-icon
+          :icon="isCollapsed ? 'window-maximize' : 'window-minimize'"
           @click="toggleCollapse"
           class="control-btn"
           :title="isCollapsed ? 'Expand' : 'Collapse'"
         />
-        <font-awesome-icon 
-          icon="times" 
+        <font-awesome-icon
+          icon="times"
           @click="toggleModal('journal')"
           class="control-btn close-btn"
           title="Close [J]"
@@ -97,7 +94,7 @@
       </div>
     </div>
 
-    <div 
+    <div
       v-if="!isCollapsed"
       class="resize-handle"
       @mousedown="startResize"
@@ -130,14 +127,14 @@ export default {
   },
   mounted() {
     this.loadJournal();
-    document.addEventListener('mousemove', this.onMouseMove);
-    document.addEventListener('mouseup', this.onMouseUp);
-    document.addEventListener('keydown', this.handleKeyboard);
+    document.addEventListener("mousemove", this.onMouseMove);
+    document.addEventListener("mouseup", this.onMouseUp);
+    document.addEventListener("keydown", this.handleKeyboard);
   },
-  beforeDestroy() {
-    document.removeEventListener('mousemove', this.onMouseMove);
-    document.removeEventListener('mouseup', this.onMouseUp);
-    document.removeEventListener('keydown', this.handleKeyboard);
+  beforeUnmount() {
+    document.removeEventListener("mousemove", this.onMouseMove);
+    document.removeEventListener("mouseup", this.onMouseUp);
+    document.removeEventListener("keydown", this.handleKeyboard);
   },
   methods: {
     ...mapMutations(["toggleModal"]),
@@ -145,29 +142,29 @@ export default {
     handleKeyboard(e) {
       // Only handle shortcuts if journal is open
       if (!this.modals.journal) return;
-      
+
       // Ctrl+N for new night
-      if (e.ctrlKey && e.key.toLowerCase() === 'n') {
+      if (e.ctrlKey && e.key.toLowerCase() === "n") {
         e.preventDefault();
-        this.addSection('night');
+        this.addSection("night");
       }
       // Ctrl+D for new day
-      else if (e.ctrlKey && e.key.toLowerCase() === 'd') {
+      else if (e.ctrlKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
-        this.addSection('day');
+        this.addSection("day");
       }
       // Ctrl+Shift+C for custom section (avoid conflict with copy)
-      else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
+      else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "c") {
         e.preventDefault();
-        this.addSection('custom');
+        this.addSection("custom");
       }
     },
-    
+
     startDrag(e) {
       this.isDragging = true;
       this.dragStart = {
         x: e.clientX - this.position.x,
-        y: e.clientY - this.position.y
+        y: e.clientY - this.position.y,
       };
     },
 
@@ -178,7 +175,7 @@ export default {
         x: e.clientX,
         y: e.clientY,
         width: this.size.width,
-        height: this.size.height
+        height: this.size.height,
       };
     },
 
@@ -186,13 +183,16 @@ export default {
       if (this.isDragging) {
         const newX = e.clientX - this.dragStart.x;
         const newY = e.clientY - this.dragStart.y;
-        
+
         // Keep at least 50px of the header visible
         const minVisible = 50;
         const maxX = window.innerWidth - minVisible;
         const maxY = window.innerHeight - minVisible;
-        
-        this.position.x = Math.max(-this.size.width + minVisible, Math.min(maxX, newX));
+
+        this.position.x = Math.max(
+          -this.size.width + minVisible,
+          Math.min(maxX, newX),
+        );
         this.position.y = Math.max(0, Math.min(maxY, newY));
         this.saveWindowState();
       } else if (this.isResizing) {
@@ -219,7 +219,7 @@ export default {
       this.size = { width: 600, height: 500 };
       this.saveWindowState();
     },
-    
+
     addSection(type) {
       let name = "";
       if (type === "night") {
@@ -232,7 +232,7 @@ export default {
         name = prompt("Enter section name:");
         if (!name) return;
       }
-      
+
       this.sections.push({
         name,
         content: "",
@@ -246,7 +246,7 @@ export default {
     deleteSection(index) {
       if (this.sections.length === 1) return;
       if (!confirm(`Delete "${this.sections[index].name}"?`)) return;
-      
+
       this.sections.splice(index, 1);
       if (this.activeSection >= this.sections.length) {
         this.activeSection = this.sections.length - 1;
@@ -267,9 +267,12 @@ export default {
       const windowState = {
         position: this.position,
         size: this.size,
-        isCollapsed: this.isCollapsed
+        isCollapsed: this.isCollapsed,
       };
-      localStorage.setItem("grimoire-journal-window", JSON.stringify(windowState));
+      localStorage.setItem(
+        "grimoire-journal-window",
+        JSON.stringify(windowState),
+      );
     },
 
     loadJournal() {
@@ -285,15 +288,17 @@ export default {
           console.error("Failed to load journal:", e);
         }
       }
-      
+
       // Initialize with first night if empty
       if (this.sections.length === 0) {
         this.nightCount = 1;
-        this.sections = [{
-          name: "Night 1",
-          content: "",
-          type: "night",
-        }];
+        this.sections = [
+          {
+            name: "Night 1",
+            content: "",
+            type: "night",
+          },
+        ];
       }
 
       // Load window state
@@ -312,16 +317,16 @@ export default {
 
     exportJournal() {
       let text = "=== GRIMOIRE JOURNAL ===\n\n";
-      this.sections.forEach(section => {
+      this.sections.forEach((section) => {
         text += `\n=== ${section.name.toUpperCase()} ===\n`;
         text += section.content || "(No notes)\n";
       });
-      
+
       const blob = new Blob([text], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `grimoire-journal-${new Date().toISOString().split('T')[0]}.txt`;
+      a.download = `grimoire-journal-${new Date().toISOString().split("T")[0]}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -330,12 +335,14 @@ export default {
 
     clearAllNotes() {
       if (!confirm("Clear ALL notes? This cannot be undone!")) return;
-      
-      this.sections = [{
-        name: "Night 1",
-        content: "",
-        type: "night",
-      }];
+
+      this.sections = [
+        {
+          name: "Night 1",
+          content: "",
+          type: "night",
+        },
+      ];
       this.activeSection = 0;
       this.nightCount = 1;
       this.dayCount = 0;
@@ -346,15 +353,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .journal-window {
   position: fixed;
   z-index: 200;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.98) 0%, rgba(26, 15, 40, 0.99) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.98) 0%,
+    rgba(26, 15, 40, 0.99) 100%
+  );
   backdrop-filter: blur(6px);
   border: 2px solid rgba(212, 175, 55, 0.4);
   border-radius: 12px;
-  box-shadow: 
+  box-shadow:
     0 0 40px rgba(123, 44, 191, 0.5),
     0 12px 32px rgba(0, 0, 0, 0.8),
     inset 0 0 60px rgba(139, 0, 0, 0.15);
@@ -375,7 +385,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.95) 0%,
+    rgba(26, 15, 40, 0.98) 100%
+  );
   border-bottom: 2px solid rgba(212, 175, 55, 0.3);
   cursor: move;
   user-select: none;
@@ -427,13 +441,13 @@ export default {
 
 .journal-controls {
   margin-bottom: 12px;
-  
+
   .tabs {
     display: flex;
     gap: 5px;
     flex-wrap: wrap;
     align-items: center;
-    
+
     .tab {
       padding: 6px 12px;
       background: rgba(26, 15, 40, 0.6);
@@ -446,59 +460,63 @@ export default {
       font-weight: 400;
       font-size: 0.95em;
       position: relative;
-      
+
       &:hover {
         background: rgba(42, 26, 61, 0.8);
         border-color: rgba(212, 175, 55, 0.5);
       }
-      
+
       &.active {
         background: rgba(42, 26, 61, 0.95);
         border-color: rgba(212, 175, 55, 0.7);
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
         color: rgba(212, 175, 55, 1);
       }
-      
+
       .delete-tab {
         margin-left: 6px;
         opacity: 0.6;
         font-size: 0.85em;
-        
+
         &:hover {
           opacity: 1;
           color: #8b0000;
         }
       }
     }
-    
+
     .add-section {
       position: relative;
       margin-left: 5px;
-      
+
       > svg {
         cursor: pointer;
         font-size: 1.3em;
         color: rgba(212, 175, 55, 0.7);
         transition: all 250ms ease;
-        
+
         &:hover {
           color: rgba(212, 175, 55, 1);
           transform: scale(1.1);
         }
       }
-      
+
       .add-menu {
         position: absolute;
         top: 100%;
         left: 0;
         margin-top: 5px;
-        background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(42, 26, 61, 0.95) 0%,
+          rgba(26, 15, 40, 0.98) 100%
+        );
         border: 2px solid rgba(212, 175, 55, 0.3);
         border-radius: 8px;
         overflow: hidden;
         z-index: 100;
         box-shadow: 0 0 20px rgba(123, 44, 191, 0.4);
-        
+
         div {
           padding: 8px 12px;
           cursor: pointer;
@@ -510,7 +528,7 @@ export default {
           justify-content: space-between;
           align-items: center;
           gap: 15px;
-          
+
           .shortcut {
             font-size: 0.75em;
             opacity: 0.6;
@@ -519,16 +537,16 @@ export default {
             padding: 2px 6px;
             border-radius: 3px;
           }
-          
+
           &:hover {
             background: rgba(42, 26, 61, 0.8);
             color: rgba(212, 175, 55, 1);
-            
+
             .shortcut {
               opacity: 0.9;
             }
           }
-          
+
           &:not(:last-child) {
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
           }
@@ -543,17 +561,23 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  
+
   .parchment-textarea {
     width: 100%;
     height: 100%;
     flex: 1;
     padding: 15px;
-    background: linear-gradient(135deg, 
-      rgba(245, 230, 211, 0.95) 0%, 
-      rgba(235, 220, 201, 0.97) 100%);
-    background-image: 
-      linear-gradient(135deg, rgba(245, 230, 211, 0.95) 0%, rgba(235, 220, 201, 0.97) 100%),
+    background: linear-gradient(
+      135deg,
+      rgba(245, 230, 211, 0.95) 0%,
+      rgba(235, 220, 201, 0.97) 100%
+    );
+    background-image:
+      linear-gradient(
+        135deg,
+        rgba(245, 230, 211, 0.95) 0%,
+        rgba(235, 220, 201, 0.97) 100%
+      ),
       repeating-linear-gradient(
         0deg,
         transparent,
@@ -563,7 +587,7 @@ export default {
       );
     border: 2px solid rgba(139, 69, 19, 0.4);
     border-radius: 8px;
-    box-shadow: 
+    box-shadow:
       inset 0 0 30px rgba(139, 69, 19, 0.1),
       0 4px 15px rgba(0, 0, 0, 0.3);
     color: #2a1810;
@@ -572,16 +596,16 @@ export default {
     line-height: 1.7;
     resize: none;
     transition: all 250ms ease;
-    
+
     &:focus {
       outline: none;
       border-color: rgba(139, 69, 19, 0.6);
-      box-shadow: 
+      box-shadow:
         inset 0 0 30px rgba(139, 69, 19, 0.15),
         0 4px 20px rgba(0, 0, 0, 0.4),
         0 0 15px rgba(212, 175, 55, 0.2);
     }
-    
+
     &::placeholder {
       color: rgba(42, 24, 16, 0.4);
       font-style: italic;
@@ -596,7 +620,7 @@ export default {
   padding-top: 10px;
   margin-top: 10px;
   border-top: 2px solid rgba(212, 175, 55, 0.3);
-  
+
   .footer-link {
     display: flex;
     align-items: center;
@@ -607,17 +631,17 @@ export default {
     cursor: pointer;
     transition: all 250ms ease;
     border-radius: 4px;
-    
+
     svg {
       font-size: 0.9em;
     }
-    
+
     &:hover {
       color: rgba(212, 175, 55, 1);
       background: rgba(212, 175, 55, 0.1);
       text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
-    
+
     &.danger:hover {
       color: #ff6b6b;
       background: rgba(255, 107, 107, 0.1);
@@ -633,7 +657,7 @@ export default {
   width: 20px;
   height: 20px;
   cursor: nwse-resize;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -657,16 +681,16 @@ export default {
     top: 5% !important;
     width: 90% !important;
     max-width: 90%;
-    
+
     .tabs {
       font-size: 0.85em;
-      
+
       .tab {
         padding: 5px 8px;
       }
     }
   }
-  
+
   .journal-content .parchment-textarea {
     font-size: 0.95em;
   }

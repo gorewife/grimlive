@@ -78,7 +78,7 @@ import { getEditionImage } from "@/utils/images";
 
 export default {
   methods: {
-    getEditionImage
+    getEditionImage,
   },
   computed: {
     teams: function () {
@@ -103,7 +103,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .info {
   position: absolute;
   top: 50%;

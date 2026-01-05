@@ -5,7 +5,7 @@
   >
     <h3>⏰ The Hourglass Turns</h3>
     <p class="timer-description">Set the sands of time...</p>
-    
+
     <div class="timer-presets">
       <button
         v-for="preset in presets"
@@ -51,7 +51,11 @@
     </div>
 
     <div class="button-group">
-      <button @click="startTimer" :disabled="duration === 0" class="start-button">
+      <button
+        @click="startTimer"
+        :disabled="duration === 0"
+        class="start-button"
+      >
         <font-awesome-icon icon="play" />
         Begin
       </button>
@@ -63,7 +67,8 @@
     <div class="timer-info">
       <p>
         <font-awesome-icon icon="bell" />
-        When time expires, the bell tolls and all players are called to the town square.
+        When time expires, the bell tolls and all players are called to the town
+        square.
       </p>
     </div>
   </Modal>
@@ -93,7 +98,7 @@ export default {
   computed: {
     ...mapState(["modals", "session"]),
     ...mapState("stats", {
-      sessionCode: state => state.sessionCode
+      sessionCode: (state) => state.sessionCode,
     }),
   },
   methods: {
@@ -120,7 +125,7 @@ export default {
       if (this.duration === 0) return;
 
       const endTime = Date.now() + this.duration * 1000;
-      
+
       this.$store.commit("session/startTimer", {
         duration: this.duration,
         endTime: endTime,
@@ -138,26 +143,26 @@ export default {
       if (this.sessionCode) {
         try {
           const baseUrl = import.meta.env.PROD
-            ? 'https://api.hystericca.dev'
-            : 'http://localhost:8001';
-          
+            ? "https://api.hystericca.dev"
+            : "http://localhost:8001";
+
           await fetch(`${baseUrl}/api/timerAnnounce`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               sessionCode: this.sessionCode,
-              duration: this.duration
-            })
+              duration: this.duration,
+            }),
           });
         } catch (error) {
-          console.error('Failed to announce timer:', error);
+          console.error("Failed to announce timer:", error);
         }
       }
 
       this.toggleModal("timer");
-      
+
       this.duration = 0;
       this.customMinutes = 0;
       this.customSeconds = 0;
@@ -331,7 +336,9 @@ h3 {
 
     &:hover:not(:disabled) {
       background: rgba(212, 175, 55, 0.3);
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 6px 15px rgba(0, 0, 0, 0.5);
+      box-shadow:
+        0 0 20px rgba(212, 175, 55, 0.4),
+        0 6px 15px rgba(0, 0, 0, 0.5);
       transform: translateY(-2px);
     }
 

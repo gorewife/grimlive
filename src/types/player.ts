@@ -5,7 +5,7 @@
 export interface Role {
   id: string;
   name: string;
-  team: 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled';
+  team: "townsfolk" | "outsider" | "minion" | "demon" | "traveller" | "fabled";
   ability: string;
   edition: string;
   firstNight: number;

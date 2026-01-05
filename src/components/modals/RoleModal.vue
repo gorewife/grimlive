@@ -193,7 +193,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
 .modal {
   overflow-y: auto;
   overflow-x: hidden;

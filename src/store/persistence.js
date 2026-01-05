@@ -17,7 +17,7 @@ export default (store) => {
   loadFlag("static", "toggleStatic");
   loadFlag("mockAssignments", "toggleMockAssignments");
   loadFlag("imageOptIn", "toggleImageOptIn");
-  
+
   if (localStorage.zoom) {
     store.commit("setZoom", parseFloat(localStorage.zoom));
   }

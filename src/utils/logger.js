@@ -3,12 +3,14 @@ const LOG_LEVELS = {
   INFO: 1,
   WARN: 2,
   ERROR: 3,
-  NONE: 4
+  NONE: 4,
 };
 
-const CURRENT_LEVEL = import.meta.env.VITE_LOG_LEVEL 
-  ? LOG_LEVELS[import.meta.env.VITE_LOG_LEVEL.toUpperCase()] 
-  : (import.meta.env.PROD ? LOG_LEVELS.ERROR : LOG_LEVELS.DEBUG);
+const CURRENT_LEVEL = import.meta.env.VITE_LOG_LEVEL
+  ? LOG_LEVELS[import.meta.env.VITE_LOG_LEVEL.toUpperCase()]
+  : import.meta.env.PROD
+    ? LOG_LEVELS.ERROR
+    : LOG_LEVELS.DEBUG;
 
 class Logger {
   debug(message, ...args) {

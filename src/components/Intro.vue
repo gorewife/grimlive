@@ -3,8 +3,7 @@
     <img src="/static/apple-icon.png" alt="" class="logo" />
     <div>
       Welcome to the (unofficial)
-      <b>Virtual Grimoire</b> for Grim!
-      Please add more players through the
+      <b>Virtual Grimoire</b> for Grim! Please add more players through the
       <span class="button" @click="toggleMenu">
         <font-awesome-icon icon="cog" /> Menu
       </span>
@@ -12,8 +11,7 @@
       session by pressing <b>[J]</b>.<br />
       <div class="footer">
         This project is free and open source and can be found on
-        <a href="https://github.com/gorewife/grimlive" target="_blank"
-          >GitHub</a
+        <a href="https://github.com/gorewife/grimlive" target="_blank">GitHub</a
         >. It is not affiliated with The Pandemonium Institute. "Blood on the
         Clocktower" is a trademark of Steven Medway and The Pandemonium
         Institute.
@@ -51,10 +49,14 @@ export default {
   font-size: 120%;
   position: absolute;
   padding: 10px;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.9) 0%,
+    rgba(26, 15, 40, 0.95) 100%
+  );
   backdrop-filter: blur(4px);
   border: 2px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 
+  box-shadow:
     0 0 30px rgba(123, 44, 191, 0.3),
     0 8px 20px rgba(0, 0, 0, 0.7),
     inset 0 0 40px rgba(139, 0, 0, 0.1);
@@ -73,7 +75,11 @@ export default {
     top: 100%;
     margin-top: 2vh;
     padding: 10px;
-    background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(42, 26, 61, 0.9) 0%,
+      rgba(26, 15, 40, 0.95) 100%
+    );
     backdrop-filter: blur(4px);
     border: 2px solid rgba(212, 175, 55, 0.3);
     box-shadow: 0 0 20px rgba(123, 44, 191, 0.3);
@@ -98,7 +104,7 @@ export default {
     margin-bottom: 2vh;
     max-width: 192px;
     border-radius: 50%;
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(123, 44, 191, 0.4),
       0 4px 20px rgba(0, 0, 0, 0.8);
     border: 3px solid rgba(212, 175, 55, 0.3);

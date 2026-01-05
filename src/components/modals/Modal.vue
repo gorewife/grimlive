@@ -51,7 +51,11 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: radial-gradient(ellipse at center, rgba(42, 26, 61, 0.7) 0%, rgba(0, 0, 0, 0.85) 100%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(42, 26, 61, 0.7) 0%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
@@ -61,16 +65,24 @@ export default {
 }
 
 @keyframes backdropFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.95) 0%,
+    rgba(26, 15, 40, 0.98) 100%
+  );
   padding: 20px 30px;
   border-radius: 15px;
   border: 2px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 
+  box-shadow:
     0 0 40px rgba(123, 44, 191, 0.4),
     0 8px 32px rgba(0, 0, 0, 0.8),
     inset 0 0 60px rgba(139, 0, 0, 0.1);
@@ -80,15 +92,20 @@ export default {
   max-width: 80%;
   position: relative;
   animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 175, 55, 0.5),
+      transparent
+    );
   }
 
   @keyframes modalSlideIn {

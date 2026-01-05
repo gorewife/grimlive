@@ -10,12 +10,14 @@
           <div class="timer-label">Time Remaining</div>
         </div>
         <div v-if="!session.isSpectator" class="timer-controls">
-          <button 
-            @click="togglePause" 
-            class="pause-button" 
+          <button
+            @click="togglePause"
+            class="pause-button"
             :title="session.timer.isPaused ? 'Resume Timer' : 'Pause Timer'"
           >
-            <font-awesome-icon :icon="session.timer.isPaused ? 'play' : 'pause'" />
+            <font-awesome-icon
+              :icon="session.timer.isPaused ? 'play' : 'pause'"
+            />
           </button>
           <button @click="stopTimer" class="stop-button" title="Stop Timer">
             <font-awesome-icon icon="times" />
@@ -23,7 +25,10 @@
         </div>
       </div>
       <div class="timer-progress">
-        <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+        <div
+          class="progress-bar"
+          :style="{ width: progressPercent + '%' }"
+        ></div>
       </div>
     </div>
   </transition>
@@ -52,7 +57,10 @@ export default {
       if (!this.session.timer.endTime) {
         return 0;
       }
-      const remaining = Math.max(0, Math.floor((this.session.timer.endTime - this.now) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.floor((this.session.timer.endTime - this.now) / 1000),
+      );
       return remaining;
     },
     formattedTime() {
@@ -81,20 +89,20 @@ export default {
         if (sessionCode) {
           try {
             const baseUrl = import.meta.env.PROD
-              ? 'https://api.hystericca.dev'
-              : 'http://localhost:8001';
-            
+              ? "https://api.hystericca.dev"
+              : "http://localhost:8001";
+
             await fetch(`${baseUrl}/api/timerCancel`, {
-              method: 'POST',
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
-              body: JSON.stringify({ 
-                sessionCode: sessionCode
-              })
+              body: JSON.stringify({
+                sessionCode: sessionCode,
+              }),
             });
           } catch (error) {
-            console.error('Failed to cancel timer:', error);
+            console.error("Failed to cancel timer:", error);
           }
         }
       }
@@ -118,21 +126,27 @@ export default {
     },
     updateNow() {
       this.now = Date.now();
-      
+
       // Check if timer has expired (only when not paused)
-      if (this.remainingSeconds === 0 && this.session.timer.isActive && !this.session.timer.isPaused) {
+      if (
+        this.remainingSeconds === 0 &&
+        this.session.timer.isActive &&
+        !this.session.timer.isPaused
+      ) {
         this.handleTimerComplete();
       }
     },
     handleTimerComplete() {
       // Play bell sound at 80% volume
-      const audio = new Audio(new URL('@/assets/sounds/countdown.mp3', import.meta.url).href);
+      const audio = new Audio(
+        new URL("@/assets/sounds/countdown.mp3", import.meta.url).href,
+      );
       audio.volume = 0.8;
       audio.play();
 
       // Stop the timer
       this.$store.commit("session/stopTimer");
-      
+
       // Notify other clients (bot handles town square logic if connected)
       this.$store.state.grimoire.sendTimer({
         action: "complete",
@@ -170,17 +184,20 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
 .timer-display {
   position: fixed;
   top: 80px;
   right: 20px;
   min-width: 280px;
-  background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(20, 20, 20, 0.99) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 15, 15, 0.98) 0%,
+    rgba(20, 20, 20, 0.99) 100%
+  );
   backdrop-filter: blur(6px);
   border: 2px solid rgba(100, 100, 100, 0.4);
   border-radius: 12px;
-  box-shadow: 
+  box-shadow:
     0 0 40px rgba(0, 0, 0, 0.9),
     0 12px 32px rgba(0, 0, 0, 0.8),
     inset 0 0 60px rgba(30, 30, 30, 0.3);
@@ -188,13 +205,18 @@ export default {
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(150, 150, 150, 0.4), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(150, 150, 150, 0.4),
+      transparent
+    );
   }
 }
 
@@ -213,7 +235,8 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -233,7 +256,7 @@ export default {
   font-size: 2.2em;
   font-weight: 400;
   color: rgba(230, 230, 230, 0.95);
-  text-shadow: 
+  text-shadow:
     0 0 10px rgba(255, 255, 255, 0.3),
     0 2px 6px rgba(0, 0, 0, 0.8);
   line-height: 1;
@@ -242,7 +265,8 @@ export default {
 }
 
 .timer-label {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 0.75em;
   color: rgba(160, 160, 160, 0.75);
   text-transform: uppercase;
@@ -260,7 +284,11 @@ export default {
 .stop-button {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, rgba(60, 60, 60, 0.9) 0%, rgba(70, 70, 70, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(60, 60, 60, 0.9) 0%,
+    rgba(70, 70, 70, 0.95) 100%
+  );
   border: 2px solid rgba(100, 100, 100, 0.7);
   border-radius: 50%;
   color: rgba(220, 220, 220, 0.9);
@@ -273,9 +301,15 @@ export default {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
 
   &:hover {
-    background: linear-gradient(135deg, rgba(80, 80, 80, 0.95) 0%, rgba(90, 90, 90, 1) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(80, 80, 80, 0.95) 0%,
+      rgba(90, 90, 90, 1) 100%
+    );
     border-color: rgba(150, 150, 150, 0.8);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.25), 0 0 15px rgba(150, 150, 150, 0.3);
+    box-shadow:
+      0 0 20px rgba(255, 255, 255, 0.25),
+      0 0 15px rgba(150, 150, 150, 0.3);
     transform: scale(1.1);
   }
 
@@ -293,8 +327,9 @@ export default {
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(120, 120, 120, 0.8) 0%, 
+  background: linear-gradient(
+    90deg,
+    rgba(120, 120, 120, 0.8) 0%,
     rgba(150, 150, 150, 0.9) 50%,
     rgba(180, 180, 180, 0.95) 100%
   );
@@ -303,7 +338,7 @@ export default {
   position: relative;
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: 0;

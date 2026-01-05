@@ -331,7 +331,7 @@ export default {
       ];
     },
     setResponded(player, roleId) {
-      var hasResponded = { ...player.hasResponded };
+      const hasResponded = { ...player.hasResponded };
       hasResponded[roleId] = !hasResponded[roleId];
       this.$store.commit("players/update", {
         player: player,
@@ -345,7 +345,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .toggle {
   position: absolute;
   left: 20px;
@@ -496,11 +495,17 @@ ul {
       bottom: 0;
       width: 500px;
       z-index: 25;
-      background: linear-gradient(135deg, rgba(42, 26, 61, 0.95) 0%, rgba(26, 15, 40, 0.98) 100%);
+      background: linear-gradient(
+        135deg,
+        rgba(42, 26, 61, 0.95) 0%,
+        rgba(26, 15, 40, 0.98) 100%
+      );
       backdrop-filter: blur(4px);
       border-radius: 10px;
       border: 2px solid rgba(212, 175, 55, 0.3);
-      box-shadow: 0 0 20px rgba(123, 44, 191, 0.4), 0 8px 15px rgba(0, 0, 0, 0.7);
+      box-shadow:
+        0 0 20px rgba(123, 44, 191, 0.4),
+        0 8px 15px rgba(0, 0, 0, 0.7);
       text-align: left;
       pointer-events: none;
       opacity: 0;

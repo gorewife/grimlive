@@ -34,9 +34,9 @@
       <h3>
         <span v-if="session.isSpectator">Other Characters</span>
         <span v-else>Demon Bluffs</span>
-        <font-awesome-icon 
-          :icon="isBluffsOpen ? 'times-circle' : 'plus-circle'" 
-          @click.stop="toggleBluffs" 
+        <font-awesome-icon
+          :icon="isBluffsOpen ? 'times-circle' : 'plus-circle'"
+          @click.stop="toggleBluffs"
         />
       </h3>
       <ul>
@@ -53,9 +53,9 @@
     <div class="npcs" :class="{ closed: !isNpcsOpen }" v-if="npcs.length">
       <h3>
         <span>NPCs</span>
-        <font-awesome-icon 
-          :icon="isNpcsOpen ? 'times-circle' : 'plus-circle'" 
-          @click.stop="toggleNpcs" 
+        <font-awesome-icon
+          :icon="isNpcsOpen ? 'times-circle' : 'plus-circle'"
+          @click.stop="toggleNpcs"
         />
       </h3>
       <ul>
@@ -101,16 +101,16 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, defineComponent } from 'vue';
-import { useStore } from 'vuex';
-import type { Player as PlayerType, Role } from '@/types/player';
+import { ref, computed, defineComponent } from "vue";
+import { useStore } from "vuex";
 import Player from "./Player.vue";
 import Token from "./Token.vue";
 import ReminderModal from "./modals/ReminderModal.vue";
 import RoleModal from "./modals/RoleModal.vue";
+import type { Player as PlayerType, Role } from "@/types/player";
 
 export default defineComponent({
-  name: 'TownSquare',
+  name: "TownSquare",
   components: {
     Player,
     Token,
@@ -119,7 +119,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-    
+
     // Refs
     const selectedPlayer = ref<number>(0);
     const bluffSize = ref<number>(3);
@@ -128,7 +128,7 @@ export default defineComponent({
     const nominate = ref<number>(-1);
     const isBluffsOpen = ref<boolean>(true);
     const isNpcsOpen = ref<boolean>(true);
-    
+
     // Computed properties from Vuex
     const grimoire = computed(() => store.state.grimoire);
     const roles = computed(() => store.state.roles);
@@ -136,25 +136,28 @@ export default defineComponent({
     const players = computed<PlayerType[]>(() => store.state.players.players);
     const bluffs = computed<Role[]>(() => store.state.players.bluffs);
     const npcs = computed<Role[]>(() => store.state.players.npcs);
-    const nightOrder = computed(() => store.getters['players/nightOrder']);
+    const nightOrder = computed(() => store.getters["players/nightOrder"]);
     const discordUserId = computed(() => store.state.stats.discordUserId);
-    
+
     // Methods
     const toggleBluffs = () => {
       isBluffsOpen.value = !isBluffsOpen.value;
     };
-    
+
     const toggleNpcs = () => {
       isNpcsOpen.value = !isNpcsOpen.value;
     };
-    
+
     const removeNpc = (index: number) => {
       if (session.value.isSpectator) return;
       store.commit("players/setNpcs", { index });
     };
-    
-    const handleTrigger = (playerIndex: number, [method, params]: [string, any?]) => {
-      const methods: Record<string, (from: number, to?: any) => void> = {
+
+    const handleTrigger = (
+      playerIndex: number,
+      [method, params]: [string, any?],
+    ) => {
+      const methods: Record<string, Function> = {
         claimSeat,
         openReminderModal,
         openRoleModal,
@@ -164,12 +167,12 @@ export default defineComponent({
         nominatePlayer,
         cancel,
       };
-      
+
       if (methods[method]) {
         methods[method](playerIndex, params);
       }
     };
-    
+
     const claimSeat = (playerIndex: number) => {
       if (!session.value.isSpectator) return;
       const player = players.value[playerIndex];
@@ -182,17 +185,17 @@ export default defineComponent({
           store.commit("players/update", {
             player: players.value[playerIndex],
             property: "discord_id",
-            value: discordUserId.value
+            value: discordUserId.value,
           });
         }
       }
     };
-    
+
     const openReminderModal = (playerIndex: number) => {
       selectedPlayer.value = playerIndex;
       store.commit("toggleModal", "reminder");
     };
-    
+
     const openRoleModal = (playerIndex: number) => {
       const player = players.value[playerIndex];
       if (
@@ -204,7 +207,7 @@ export default defineComponent({
       selectedPlayer.value = playerIndex;
       store.commit("toggleModal", "role");
     };
-    
+
     const removePlayer = (playerIndex: number) => {
       if (session.value.isSpectator || session.value.lockedVote) return;
       if (
@@ -231,7 +234,7 @@ export default defineComponent({
         store.commit("players/remove", playerIndex);
       }
     };
-    
+
     const swapPlayer = (from: number, to?: PlayerType) => {
       if (session.value.isSpectator || session.value.lockedVote) return;
       if (to === undefined) {
@@ -241,11 +244,13 @@ export default defineComponent({
         if (session.value.nomination) {
           // update nomination if one of the involved players is swapped
           const swapTo = players.value.indexOf(to);
-          const updatedNomination = session.value.nomination.map((nom: number) => {
-            if (nom === swap.value) return swapTo;
-            if (nom === swapTo) return swap.value;
-            return nom;
-          }) as [number, number];
+          const updatedNomination = session.value.nomination.map(
+            (nom: number) => {
+              if (nom === swap.value) return swapTo;
+              if (nom === swapTo) return swap.value;
+              return nom;
+            },
+          ) as [number, number];
           if (
             session.value.nomination[0] !== updatedNomination[0] ||
             session.value.nomination[1] !== updatedNomination[1]
@@ -253,14 +258,11 @@ export default defineComponent({
             store.commit("session/setNomination", updatedNomination);
           }
         }
-        store.commit("players/swap", [
-          swap.value,
-          players.value.indexOf(to),
-        ]);
+        store.commit("players/swap", [swap.value, players.value.indexOf(to)]);
         cancel();
       }
     };
-    
+
     const movePlayer = (from: number, to?: PlayerType) => {
       if (session.value.isSpectator || session.value.lockedVote) return;
       if (to === undefined) {
@@ -270,12 +272,14 @@ export default defineComponent({
         if (session.value.nomination) {
           // update nomination if it is affected by the move
           const moveTo = players.value.indexOf(to);
-          const updatedNomination = session.value.nomination.map((nom: number) => {
-            if (nom === move.value) return moveTo;
-            if (nom > move.value && nom <= moveTo) return nom - 1;
-            if (nom < move.value && nom >= moveTo) return nom + 1;
-            return nom;
-          }) as [number, number];
+          const updatedNomination = session.value.nomination.map(
+            (nom: number) => {
+              if (nom === move.value) return moveTo;
+              if (nom > move.value && nom <= moveTo) return nom - 1;
+              if (nom < move.value && nom >= moveTo) return nom + 1;
+              return nom;
+            },
+          ) as [number, number];
           if (
             session.value.nomination[0] !== updatedNomination[0] ||
             session.value.nomination[1] !== updatedNomination[1]
@@ -283,14 +287,11 @@ export default defineComponent({
             store.commit("session/setNomination", updatedNomination);
           }
         }
-        store.commit("players/move", [
-          move.value,
-          players.value.indexOf(to),
-        ]);
+        store.commit("players/move", [move.value, players.value.indexOf(to)]);
         cancel();
       }
     };
-    
+
     const nominatePlayer = (from: number, to?: PlayerType) => {
       if (session.value.isSpectator || session.value.lockedVote) return;
       if (to === undefined) {
@@ -300,18 +301,21 @@ export default defineComponent({
           nominate.value = from;
         }
       } else {
-        const nomination: [number, number] = [nominate.value, players.value.indexOf(to)];
+        const nomination: [number, number] = [
+          nominate.value,
+          players.value.indexOf(to),
+        ];
         store.commit("session/nomination", { nomination });
         cancel();
       }
     };
-    
+
     const cancel = () => {
       move.value = -1;
       swap.value = -1;
       nominate.value = -1;
     };
-    
+
     return {
       // Refs
       selectedPlayer,
@@ -321,7 +325,7 @@ export default defineComponent({
       nominate,
       isBluffsOpen,
       isNpcsOpen,
-      
+
       // Computed
       grimoire,
       roles,
@@ -330,7 +334,7 @@ export default defineComponent({
       bluffs,
       npcs,
       nightOrder,
-      
+
       // Methods
       toggleBluffs,
       toggleNpcs,
@@ -496,11 +500,15 @@ export default defineComponent({
     top: 10px;
   }
   left: 10px;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.9) 0%,
+    rgba(26, 15, 40, 0.95) 100%
+  );
   backdrop-filter: blur(4px);
   border-radius: 10px;
   border: 2px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 
+  box-shadow:
     0 0 30px rgba(123, 44, 191, 0.3),
     0 8px 20px rgba(0, 0, 0, 0.7),
     inset 0 0 40px rgba(139, 0, 0, 0.1);

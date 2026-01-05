@@ -7,12 +7,14 @@
  */
 const handleVote = (state, [index, vote]) => {
   if (!state.nomination) return;
-  
+
   // Determine expected player count from nomination or existing votes
   // The nomination indices give us a minimum player count
-  const minPlayerCount = state.nomination ? Math.max(...state.nomination) + 1 : 0;
+  const minPlayerCount = state.nomination
+    ? Math.max(...state.nomination) + 1
+    : 0;
   const expectedCount = Math.max(minPlayerCount, index + 1, state.votes.length);
-  
+
   // Ensure votes array is properly sized (fill with 0s if needed)
   if (state.votes.length < expectedCount) {
     const newVotes = Array(expectedCount).fill(0);
@@ -24,11 +26,10 @@ const handleVote = (state, [index, vote]) => {
   } else {
     state.votes = [...state.votes];
   }
-  
+
   // Handle undefined votes (treat as 0)
   const currentVote = state.votes[index] || 0;
-  state.votes[index] =
-    vote === undefined ? (currentVote === 1 ? 0 : 1) : vote;
+  state.votes[index] = vote === undefined ? (currentVote === 1 ? 0 : 1) : vote;
 };
 
 const state = () => ({
@@ -170,14 +171,17 @@ const mutations = {
   },
   pauseTimer(state) {
     if (!state.timer.isActive || state.timer.isPaused) return;
-    const remaining = Math.max(0, Math.floor((state.timer.endTime - Date.now()) / 1000));
+    const remaining = Math.max(
+      0,
+      Math.floor((state.timer.endTime - Date.now()) / 1000),
+    );
     state.timer.isPaused = true;
     state.timer.pausedTime = Date.now();
     state.timer.pausedRemaining = remaining;
   },
   resumeTimer(state) {
     if (!state.timer.isActive || !state.timer.isPaused) return;
-    const newEndTime = Date.now() + (state.timer.pausedRemaining * 1000);
+    const newEndTime = Date.now() + state.timer.pausedRemaining * 1000;
     state.timer.endTime = newEndTime;
     state.timer.isPaused = false;
     state.timer.pausedTime = null;

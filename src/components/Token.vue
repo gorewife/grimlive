@@ -57,16 +57,25 @@ export default {
         if (!role.id) return true;
         // Validate required role properties
         return (
-          typeof role.id === 'string' &&
-          typeof role.name === 'string' &&
-          (!role.team || ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric'].includes(role.team))
+          typeof role.id === "string" &&
+          typeof role.name === "string" &&
+          (!role.team ||
+            [
+              "townsfolk",
+              "outsider",
+              "minion",
+              "demon",
+              "traveller",
+              "fabled",
+              "loric",
+            ].includes(role.team))
         );
-      }
+      },
     },
     alignmentIndex: {
       type: Number,
       default: 0,
-      validator: (val) => val >= 0 && val <= 2
+      validator: (val) => val >= 0 && val <= 2,
     },
   },
   computed: {
@@ -76,7 +85,7 @@ export default {
         (this.role.remindersGlobal || []).length
       );
     },
-    nameToFontSize: function() {
+    nameToFontSize: function () {
       const name = this.role.name;
       return name && name.length > 10 ? "90%" : "110%";
     },
@@ -95,7 +104,8 @@ export default {
       }
 
       // Construct the path to match the glob import keys
-      const path = "../assets/icons/" +
+      const path =
+        "../assets/icons/" +
         (this.alignmentIndex > 0 ? "Alternate/" : "") +
         (role.imageAlt || role.id) +
         (this.role.team === "traveller"
@@ -108,7 +118,7 @@ export default {
         ".webp";
 
       // Return the imported image URL
-      return iconImages[path] || '';
+      return iconImages[path] || "";
     },
     setRole() {
       this.$emit("set-role");
@@ -125,7 +135,7 @@ export default {
   background-size: 100%;
   text-align: center;
   border: 3px solid #2a1a3d;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(123, 44, 191, 0.3),
     0 4px 15px rgba(0, 0, 0, 0.6),
     inset 0 0 30px rgba(139, 0, 0, 0.1);
@@ -135,9 +145,9 @@ export default {
   justify-content: center;
   transition: all 350ms ease;
   position: relative;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -3px;
     left: -3px;
@@ -147,11 +157,11 @@ export default {
     border: 1px solid rgba(212, 175, 55, 0.2);
     pointer-events: none;
   }
-  
+
   &:hover {
     transform: scale(1.05);
     border-color: #4a2a5d;
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(123, 44, 191, 0.5),
       0 6px 20px rgba(0, 0, 0, 0.8),
       inset 0 0 40px rgba(139, 0, 0, 0.15);
@@ -240,7 +250,7 @@ export default {
       paint-order: stroke;
       font-family: "Sorts Mill Goudy", serif;
       font-weight: bold;
-      text-shadow: 
+      text-shadow:
         0 0 10px rgba(0, 0, 0, 0.8),
         0 2px 4px rgba(0, 0, 0, 0.9);
       letter-spacing: 1.5px;
@@ -250,7 +260,7 @@ export default {
         &.mozilla {
           // Vue doesn't support scoped media queries, so we have to use a second css class
           stroke: none;
-          text-shadow: 
+          text-shadow:
             0 2px 0 black,
             0 -2px 0 black,
             2px 0 0 black,

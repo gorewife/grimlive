@@ -26,22 +26,25 @@
     <div class="backdrop" aria-hidden="true"></div>
     <transition name="blur" mode="out-in">
       <Intro v-if="!players.length" key="intro"></Intro>
-      <TownInfo v-else-if="players.length && !session.nomination" key="towninfo"></TownInfo>
+      <TownInfo
+        v-else-if="players.length && !session.nomination"
+        key="towninfo"
+      ></TownInfo>
       <Vote v-else key="vote" ref="vote"></Vote>
     </transition>
-    
+
     <ErrorBoundary fallback-title="Town Square Error">
       <TownSquare></TownSquare>
     </ErrorBoundary>
-    
+
     <ErrorBoundary fallback-title="Timer Error">
       <Timer></Timer>
     </ErrorBoundary>
-    
+
     <ErrorBoundary fallback-title="Menu Error">
       <Menu ref="menu"></Menu>
     </ErrorBoundary>
-    
+
     <ErrorBoundary fallback-title="Modal Error">
       <EditionModal />
       <EndGameModal @winner-selected="handleWinnerSelected" />
@@ -54,7 +57,7 @@
       <VoteHistoryModal />
       <GameStateModal />
     </ErrorBoundary>
-    
+
     <Gradients />
     <span id="version" aria-label="Version">v{{ version }}</span>
   </div>
@@ -114,14 +117,17 @@ export default {
   },
   methods: {
     keyup(event) {
-      const { key, ctrlKey, metaKey, target, shiftKey } = event;
+      const { key, ctrlKey, metaKey, target } = event;
       if (ctrlKey || metaKey) return;
-      
+
       // Ignore keyboard shortcuts if user is typing in an input field
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA")
+      ) {
         return;
       }
-      
+
       switch (key.toLocaleLowerCase()) {
         case "g":
           if (this.session.isSpectator) return;
@@ -193,7 +199,6 @@ export default {
 </script>
 
 <style lang="scss">
-
 @font-face {
   font-family: "Papyrus";
   src: url("assets/fonts/papyrus.eot"); /* IE9*/
@@ -247,7 +252,7 @@ a:focus-visible,
   padding: 8px;
   text-decoration: none;
   z-index: 10000;
-  
+
   &:focus {
     top: 0;
   }
@@ -361,13 +366,19 @@ ul {
     0 0 15px rgba(123, 44, 191, 0.3),
     0 4px 10px rgba(0, 0, 0, 0.6);
   background:
-    radial-gradient(at 0 -15%, rgba(212, 175, 55, 0.1) 70%, rgba(255, 255, 255, 0) 71%) 0 0/ 80%
-      90% no-repeat content-box,
+    radial-gradient(
+        at 0 -15%,
+        rgba(212, 175, 55, 0.1) 70%,
+        rgba(255, 255, 255, 0) 71%
+      )
+      0 0/ 80% 90% no-repeat content-box,
     linear-gradient(#3a2a4a, #1a0a2a) content-box,
     linear-gradient(#2a1a3d, #0d0515) border-box;
   color: #f5e6d3;
   font-weight: bold;
-  text-shadow: 0 0 8px rgba(123, 44, 191, 0.5), 1px 1px rgba(0, 0, 0, 0.8);
+  text-shadow:
+    0 0 8px rgba(123, 44, 191, 0.5),
+    1px 1px rgba(0, 0, 0, 0.8);
   line-height: 170%;
   margin: 5px auto;
   cursor: pointer;
@@ -379,7 +390,9 @@ ul {
       inset 0 1px 1px rgba(212, 175, 55, 0.3),
       0 0 25px rgba(123, 44, 191, 0.5),
       0 4px 15px rgba(0, 0, 0, 0.7);
-    text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 1px 1px rgba(0, 0, 0, 0.8);
+    text-shadow:
+      0 0 12px rgba(212, 175, 55, 0.6),
+      1px 1px rgba(0, 0, 0, 0.8);
   }
   &.disabled {
     color: #6a5a7a;

@@ -32,8 +32,16 @@
         'alignment-' + player.alignmentIndex,
       ]"
     >
-      <div class="shroud" v-if="!grimoire.isRevealMode" @click="toggleStatus()"></div>
-      <div class="life" v-if="!grimoire.isRevealMode" @click="toggleStatus()"></div>
+      <div
+        class="shroud"
+        v-if="!grimoire.isRevealMode"
+        @click="toggleStatus()"
+      ></div>
+      <div
+        class="life"
+        v-if="!grimoire.isRevealMode"
+        @click="toggleStatus()"
+      ></div>
 
       <div
         class="night-order first"
@@ -62,32 +70,48 @@
         }}</span>
       </div>
 
-      <div 
-        v-if="grimoire.isRevealMode && !player.isRevealed && !session.isSpectator"
+      <div
+        v-if="
+          grimoire.isRevealMode && !player.isRevealed && !session.isSpectator
+        "
         class="reveal-overlay"
         @click.stop="revealPlayer"
         :title="`${player.role.name} - Click to reveal`"
       ></div>
 
       <Token
-        :role="grimoire.isRevealMode && !session.isSpectator && player.isRevealed !== true ? {} : player.role"
+        :role="
+          grimoire.isRevealMode &&
+          !session.isSpectator &&
+          player.isRevealed !== true
+            ? {}
+            : player.role
+        "
         :alignmentIndex="
           player.role.team === 'traveller' && grimoire.isPublic
             ? 0
             : player.alignmentIndex
         "
-        :class="{ 
-          'reveal-animation': grimoire.isRevealMode && player.isRevealed
+        :class="{
+          'reveal-animation': grimoire.isRevealMode && player.isRevealed,
         }"
-        :style="grimoire.isRevealMode && !session.isSpectator && player.isRevealed !== true ? {
-          opacity: 0.3,
-          transition: 'opacity 1.5s ease-out',
-          transitionDelay: (index * 0.1) + 's',
-          cursor: 'pointer',
-          transform: 'perspective(400px) rotateY(0deg) !important'
-        } : player.isRevealed && !grimoire.isRevealMode && session.isSpectator ? {
-          transform: 'perspective(400px) rotateY(0deg) !important'
-        } : {}"
+        :style="
+          grimoire.isRevealMode &&
+          !session.isSpectator &&
+          player.isRevealed !== true
+            ? {
+                opacity: 0.3,
+                transition: 'opacity 1.5s ease-out',
+                transitionDelay: index * 0.1 + 's',
+                cursor: 'pointer',
+                transform: 'perspective(400px) rotateY(0deg) !important',
+              }
+            : player.isRevealed && !grimoire.isRevealMode && session.isSpectator
+              ? {
+                  transform: 'perspective(400px) rotateY(0deg) !important',
+                }
+              : {}
+        "
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
 
@@ -174,18 +198,21 @@
         class="name"
         @click="grimoire.isRevealMode ? null : (isMenuOpen = !isMenuOpen)"
         :class="{ active: isMenuOpen }"
-        :style="{ 
+        :style="{
           pointerEvents: grimoire.isRevealMode ? 'none' : 'auto',
           opacity: grimoire.isRevealMode && !player.isRevealed ? 0.3 : 1,
           transition: 'opacity 1.5s ease-out',
-          transitionDelay: grimoire.isRevealMode && !player.isRevealed ? (index * 0.1) + 's' : '0s'
+          transitionDelay:
+            grimoire.isRevealMode && !player.isRevealed
+              ? index * 0.1 + 's'
+              : '0s',
         }"
       >
         <div class="name-row">
           <span>{{ player.name }}</span>
-          <img 
-            v-if="isStatsLinked && player.id" 
-            src="../assets/Discord--Streamline-Simple-Icons.webp" 
+          <img
+            v-if="isStatsLinked && player.id"
+            src="../assets/Discord--Streamline-Simple-Icons.webp"
             class="discord-indicator"
             title="Stats tracking enabled"
           />
@@ -329,23 +356,23 @@ export default {
       validator: (player) => {
         return (
           player &&
-          typeof player.name === 'string' &&
-          typeof player.role === 'object' &&
-          typeof player.isDead === 'boolean'
+          typeof player.name === "string" &&
+          typeof player.role === "object" &&
+          typeof player.isDead === "boolean"
         );
-      }
+      },
     },
     isNominating: {
       type: Boolean,
-      default: false
+      default: false,
     },
   },
   computed: {
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
     ...mapState("stats", {
-      statsEnabled: state => state.trackingEnabled,
-      isDiscordLinked: state => !!state.discordUserId,
+      statsEnabled: (state) => state.trackingEnabled,
+      isDiscordLinked: (state) => !!state.discordUserId,
     }),
     ...mapGetters({ nightOrder: "players/nightOrder" }),
     index: function () {
@@ -387,10 +414,10 @@ export default {
     revealPlayer() {
       // Only used in reveal mode - reveals player to everyone
       this.updatePlayer("isRevealed", true, true);
-      
+
       // Check if all players are now revealed
       this.$nextTick(() => {
-        const allRevealed = this.players.every(p => p.isRevealed === true);
+        const allRevealed = this.players.every((p) => p.isRevealed === true);
         if (allRevealed && this.grimoire.isRevealMode) {
           // All tokens revealed, exit reveal mode
           this.$root.$refs.menu.toggleRevealMode();
@@ -509,7 +536,7 @@ export default {
       if (this.session.isSpectator) return;
       if (!this.voteLocked) return;
 
-      var count = this.session.votes[this.index];
+      let count = this.session.votes[this.index];
       if (player.hasTwoVotes && count === 1) {
         count = 2;
       } else if (count === 1) {
@@ -528,7 +555,6 @@ export default {
 </script>
 
 <style lang="scss">
-
 .fold-enter-active,
 .fold-leave-active {
   transition: transform 250ms ease-in-out;
@@ -614,7 +640,7 @@ export default {
     background: url("../assets/life.webp") center center;
     background-size: 100%;
     border: 3px solid #2a1a3d;
-    box-shadow: 
+    box-shadow:
       0 0 20px rgba(123, 44, 191, 0.3),
       0 4px 15px rgba(0, 0, 0, 0.6);
     cursor: pointer;
@@ -749,10 +775,7 @@ export default {
   transform: scale(1);
 }
 
-#townsquare.vote
-  .player:not(.vote-twice)
-  .overlay
-  svg.second-vote.fa-hand {
+#townsquare.vote .player:not(.vote-twice) .overlay svg.second-vote.fa-hand {
   opacity: 0 !important;
 }
 
@@ -961,12 +984,18 @@ li.move:not(.from) .player .overlay svg.move {
   cursor: pointer;
   white-space: nowrap;
   width: 120%;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.85) 0%, rgba(26, 15, 40, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.85) 0%,
+    rgba(26, 15, 40, 0.9) 100%
+  );
   backdrop-filter: blur(4px);
   border: 2px solid rgba(212, 175, 55, 0.3);
   border-radius: 10px;
   top: 5px;
-  box-shadow: 0 0 15px rgba(123, 44, 191, 0.3), 0 4px 10px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    0 0 15px rgba(123, 44, 191, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.7);
   padding: 0 4px;
 
   svg {
@@ -1023,14 +1052,20 @@ li.move:not(.from) .player .overlay svg.move {
   text-align: left;
   font-size: 90%;
   white-space: nowrap;
-  background: linear-gradient(135deg, rgba(42, 26, 61, 0.9) 0%, rgba(26, 15, 40, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(42, 26, 61, 0.9) 0%,
+    rgba(26, 15, 40, 0.95) 100%
+  );
   backdrop-filter: blur(4px);
   padding: 2px 5px;
   border-radius: 10px;
   border: 2px solid rgba(212, 175, 55, 0.3);
   margin-left: 15px;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(123, 44, 191, 0.3), 0 4px 10px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 0 20px rgba(123, 44, 191, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.6);
 
   &:before {
     content: " ";
@@ -1101,7 +1136,7 @@ li.move:not(.from) .player .overlay svg.move {
   margin: 5px 0 0 -25%;
   border-radius: 50%;
   border: 3px solid #2a1a3d;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(123, 44, 191, 0.3),
     0 4px 15px rgba(0, 0, 0, 0.6);
   transition: all 350ms ease;

@@ -36,7 +36,7 @@
 
 <script>
 import Modal from "./Modal";
-import { iconImages, getRoleIcon } from "@/utils/images";
+import { getRoleIcon } from "@/utils/images";
 import { mapMutations, mapState } from "vuex";
 
 /**
@@ -58,7 +58,7 @@ export default {
   props: ["playerIndex"],
   computed: {
     availableReminders() {
-      let reminders = [];
+      const reminders = [];
       const { players, bluffs } = this.$store.state.players;
       this.$store.state.roles.forEach((role) => {
         // add reminders from player roles and bluff/other roles
@@ -210,7 +210,7 @@ ul.reminders .reminder {
 
   border-radius: 50%;
   border: 3px solid #2a1a3d;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(123, 44, 191, 0.3),
     0 4px 15px rgba(0, 0, 0, 0.6),
     inset 0 0 30px rgba(139, 0, 0, 0.1);

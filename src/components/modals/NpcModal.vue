@@ -73,7 +73,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
 ul.tokens li {
   border-radius: 50%;
   width: 8vw;

@@ -4,14 +4,14 @@
     <p>Which team emerged victorious?</p>
     <div class="winner-buttons">
       <button class="good-button" @click="selectWinner('Good')">
-        <span 
+        <span
           class="team-icon"
           :style="{ backgroundImage: `url(${mayorIcon})` }"
         ></span>
         <span>⚖️ Good Wins</span>
       </button>
       <button class="evil-button" @click="selectWinner('Evil')">
-        <span 
+        <span
           class="team-icon"
           :style="{ backgroundImage: `url(${impIcon})` }"
         ></span>
@@ -39,8 +39,8 @@ export default {
   },
   methods: {
     async selectWinner(team) {
-      this.$emit('winner-selected', team);
-      this.toggleModal('endGame');
+      this.$emit("winner-selected", team);
+      this.toggleModal("endGame");
     },
     ...mapMutations(["toggleModal"]),
   },
@@ -86,12 +86,12 @@ button {
   background: rgba(0, 0, 0, 0.3);
   color: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   }
-  
+
   &:active {
     transform: translateY(-2px);
   }
@@ -99,7 +99,7 @@ button {
 
 .good-button {
   border-color: rgba(103, 181, 255, 0.6);
-  
+
   &:hover {
     background: rgba(74, 144, 226, 0.3);
     border-color: #67b5ff;
@@ -109,7 +109,7 @@ button {
 
 .evil-button {
   border-color: rgba(255, 103, 103, 0.6);
-  
+
   &:hover {
     background: rgba(226, 74, 74, 0.3);
     border-color: #ff6767;

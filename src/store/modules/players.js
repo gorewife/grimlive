@@ -189,7 +189,7 @@ const mutations = {
     }
   },
   resetReveals(state) {
-    state.players.forEach(player => {
+    state.players.forEach((player) => {
       player.isRevealed = false;
     });
   },

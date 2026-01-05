@@ -112,7 +112,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 h3 {
   text-align: center;
   margin: 0 40px;
