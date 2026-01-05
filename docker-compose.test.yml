@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database (same schema for gk and gl)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: grimkeeper_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./tests/e2e/complete-test-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./tests/e2e/test-data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d grimkeeper_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Grimlive server (Bun + WebSocket + API)
+  grimlive:
+    build:
+      context: .
+      dockerfile: tests/e2e/Dockerfile.grimlive
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://testuser:testpass@postgres:5432/grimkeeper_test
+      PORT: 8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8001/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  default:
+    name: grimkeeper_test_network
+
+# Note: Grimkeeper not included in E2E tests
+# It writes directly to database (not via HTTP) for now anyways
+# Full integration tested in production where both services share same database
