@@ -6,6 +6,7 @@ import { URL } from "url";
 import { WebSocketServer, WebSocket } from "ws";
 import client from "prom-client";
 import { api } from "./api.js";
+import { apiV1 } from "./api_v1.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
@@ -50,7 +51,7 @@ if (process.env.NODE_ENV !== "development") {
 const requestHandler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -63,6 +64,14 @@ const requestHandler = async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host}`);
   
+  // Health check endpoint for Docker
+  if (url.pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+    return;
+  }
+  
+  // Auth endpoints
   if (url.pathname === '/auth/discord') {
     const response = await api.discordOAuth(req);
     if (response.headers?.Location) {
@@ -78,6 +87,59 @@ const requestHandler = async (req, res) => {
     return;
   }
   
+  // API v1 endpoints (read-only, requires API key)
+  if (url.pathname.startsWith('/api/v1/')) {
+    const path = url.pathname.slice(8); // Remove '/api/v1/'
+    
+    try {
+      let response;
+      
+      // Read-only endpoints (require API key)
+      if (path === 'games' && req.method === 'GET') {
+        response = await apiV1.getGames(req);
+      } else if (path.startsWith('games/') && req.method === 'GET') {
+        const gameId = path.split('/')[1];
+        response = await apiV1.getGameById(req, gameId);
+      } else if (path === 'stats/summary' && req.method === 'GET') {
+        response = await apiV1.getStatsSummary(req);
+      } else if (path.startsWith('players/') && path.endsWith('/stats') && req.method === 'GET') {
+        const discordId = path.split('/')[1];
+        response = await apiV1.getPlayerStats(req, discordId);
+      } else if (path.startsWith('scripts/') && path.endsWith('/stats') && req.method === 'GET') {
+        const scriptName = decodeURIComponent(path.split('/')[1]);
+        response = await apiV1.getScriptStats(req, scriptName);
+      }
+      // API key management endpoints (require session token)
+      else if (path === 'keys' && req.method === 'GET') {
+        response = await apiV1.listApiKeys(req);
+      } else if (path === 'keys/create' && req.method === 'POST') {
+        response = await apiV1.createApiKey(req);
+      } else if (path.startsWith('keys/') && req.method === 'DELETE') {
+        const keyId = path.split('/')[1];
+        response = await apiV1.deleteApiKey(req, keyId);
+      } else if (path.startsWith('keys/') && req.method === 'PATCH') {
+        const keyId = path.split('/')[1];
+        response = await apiV1.updateApiKey(req, keyId);
+      } else {
+        response = { 
+          status: 404, 
+          text: async () => JSON.stringify({ error: 'Not found' })
+        };
+      }
+      
+      const headers = { 'Content-Type': 'application/json', ...response.headers };
+      res.writeHead(response.status || 200, headers);
+      const body = await response.text();
+      res.end(body);
+    } catch (error) {
+      logger.error('API v1 error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+  
+  // Legacy API endpoints (backward compatible, session-based auth)
   if (url.pathname.startsWith('/api/')) {
     const path = url.pathname.slice(5); // Remove '/api/'
     

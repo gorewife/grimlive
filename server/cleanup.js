@@ -3,16 +3,7 @@
  * Runs periodically to prevent orphaned active games
  */
 
-import pkg from 'pg';
-const { Pool } = pkg;
-
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'botc',
-  user: process.env.DB_USER || 'botc_user',
-  password: process.env.DB_PASSWORD,
-});
+import { pool } from './api-shared.js';
 
 /**
  * Mark games older than 24 hours as inactive
