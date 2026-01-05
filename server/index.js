@@ -71,6 +71,14 @@ const requestHandler = async (req, res) => {
     return;
   }
   
+  // Prometheus metrics endpoint
+  if (url.pathname === '/metrics') {
+    res.setHeader('Content-Type', register.contentType);
+    const metrics = await register.metrics();
+    res.end(metrics);
+    return;
+  }
+  
   // Auth endpoints
   if (url.pathname === '/auth/discord') {
     const response = await api.discordOAuth(req);
@@ -511,8 +519,4 @@ if (process.env.NODE_ENV !== "development") {
   logger.info("server starting");
   server.listen(8001);
   startCleanupTask();
-  server.on("request", (req, res) => {
-    res.setHeader("Content-Type", register.contentType);
-    register.metrics().then((out) => res.end(out));
-  });
 }
