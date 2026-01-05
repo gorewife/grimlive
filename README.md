@@ -1,17 +1,16 @@
 # Blood on the Clocktower Grimoire & Town Square
 
-This is a fork of the original clocktower.live tool with integrated game tracking and Discord bot support.
+This is a fork of the original clocktower.live tool with integrated game tracking and support for my bot Grimkeeper. (Read API coming soon :p)
 
 **What's New:**
+
 - **Game tracking**: Starting roles, final roles, win/loss stats per player
 - **Discord integration**: Link your Discord account, claim seats, automatic stat attribution
-- **Bot announcements**: Game start/end notifications in Discord via [GrimKeeper](https://github.com/gorewife/grimkeeper)
-- **Session persistence**: Reusable session codes for storytellers
 - **Modernized UI**: Improved typography and visual polish
 
 **Original features** (public grimoire, live sessions, custom scripts, all editions) remain intact.
 
-For bot setup and features, see [GrimKeeper documentation](https://github.com/gorewife/grimkeeper).
+[Grimkeeper documentation](https://github.com/gorewife/grimkeeper).
 
 ---
 
@@ -83,20 +82,20 @@ For base game characters, it is sufficient to provide only the ID as a string, s
 
 **Required properties:** `id`, `name`, `team`, `ability`
 
-- **id**: the internal ID for this character, without spaces or special characters<br>
+- **id**: the internal ID for this character, without spaces or special characters
   _Note_: this ID needs to be unique and can't be the same as any ID already used by an existing character, otherwise the custom character will be overwritten with the existing role!
-- **image**: a URL to a PNG of the character token icon (should have a transparent background!)<br>
+- **image**: a URL to a PNG of the character token icon (should have a transparent background!)
   _Note_: custom images will only be visible after enabling them in the Grimoire menu!
 - **edition**: the ID of the edition for this character. can be left blank or "custom"
 - **firstNight** / **otherNight**: the position that this character acts on the first / other nights, compared to all
-  other characters<br>
+  other characters
   _Note_: must be a positive number or zero, with zero being treated as "does not act during the night"
 - **firstNightReminder** / **otherNightReminder**: reminder text for first / other nights
 - **reminders**: reminder tokens, should be an empty array `[]` if none
 - **remindersGlobal**: global reminder tokens that will always be available, no matter if the character is assigned to a player or not
 - **setup**: whether this token affects setup (orange leaf), like the Drunk or Baron
 - **name**: the displayed name of this character
-- **team**: the team of the character, has to be one of `townsfolk`, `outsider`, `minion`, `demon`, `traveller`, `fabled` or `loric`<br>
+- **team**: the team of the character, has to be one of `townsfolk`, `outsider`, `minion`, `demon`, `traveller`, `fabled` or `loric`
   _Note_: if you create a custom Fabled or Loric character, it will be automatically added to the game when the custom script is loaded
 - **ability**: the displayed ability text of the character
 
@@ -108,16 +107,18 @@ For further details on the JSON structure, see the official app's [JSON Schema](
 
 ## Acknowledgements and Copyrights
 
-* [Blood on the Clocktower](https://bloodontheclocktower.com/) is a trademark of Steven Medway and [The Pandemonium Institute](https://www.thepandemoniuminstitute.com/)
-* Night reminders and other auxiliary text written by [Ben Finney](http://bignose.whitetree.org/projects/botc/diy/)
-* Iconography by [Font Awesome](https://fontawesome.com/)
-* Background image copyright and permission granted by [Ryan Maloney](https://www.artstation.com/maloney94)
-* Webfonts by [Google Fonts](https://fonts.google.com/) and [Online Web Fonts](https://www.onlinewebfonts.com/)
-* All other images and icons are copyright to their respective owners
+- [Blood on the Clocktower](https://bloodontheclocktower.com/) is a trademark of Steven Medway and [The Pandemonium Institute](https://www.thepandemoniuminstitute.com/)
+- Night reminders and other auxiliary text written by [Ben Finney](http://bignose.whitetree.org/projects/botc/diy/)
+- Iconography by [Font Awesome](https://fontawesome.com/)
+- Background image copyright and permission granted by [Ryan Maloney](https://www.artstation.com/maloney94)
+- Webfonts by [Google Fonts](https://fonts.google.com/) and [Online Web Fonts](https://www.onlinewebfonts.com/)
+- All other images and icons are copyright to their respective owners
 
 This project and its website are provided free of charge and not affiliated with The Pandemonium Institute in any way.
 
 ## Credits
-* [Bra1n](https://github.com/bra1n) for building the original clocktower.live in 2021
-* Forked from [nicholas-eden/townsquare](https://github.com/nicholas-eden/townsquare)
-* This fork maintained by [gorewife](https://github.com/gorewife)
+
+- [Bra1n](https://github.com/bra1n) for building the original clocktower.live in 2021
+
+- Forked from [nicholas-eden/townsquare](https://github.com/nicholas-eden/townsquare)
+- This fork maintained by [gorewife](https://github.com/gorewife)
