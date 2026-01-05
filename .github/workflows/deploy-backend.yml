@@ -1,0 +1,52 @@
+name: Deploy Backend to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm deployment to production'
+        required: true
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'deploy'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H botserver >> ~/.ssh/known_hosts || true
+    
+    - name: Configure SSH alias
+      run: |
+        cat >> ~/.ssh/config << 'EOF'
+        Host botserver
+          HostName ${{ secrets.SERVER_HOST }}
+          User ${{ secrets.SERVER_USER }}
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+        EOF
+        chmod 600 ~/.ssh/config
+    
+    - name: Run deployment script
+      run: |
+        chmod +x scripts/deploy-integration.sh
+        ./scripts/deploy-integration.sh
+    
+    - name: Verify deployment
+      run: |
+        sleep 5
+        curl -f https://api.hystericca.dev/health || exit 1
+        echo "✅ Deployment successful and server is healthy"
+    
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Deployment failed! Check the logs above."
+        exit 1
