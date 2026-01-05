@@ -8,8 +8,8 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-const GRIMLIVE_API = 'http://localhost:8001';
-const DB_URL = 'postgresql://testuser:testpass@localhost:5433/grimkeeper_test';
+const GRIMLIVE_API = process.env.GRIMLIVE_API_URL || 'http://localhost:8001';
+const DB_URL = process.env.TEST_DATABASE_URL || 'postgresql://testuser:testpass@localhost:5433/grimkeeper_test';
 
 // Test data
 const TEST_DISCORD_USER = '999888777';
