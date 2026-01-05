@@ -26,12 +26,11 @@
       </aside>
       <ul>
         <li v-for="(rule, index) in edition.bootlegger" :key="index">
-          <span
+          <img
             class="icon"
-            :style="{
-              backgroundImage: `url(${iconImages['../../assets/icons/bootlegger.webp']})`,
-            }"
-          ></span>
+            :src="iconImages['../../assets/icons/bootlegger.webp']"
+            alt="bootlegger"
+          />
           <div class="role">
             <span class="ability">{{ rule }}</span>
           </div>
@@ -51,13 +50,12 @@
       </aside>
       <ul>
         <li v-for="role in teamRoles" :class="[team]" :key="role.id">
-          <span
+          <img
             class="icon"
             v-if="role.id"
-            :style="{
-              backgroundImage: `url(${getImage(role)})`,
-            }"
-          ></span>
+            :src="getImage(role)"
+            :alt="role.name"
+          />
           <div class="role">
             <span class="player" v-if="Object.keys(playersByRole).length">{{
               playersByRole[role.id] ? playersByRole[role.id].join(", ") : ""
@@ -77,18 +75,16 @@
       </aside>
       <ul>
         <li v-for="(jinx, index) in jinxed" :key="index">
-          <span
+          <img
             class="icon"
-            :style="{
-              backgroundImage: `url(${getImage(jinx.first)})`,
-            }"
-          ></span>
-          <span
+            :src="getImage(jinx.first)"
+            :alt="jinx.first.name"
+          />
+          <img
             class="icon"
-            :style="{
-              backgroundImage: `url(${getImage(jinx.second)})`,
-            }"
-          ></span>
+            :src="getImage(jinx.second)"
+            :alt="jinx.second.name"
+          />
           <div class="role">
             <span class="name"
               >{{ jinx.first.name }} & {{ jinx.second.name }}</span
@@ -313,15 +309,10 @@ ul {
     width: 420px;
     .icon {
       width: 8vh;
-      background-size: 65%;
-      background-position: center center;
+      height: 8vh;
+      object-fit: contain;
       flex-shrink: 0;
       flex-grow: 0;
-      &:after {
-        content: " ";
-        display: block;
-        padding-top: 75%;
-      }
     }
     .role {
       line-height: 80%;

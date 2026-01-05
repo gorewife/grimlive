@@ -1254,6 +1254,14 @@ export default {
     max-height: calc(100vh - 100px);
     overflow-y: auto;
     overflow-x: hidden;
+    
+    /* Hide scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+    
     background:
       linear-gradient(
         135deg,
@@ -1335,6 +1343,11 @@ export default {
       &.tabs {
         display: flex;
         padding: 0;
+        padding-bottom: 20px;
+        background: rgba(26, 15, 40, 0.5);
+        margin-top: 0 !important;
+        margin-bottom: 0;
+        min-height: auto;
         svg,
         button {
           flex-grow: 1;
@@ -1346,7 +1359,7 @@ export default {
           cursor: pointer;
           transition: all 250ms ease;
           font-size: 1.2em;
-          background: transparent;
+          background: rgba(26, 15, 40, 0.5);
           border-top: none;
           border-left: none;
           color: inherit;
@@ -1354,6 +1367,13 @@ export default {
           &:hover {
             color: rgba(212, 175, 55, 1);
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+          }
+          &:focus,
+          &:active,
+          &:focus-visible {
+            outline: none !important;
+            background: rgba(26, 15, 40, 0.5) !important;
+            box-shadow: none !important;
           }
           &:last-child {
             border-right: 0;

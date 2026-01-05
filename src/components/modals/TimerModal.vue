@@ -3,8 +3,7 @@
     v-if="modals.timer && !session.isSpectator"
     @close="toggleModal('timer')"
   >
-    <h3>⏰ The Hourglass Turns</h3>
-    <p class="timer-description">Set the sands of time...</p>
+    <h3>Timer</h3>
 
     <div class="timer-presets">
       <button
@@ -46,10 +45,6 @@
       </div>
     </div>
 
-    <div class="timer-display" v-if="duration > 0">
-      <em>⏳ {{ formatDuration(duration) }}</em>
-    </div>
-
     <div class="button-group">
       <button
         @click="startTimer"
@@ -64,13 +59,6 @@
       </button>
     </div>
 
-    <div class="timer-info">
-      <p>
-        <font-awesome-icon icon="bell" />
-        When time expires, the bell tolls and all players are called to the town
-        square.
-      </p>
-    </div>
   </Modal>
 </template>
 
@@ -88,10 +76,10 @@ export default {
       customMinutes: 0,
       customSeconds: 0,
       presets: [
-        { label: "1 min", value: 1 * 60 },
-        { label: "3 min", value: 3 * 60 },
-        { label: "5 min", value: 5 * 60 },
-        { label: "7 min", value: 7 * 60 },
+        { label: "3:00", value: 3 * 60 },
+        { label: "3:30", value: 3 * 60 + 30 },
+        { label: "4:00", value: 4 * 60 },
+        { label: "5:00", value: 5 * 60 },
       ],
     };
   },
@@ -172,7 +160,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../../vars.scss";
+@use "../../vars.scss" as *;
 
 h3 {
   margin: 0 0 0.5em;
@@ -207,20 +195,17 @@ h3 {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 
   &:hover {
     background: rgba(212, 175, 55, 0.15);
     border-color: rgba(212, 175, 55, 0.5);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
   }
 
   &.active {
     background: rgba(212, 175, 55, 0.25);
     border-color: $gold;
     color: $gold;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
   }
 
   &:active {
@@ -274,10 +259,17 @@ h3 {
       text-align: center;
       transition: all 0.25s ease;
 
+      /* Hide number input arrows */
+      appearance: textfield;
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
       &:focus {
         outline: none;
         border-color: $gold;
-        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
       }
 
       &::placeholder {
@@ -364,29 +356,4 @@ h3 {
   }
 }
 
-.timer-info {
-  padding: 1.2em;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
-
-  p {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 0.95em;
-    line-height: 1.6;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-style: italic;
-
-    svg {
-      color: $gold;
-      font-size: 1.1em;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
-    }
-  }
-}
 </style>

@@ -48,7 +48,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../../vars.scss";
+@use "../../vars.scss" as *;
 
 h3 {
   margin: 0 0 1em;

@@ -55,13 +55,12 @@
               </small>
             </span>
           </span>
-          <span
+          <img
             class="icon"
             v-if="role.id"
-            :style="{
-              backgroundImage: `url(${getImage(role)})`,
-            }"
-          ></span>
+            :src="getImage(role)"
+            :alt="role.name"
+          />
           <span class="reminder" v-if="role.firstNightReminder">
             {{ role.firstNightReminder }}
           </span>
@@ -74,13 +73,12 @@
           :key="role.name"
           :class="[role.team]"
         >
-          <span
+          <img
             class="icon"
             v-if="role.id"
-            :style="{
-              backgroundImage: `url(${getImage(role)})`,
-            }"
-          ></span>
+            :src="getImage(role)"
+            :alt="role.name"
+          />
           <span class="name">
             {{ role.name }}
             <span class="player" v-if="role.players.length">
@@ -454,18 +452,12 @@ ul {
     margin-bottom: 3px;
     .icon {
       width: 5vh;
-      background-size: 65%;
-      background-position: 50%;
-      background-repeat: no-repeat;
+      height: 5vh;
+      object-fit: contain;
       flex-grow: 0;
       flex-shrink: 0;
       text-align: center;
       margin: 0 2px -10px;
-      &:after {
-        content: " ";
-        display: block;
-        padding-top: 66%;
-      }
     }
     .name {
       flex-grow: 0;

@@ -1,12 +1,11 @@
 <template>
   <div class="token" @click="setRole" :class="[role.id]">
-    <span
+    <img
       class="icon"
       v-if="role.id"
-      :style="{
-        backgroundImage: `url(${getImage(role)})`,
-      }"
-    ></span>
+      :src="getImage(role)"
+      :alt="role.name"
+    />
     <span
       class="leaf-left"
       v-if="role.firstNight || role.firstNightReminder"
@@ -182,13 +181,21 @@ export default {
 
   .icon,
   &:before {
-    background-size: 65%;
+    object-fit: contain;
     background-repeat: no-repeat;
     background-position: center center;
     position: absolute;
     width: 100%;
     height: 100%;
     margin-top: 3%;
+  }
+
+  .icon {
+    background-size: 0;
+  }
+
+  &:before {
+    background-size: 65%;
   }
 
   span {

@@ -9,18 +9,17 @@
         :key="reminder.role + ' ' + reminder.name"
         @click="addReminder(reminder)"
       >
-        <span
+        <img
           class="icon"
-          :style="{
-            backgroundImage: `url(${
-              reminder.image && grimoire.isImageOptIn
-                ? Array.isArray(reminder.image)
-                  ? reminder.image[0]
-                  : reminder.image
-                : getRoleIcon(reminder.role, reminder.imageAlt)
-            })`,
-          }"
-        ></span>
+          :src="
+            reminder.image && grimoire.isImageOptIn
+              ? Array.isArray(reminder.image)
+                ? reminder.image[0]
+                : reminder.image
+              : getRoleIcon(reminder.role, reminder.imageAlt)
+          "
+          :alt="reminder.name"
+        />
         <span class="text">{{ reminder.name }}</span>
       </li>
     </ul>
@@ -223,9 +222,7 @@ ul.reminders .reminder {
     top: 0;
     width: 90%;
     height: 90%;
-    background-size: 65%;
-    background-position: center center;
-    background-repeat: no-repeat;
+    object-fit: contain;
   }
 
   .text {
