@@ -39,7 +39,7 @@ const MAX_BODY_SIZE = 1024 * 100;
 
 const options = {};
 
-if (process.env.NODE_ENV !== "development") {
+if (process.env.NODE_ENV === "production") {
   options.cert = fs.readFileSync(
     "/etc/letsencrypt/live/clocktower.live/fullchain.pem",
   );
