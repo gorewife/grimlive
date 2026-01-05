@@ -12,6 +12,7 @@ deploy.sh
 *.db
 *.db-shm
 *.db-wal
+/scripts
 
 # Vite cache
 .vite
