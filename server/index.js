@@ -39,13 +39,18 @@ const MAX_BODY_SIZE = 1024 * 100;
 
 const options = {};
 
-if (process.env.NODE_ENV === "production") {
-  options.cert = fs.readFileSync(
-    "/etc/letsencrypt/live/clocktower.live/fullchain.pem",
-  );
-  options.key = fs.readFileSync(
-    "/etc/letsencrypt/live/clocktower.live/privkey.pem",
-  );
+if (process.env.NODE_ENV === "production" && process.env.SSL_ENABLED === "true") {
+  try {
+    options.cert = fs.readFileSync(
+      "/etc/letsencrypt/live/clocktower.live/fullchain.pem",
+    );
+    options.key = fs.readFileSync(
+      "/etc/letsencrypt/live/clocktower.live/privkey.pem",
+    );
+    logger.info("SSL certificates loaded");
+  } catch (err) {
+    logger.warn("SSL certificates not available, running without SSL");
+  }
 }
 
 const requestHandler = async (req, res) => {

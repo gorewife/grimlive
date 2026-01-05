@@ -130,7 +130,9 @@ class LiveSession {
       [command, params] = JSON.parse(data);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err) {
-      console.log("unsupported socket message", data);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("unsupported socket message", data);
+      }
     }
     switch (command) {
       case "getGamestate":

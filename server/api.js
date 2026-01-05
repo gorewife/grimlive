@@ -14,7 +14,7 @@ import {
   TEAMS
 } from './api-shared.js';
 
-console.log('Legacy API initialized (grimkeeper-compatible endpoints)');
+logger.info('Legacy API initialized (grimkeeper-compatible endpoints)');
 
 async function verifyToken(req) {
   const auth = req.headers.authorization;

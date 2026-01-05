@@ -22,7 +22,7 @@ async function cleanupStaleGames() {
     `, [twentyFourHoursAgo]);
     
     if (result.rows.length > 0) {
-      console.log(`[Cleanup] Marked ${result.rows.length} stale games as inactive`);
+      logger.info(`Marked ${result.rows.length} stale games as inactive`);
       
       // Clear active_game_id from sessions for cleaned up games
       for (const game of result.rows) {
@@ -42,7 +42,7 @@ async function cleanupStaleGames() {
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 export function startCleanupTask() {
-  console.log('[Cleanup] Starting cleanup task (runs every hour)');
+  logger.info('Starting cleanup task (runs every hour)');
   
   // Run immediately on startup
   cleanupStaleGames();

@@ -593,7 +593,7 @@ export default {
     window.addEventListener("message", (event) => {
       if (event.origin !== window.location.origin) return;
       if (event.data.type === "discord-login-success") {
-        console.log("[Menu] Discord login successful, reloading...");
+        // Discord login successful, reloading
         window.location.reload();
       }
     });
@@ -756,7 +756,7 @@ export default {
       }
     },
     async loginWithDiscord() {
-      console.log("[Menu] loginWithDiscord clicked");
+      // loginWithDiscord clicked
       const baseUrl = import.meta.env.PROD
         ? "https://api.hystericca.dev"
         : "http://localhost:8001";
@@ -765,7 +765,7 @@ export default {
       );
       const authUrl = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
 
-      console.log("[Menu] Redirecting to OAuth:", authUrl);
+      // Redirecting to OAuth
       window.location.href = authUrl;
     },
     logoutDiscord() {
@@ -988,7 +988,7 @@ export default {
         });
 
         if (response.ok) {
-          console.log("Mute command sent successfully");
+          // Mute command sent successfully
         } else {
           const data = await response.json();
           console.error("Failed to mute:", data.error);
@@ -1028,7 +1028,7 @@ export default {
         });
 
         if (response.ok) {
-          console.log("Unmute command sent successfully");
+          // Unmute command sent successfully
         } else {
           const data = await response.json();
           console.error("Failed to unmute:", data.error);
@@ -1070,7 +1070,7 @@ export default {
           throw new Error(errorData.error || "Failed to call townspeople");
         }
 
-        console.log("Call townspeople successful");
+        // Call townspeople successful
       } catch (error) {
         console.error("Call failed:", error);
         alert(`Failed to call townspeople: ${error.message}`);
