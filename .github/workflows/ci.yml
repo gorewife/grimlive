@@ -20,14 +20,10 @@ jobs:
         bun-version: latest
     
     - name: Install dependencies
-      run: |
-        cd server
-        bun install
+      run: bun install
     
     - name: Run unit/integration tests
-      run: |
-        cd server
-        bun test tests/integration/
+      run: bun test tests/integration/
     
     - name: Test summary
       run: echo "✅ Unit and integration tests passed"
@@ -45,9 +41,7 @@ jobs:
         bun-version: latest
     
     - name: Install dependencies
-      run: |
-        cd server
-        bun install
+      run: bun install
     
     - name: Start Docker services
       run: |
@@ -59,9 +53,7 @@ jobs:
         curl --retry 5 --retry-delay 2 --retry-connrefused http://localhost:8001/health
     
     - name: Run E2E tests
-      run: |
-        cd server
-        bun test tests/e2e/real-integration.test.js
+      run: bun test tests/e2e/real-integration.test.js
     
     - name: Show logs on failure
       if: failure()
@@ -86,13 +78,10 @@ jobs:
         bun-version: latest
     
     - name: Install dependencies
-      run: |
-        cd server
-        bun install
+      run: bun install
     
     - name: Check for syntax errors
       run: |
-        cd server
         # Check all JS files compile
-        bun build index.js --target=bun --outfile=/tmp/index.check.js
+        bun build server/index.js --target=bun --outfile=/tmp/index.check.js
         echo "✅ No syntax errors found"
