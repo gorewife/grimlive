@@ -1,53 +1,20 @@
-import pg from 'pg';
 import crypto from 'crypto';
+import {
+  pool,
+  jsonResponse,
+  parseBody,
+  normalizeGameData,
+  validateGameStart,
+  validateGameEnd,
+  validateTimerData,
+  getSessionByCode,
+  getGameWithPlayers,
+  updateSessionActivity,
+  logApiCall,
+  TEAMS
+} from './api-shared.js';
 
-const { Pool } = pg;
-
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost/grimlive_dev';
-const pool = new Pool({ connectionString: DATABASE_URL });
-
-console.log(`Using PostgreSQL: ${DATABASE_URL.replace(/:[^:]*@/, ':****@')}`);
-
-pool.on('error', (err) => {
-  console.error('Unexpected database error:', err);
-});
-
-function jsonResponse(data, status = 200) {
-  return {
-    status,
-    text: async () => JSON.stringify(data)
-  };
-}
-
-const MAX_BODY_SIZE = 1024 * 100;
-
-async function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    let size = 0;
-    
-    req.on('data', chunk => {
-      size += chunk.length;
-      if (size > MAX_BODY_SIZE) {
-        req.connection.destroy();
-        reject(new Error('Request body too large'));
-        return;
-      }
-      body += chunk;
-    });
-    
-    req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (e) {
-        console.error('JSON parse error:', e.message);
-        resolve({});
-      }
-    });
-    
-    req.on('error', reject);
-  });
-}
+console.log('Legacy API initialized (grimkeeper-compatible endpoints)');
 
 async function verifyToken(req) {
   const auth = req.headers.authorization;
@@ -62,7 +29,7 @@ async function verifyToken(req) {
   
   try {
     const result = await pool.query(
-      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > EXTRACT(epoch FROM NOW())',
+      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > NOW()',
       [token]
     );
     return result.rows[0] || null;
@@ -80,7 +47,7 @@ export const api = {
       
       const token = crypto.randomUUID();
       const sessionId = crypto.randomUUID();
-      const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours from now in Unix timestamp
+      const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours from now
       
       await pool.query(
         'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
@@ -92,7 +59,7 @@ export const api = {
       return jsonResponse({ 
         sessionId, 
         token,
-        expiresAt: new Date(expiresAt * 1000).toISOString()
+        expiresAt: expiresAt.toISOString()
       });
     } catch (error) {
       console.error('Failed to create session:', error);
@@ -142,73 +109,101 @@ export const api = {
       }, 400);
     }
 
-    if (!script) {
-      return jsonResponse({ error: 'Script required' }, 400);
-    }
-
-    // Temporarily allow 0 players for testing
-    if (!players || !Array.isArray(players)) {
-      return jsonResponse({ error: 'Players must be an array' }, 400);
+    // Validate input using shared validation
+    const validation = validateGameStart({ script, players, sessionCode });
+    if (!validation.valid) {
+      return jsonResponse({ error: validation.errors[0] }, 400);
     }
 
     let guildId = null;
     let categoryId = null;
     
-    // validate session code if provided
+    // Validate session code if provided (using shared utility)
     if (sessionCode) {
-      const sessionData = await pool.query(
-        'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
-        [sessionCode]
-      );
-      if (!sessionData.rows.length) {
+      const sessionData = await getSessionByCode(sessionCode);
+      if (!sessionData) {
         return jsonResponse({ error: 'Invalid session code' }, 400);
       }
-      guildId = sessionData.rows[0].guild_id;
-      categoryId = sessionData.rows[0].category_id;
+      
+      // Check if session already has an active game
+      if (sessionData.active_game_id) {
+        return jsonResponse({ error: 'Session already has an active game' }, 400);
+      }
+      
+      guildId = sessionData.guild_id;
+      categoryId = sessionData.category_id;
     }
 
-    const startTime = Date.now() / 1000;
+    const startTime = Math.floor(Date.now() / 1000);
     const playersJson = JSON.stringify(players || []);
     const playerCount = players?.length || 0;
 
-    const result = await pool.query(`
-      INSERT INTO games (
-        guild_id, category_id, script, custom_name, start_time, 
-        players, player_count, storyteller_id, is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true) 
-      RETURNING game_id
-    `, [guildId, categoryId, script, customName, startTime, playersJson, playerCount, session.discord_user_id]);
-    
-    const gameId = result.rows[0].game_id;
-    
-    // Update session grimoire link if session code was provided
-    if (guildId && categoryId && sessionCode) {
-      // Generate grimoire link with session ID format
-      const grimoireLink = `https://grim.hystericca.dev/#${sessionCode}`;
+    try {
+      const result = await pool.query(`
+        INSERT INTO games (
+          guild_id, category_id, script, custom_name, start_time, 
+          players, player_count, storyteller_id, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true) 
+        RETURNING game_id
+      `, [guildId, categoryId, script, customName, startTime, playersJson, playerCount, session.discord_user_id]);
       
-      await pool.query(`
-        UPDATE sessions 
-        SET grimoire_link = $1, active_game_id = $2, last_active = $3
-        WHERE guild_id = $4 AND category_id = $5
-      `, [grimoireLink, gameId, Math.floor(Date.now() / 1000), guildId, categoryId]);
+      const gameId = result.rows[0].game_id;
       
-      console.log(`Updated grimoire link for session ${sessionCode}: ${grimoireLink}`);
+      // Insert players into game_players table
+      if (players && players.length > 0) {
+        for (let i = 0; i < players.length; i++) {
+          const player = players[i];
+          await pool.query(`
+            INSERT INTO game_players (
+              game_id, discord_id, discord_user_id, player_name, seat_number,
+              character_name, alignment, starting_role_name, starting_team
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `, [
+            gameId, 
+            player.discord_id || null, 
+            player.discord_id || null,
+            player.name, 
+            i + 1,
+            player.role,
+            player.alignment,
+            player.role,
+            player.alignment === 'good' ? 'townsfolk' : (player.role === 'imp' || player.role === 'demon' ? 'demon' : 'minion')
+          ]);
+        }
+      }
+      
+      // Update session grimoire link if session code was provided
+      if (guildId && categoryId && sessionCode) {
+        const grimoireLink = `https://grim.hystericca.dev/#${sessionCode}`;
+        
+        await pool.query(`
+          UPDATE sessions 
+          SET grimoire_link = $1, active_game_id = $2, last_active = $3
+          WHERE guild_id = $4 AND category_id = $5
+        `, [grimoireLink, gameId, Math.floor(Date.now() / 1000), guildId, categoryId]);
+        
+        logApiCall('LEGACY', '/api/game/start', 'POST', 200, `Game ${gameId} linked to session ${sessionCode}`);
+      }
+      
+      // Create announcement for grimkeeper to pick up
+      if (guildId && categoryId) {
+        await pool.query(`
+          INSERT INTO announcements (
+            guild_id, category_id, announcement_type, game_id, created_at
+          ) VALUES ($1, $2, 'game_start', $3, $4)
+        `, [guildId, categoryId, gameId, Math.floor(Date.now() / 1000)]);
+      }
+      
+      // Return normalized response (compatible with both grimkeeper and v1)
+      return jsonResponse({ 
+        game_id: gameId,
+        session_code: sessionCode || null,
+        status: 'active'
+      });
+    } catch (error) {
+      logApiCall('LEGACY', '/api/game/start', 'POST', 500, error.message);
+      return jsonResponse({ error: 'Failed to start game' }, 500);
     }
-    
-    if (guildId && categoryId) {
-      await pool.query(`
-        INSERT INTO announcements (
-          guild_id, category_id, announcement_type, game_id, created_at
-        ) VALUES ($1, $2, 'game_start', $3, $4)
-      `, [
-        guildId,
-        categoryId,
-        gameId,
-        Math.floor(Date.now() / 1000)
-      ]);
-    }
-    
-    return jsonResponse({ game_id: gameId });
   },
 
   endGame: async (req) => {
@@ -218,43 +213,78 @@ export const api = {
     }
 
     const body = await parseBody(req);
-    const { gameId, winningTeam } = body;
-    const endTime = Date.now() / 1000;
-    const completedAt = new Date(); // PostgreSQL timestamp format
+    const { game_id: gameId, winner, winning_team: winningTeam } = body;
     
-    const gameData = await pool.query(
-      'SELECT guild_id, category_id, script, custom_name, start_time, player_count FROM games WHERE game_id = $1',
-      [gameId]
-    );
+    // Support both 'winner' and 'winningTeam' for compatibility
+    const finalWinner = winner || winningTeam;
     
-    await pool.query(`
-      UPDATE games 
-      SET end_time = $1, winner = $2, is_active = false, completed_at = $3
-      WHERE game_id = $4
-    `, [endTime, winningTeam, completedAt, gameId]);
-
-    await pool.query(`
-      UPDATE game_players 
-      SET winning_team = (final_team = $1)
-      WHERE game_id = $2
-    `, [winningTeam, gameId]);
-    
-    if (gameData.rows.length && gameData.rows[0].guild_id) {
-      const game = gameData.rows[0];
-      await pool.query(`
-        INSERT INTO announcements (
-          guild_id, category_id, announcement_type, game_id, data, created_at
-        ) VALUES ($1, $2, 'game_end', $3, $4, $5)
-      `, [
-        game.guild_id,
-        game.category_id,
-        gameId,
-        JSON.stringify({ winner: winningTeam }),
-        Math.floor(Date.now() / 1000)
-      ]);
+    // Validate input using shared validation
+    const validation = validateGameEnd({ gameId, winner: finalWinner });
+    if (!validation.valid) {
+      return jsonResponse({ error: validation.errors[0] }, 400);
     }
+
+    const endTime = Math.floor(Date.now() / 1000);
+    const completedAt = new Date();
     
-    return jsonResponse({ success: true });
+    try {
+      const gameData = await pool.query(
+        'SELECT guild_id, category_id, script, custom_name, start_time, player_count FROM games WHERE game_id = $1',
+        [gameId]
+      );
+      
+      if (!gameData.rows.length) {
+        return jsonResponse({ error: 'Game not found' }, 404);
+      }
+      
+      await pool.query(`
+        UPDATE games 
+        SET end_time = $1, winner = $2, is_active = false, completed_at = $3
+        WHERE game_id = $4
+      `, [endTime, finalWinner, completedAt, gameId]);
+
+      await pool.query(`
+        UPDATE game_players 
+        SET winning_team = (final_team = $1)
+        WHERE game_id = $2
+      `, [finalWinner, gameId]);
+      
+      const game = gameData.rows[0];
+      
+      // Clear active_game_id from session
+      if (game.guild_id && game.category_id) {
+        await pool.query(`
+          UPDATE sessions 
+          SET active_game_id = NULL
+          WHERE guild_id = $1 AND category_id = $2 AND active_game_id = $3
+        `, [game.guild_id, game.category_id, gameId]);
+        
+        // Create announcement for grimkeeper
+        await pool.query(`
+          INSERT INTO announcements (
+            guild_id, category_id, announcement_type, game_id, data, created_at
+          ) VALUES ($1, $2, 'game_end', $3, $4, $5)
+        `, [
+          game.guild_id,
+          game.category_id,
+          gameId,
+          JSON.stringify({ winner: finalWinner }),
+          Math.floor(Date.now() / 1000)
+        ]);
+      }
+      
+      logApiCall('LEGACY', '/api/game/end', 'POST', 200, `Game ${gameId} ended, winner: ${finalWinner}`);
+      
+      return jsonResponse({ 
+        success: true,
+        game_id: gameId,
+        winner: finalWinner,
+        status: 'completed'
+      });
+    } catch (error) {
+      logApiCall('LEGACY', '/api/game/end', 'POST', 500, error.message);
+      return jsonResponse({ error: 'Failed to end game' }, 500);
+    }
   },
 
   cancelGame: async (req) => {
@@ -507,28 +537,42 @@ export const api = {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
 
-    if (!duration || duration < 1 || duration > 10800) { // max 3 hours
+    if (!duration || duration < 1 || duration > 10800) {
       return jsonResponse({ error: 'duration must be between 1 and 10800 seconds' }, 400);
     }
 
-    // Get session info
-    const sessionResult = await pool.query(
-      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
-      [sessionCode]
-    );
+    try {
+      const sessionResult = await pool.query(
+        'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+        [sessionCode]
+      );
 
-    if (!sessionResult.rows.length) {
-      return jsonResponse({ error: 'Invalid session code' }, 404);
+      if (!sessionResult.rows.length) {
+        return jsonResponse({ error: 'Invalid session code' }, 404);
+      }
+
+      const { guild_id, category_id } = sessionResult.rows[0];
+      const endTime = new Date(Date.now() + duration * 1000);
+
+      await pool.query(
+        'DELETE FROM timers WHERE guild_id = $1 AND category_id = $2',
+        [guild_id, category_id]
+      );
+
+      await pool.query(`
+        INSERT INTO timers (guild_id, category_id, channel_id, message_id, phase, duration_seconds, end_time, is_paused, is_active)
+        VALUES ($1, $2, $3, $4, 'discussion', $5, $6, false, true)
+      `, [guild_id, category_id, 0, 0, duration, endTime]);
+
+      return jsonResponse({
+        success: true,
+        duration: duration,
+        endTime: endTime.toISOString()
+      });
+    } catch (error) {
+      console.error('Timer start error:', error);
+      return jsonResponse({ error: 'Failed to start timer' }, 500);
     }
-
-    const endTime = Date.now() + duration * 1000;
-    
-    return jsonResponse({
-      success: true,
-      endTime: endTime,
-      duration: duration,
-      message: 'Timer broadcast to WebSocket clients'
-    });
   },
 
   timerStop: async (req) => {
@@ -539,20 +583,28 @@ export const api = {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
 
-    // Verify session exists
-    const sessionResult = await pool.query(
-      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
-      [sessionCode]
-    );
+    try {
+      const sessionResult = await pool.query(
+        'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+        [sessionCode]
+      );
 
-    if (!sessionResult.rows.length) {
-      return jsonResponse({ error: 'Invalid session code' }, 404);
+      if (!sessionResult.rows.length) {
+        return jsonResponse({ error: 'Invalid session code' }, 404);
+      }
+
+      const { guild_id, category_id } = sessionResult.rows[0];
+
+      await pool.query(
+        'DELETE FROM timers WHERE guild_id = $1 AND category_id = $2',
+        [guild_id, category_id]
+      );
+
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Timer stop error:', error);
+      return jsonResponse({ error: 'Failed to stop timer' }, 500);
     }
-
-    return jsonResponse({
-      success: true,
-      message: 'Timer stop broadcast to WebSocket clients'
-    });
   },
 
   timerPause: async (req) => {
@@ -563,20 +615,28 @@ export const api = {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
 
-    // Verify session exists
-    const sessionResult = await pool.query(
-      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
-      [sessionCode]
-    );
+    try {
+      const sessionResult = await pool.query(
+        'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+        [sessionCode]
+      );
 
-    if (!sessionResult.rows.length) {
-      return jsonResponse({ error: 'Invalid session code' }, 404);
+      if (!sessionResult.rows.length) {
+        return jsonResponse({ error: 'Invalid session code' }, 404);
+      }
+
+      const { guild_id, category_id } = sessionResult.rows[0];
+
+      await pool.query(
+        'UPDATE timers SET is_paused = true WHERE guild_id = $1 AND category_id = $2',
+        [guild_id, category_id]
+      );
+
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Timer pause error:', error);
+      return jsonResponse({ error: 'Failed to pause timer' }, 500);
     }
-
-    return jsonResponse({
-      success: true,
-      message: 'Timer pause broadcast to WebSocket clients'
-    });
   },
 
   timerResume: async (req) => {
@@ -587,20 +647,28 @@ export const api = {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
 
-    // Verify session exists
-    const sessionResult = await pool.query(
-      'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
-      [sessionCode]
-    );
+    try {
+      const sessionResult = await pool.query(
+        'SELECT guild_id, category_id FROM sessions WHERE session_code = $1',
+        [sessionCode]
+      );
 
-    if (!sessionResult.rows.length) {
-      return jsonResponse({ error: 'Invalid session code' }, 404);
+      if (!sessionResult.rows.length) {
+        return jsonResponse({ error: 'Invalid session code' }, 404);
+      }
+
+      const { guild_id, category_id } = sessionResult.rows[0];
+
+      await pool.query(
+        'UPDATE timers SET is_paused = false WHERE guild_id = $1 AND category_id = $2',
+        [guild_id, category_id]
+      );
+
+      return jsonResponse({ success: true });
+    } catch (error) {
+      console.error('Timer resume error:', error);
+      return jsonResponse({ error: 'Failed to resume timer' }, 500);
     }
-
-    return jsonResponse({
-      success: true,
-      message: 'Timer resume broadcast to WebSocket clients'
-    });
   },
 
   mute: async (req) => {
