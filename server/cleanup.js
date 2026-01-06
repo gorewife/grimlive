@@ -4,6 +4,7 @@
  */
 
 import { pool } from './api-shared.js';
+import { logger } from './logger.js';
 
 /**
  * Mark games older than 24 hours as inactive
