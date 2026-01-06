@@ -5,11 +5,11 @@
 -- Web sessions table - tracks sessions initiated from grimlive website
 -- Links to Discord accounts when user authenticates
 CREATE TABLE IF NOT EXISTS web_sessions (
-    session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id TEXT PRIMARY KEY,
     token TEXT UNIQUE NOT NULL,  -- Bearer token for API auth
     discord_user_id BIGINT,  -- Links to Discord user when authenticated
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
+    created_at BIGINT DEFAULT EXTRACT(epoch FROM now()),
+    expires_at BIGINT NOT NULL,
     stat_tracking_enabled BOOLEAN DEFAULT TRUE
 );
 

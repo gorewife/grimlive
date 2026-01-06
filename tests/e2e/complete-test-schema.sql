@@ -112,11 +112,11 @@ CREATE INDEX IF NOT EXISTS idx_timers_category_id ON timers(category_id);
 
 -- Web sessions
 CREATE TABLE IF NOT EXISTS web_sessions (
-    session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id TEXT PRIMARY KEY,
     token TEXT UNIQUE NOT NULL,
     discord_user_id BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
+    created_at BIGINT DEFAULT EXTRACT(epoch FROM now()),
+    expires_at BIGINT NOT NULL,
     stat_tracking_enabled BOOLEAN DEFAULT TRUE
 );
 
