@@ -4,10 +4,50 @@
  */
 
 import pg from 'pg';
-const { Pool } = pg;
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost/grimlive_dev';
-export const pool = new Pool({ connectionString: DATABASE_URL });
+const { Pool } = pg;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env file - always load if DB_HOST not set, even if other env vars exist
+if (!process.env.DB_HOST) {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    envContent.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const [key, ...values] = trimmed.split('=');
+        if (key && values.length && !process.env[key.trim()]) { // Don't overwrite existing
+          process.env[key.trim()] = values.join('=').trim();
+        }
+      }
+    });
+    console.log('[api-shared] Loaded .env file');
+  } else {
+    console.log('[api-shared] No .env file found at', envPath);
+  }
+}
+
+console.log('[api-shared] DB_HOST:', process.env.DB_HOST);
+console.log('[api-shared] DB_PASSWORD type:', typeof process.env.DB_PASSWORD, 'value:', process.env.DB_PASSWORD ? '***' : 'undefined');
+
+// Use individual connection params to avoid password parsing issues with special chars
+const poolConfig = process.env.DB_HOST ? {
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT) || 5432,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: String(process.env.DB_PASSWORD), // Explicit string conversion
+} : {
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/grimlive_dev'
+};
+
+console.log('[api-shared] Pool config:', { ...poolConfig, password: poolConfig.password ? '***' : undefined });
+
+export const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('Unexpected database error:', err);

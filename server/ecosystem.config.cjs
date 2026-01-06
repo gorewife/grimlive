@@ -6,7 +6,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       max_memory_restart: "750M",
-      watch: true,
+      watch: false, // Disabled - was causing constant restarts
+      env_file: ".env",
       env: {}
     }
   ]

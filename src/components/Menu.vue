@@ -545,6 +545,7 @@
 
 <script>
 import { mapMutations, mapState, mapGetters } from "vuex";
+import { logger } from "../utils/logger";
 
 export default {
   computed: {

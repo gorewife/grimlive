@@ -215,7 +215,7 @@ const requestHandler = async (req, res) => {
   res.end('Not Found');
 };
 
-const server = process.env.NODE_ENV === "development"
+const server = (process.env.NODE_ENV === "development" || !options.cert)
   ? http.createServer(requestHandler)
   : https.createServer(options, requestHandler);
 
