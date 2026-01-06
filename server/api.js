@@ -28,10 +28,11 @@ async function verifyToken(req) {
     return null;
   }
   
+  const now = Math.floor(Date.now() / 1000);
   try {
     const result = await pool.query(
-      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > NOW()',
-      [token]
+      'SELECT * FROM web_sessions WHERE token = $1 AND expires_at > $2',
+      [token, now]
     );
     return result.rows[0] || null;
   } catch (error) {
@@ -48,7 +49,7 @@ export const api = {
       
       const token = crypto.randomUUID();
       const sessionId = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours from now
+      const expiresAt = Math.floor((Date.now() + (24 * 60 * 60 * 1000)) / 1000); // Unix timestamp 24h from now
       
       await pool.query(
         'INSERT INTO web_sessions (session_id, token, discord_user_id, expires_at) VALUES ($1, $2, $3, $4)',
@@ -60,7 +61,7 @@ export const api = {
       return jsonResponse({ 
         sessionId, 
         token,
-        expiresAt: expiresAt.toISOString()
+        expiresAt: new Date(expiresAt * 1000).toISOString()
       });
     } catch (error) {
       console.error('Failed to create session:', error);
