@@ -21,6 +21,9 @@
       :src="grimoire.background"
       autoplay
       loop
+      muted
+      playsinline
+      preload="metadata"
       aria-hidden="true"
     ></video>
     <div class="backdrop" aria-hidden="true"></div>
@@ -65,25 +68,28 @@
 
 <script>
 import { mapState } from "vuex";
+import { defineAsyncComponent } from "vue";
 import { version } from "../package.json";
 import ErrorBoundary from "./components/ErrorBoundary";
 import TownSquare from "./components/TownSquare";
 import TownInfo from "./components/TownInfo";
 import Timer from "./components/Timer";
 import Menu from "./components/Menu";
-import RolesModal from "./components/modals/RolesModal";
-import EditionModal from "./components/modals/EditionModal";
-import EndGameModal from "./components/modals/EndGameModal";
 import Intro from "./components/Intro";
-import ReferenceModal from "./components/modals/ReferenceModal";
 import Vote from "./components/Vote";
 import Gradients from "./components/Gradients";
-import NightOrderModal from "./components/modals/NightOrderModal";
-import NpcModal from "@/components/modals/NpcModal";
-import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
-import GameStateModal from "@/components/modals/GameStateModal";
-import JournalModal from "./components/modals/JournalModal";
-import TimerModal from "./components/modals/TimerModal";
+
+// Lazy load modals to reduce initial bundle size
+const RolesModal = defineAsyncComponent(() => import("./components/modals/RolesModal"));
+const EditionModal = defineAsyncComponent(() => import("./components/modals/EditionModal"));
+const EndGameModal = defineAsyncComponent(() => import("./components/modals/EndGameModal"));
+const ReferenceModal = defineAsyncComponent(() => import("./components/modals/ReferenceModal"));
+const NightOrderModal = defineAsyncComponent(() => import("./components/modals/NightOrderModal"));
+const NpcModal = defineAsyncComponent(() => import("@/components/modals/NpcModal"));
+const VoteHistoryModal = defineAsyncComponent(() => import("@/components/modals/VoteHistoryModal"));
+const GameStateModal = defineAsyncComponent(() => import("@/components/modals/GameStateModal"));
+const JournalModal = defineAsyncComponent(() => import("./components/modals/JournalModal"));
+const TimerModal = defineAsyncComponent(() => import("./components/modals/TimerModal"));
 
 export default {
   components: {
