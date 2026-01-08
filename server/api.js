@@ -159,22 +159,25 @@ export const api = {
           const playerName = typeof player === 'string' ? player : player.name;
           const discordId = typeof player === 'object' ? (player.discord_id || null) : null;
           const roleName = typeof player === 'object' ? player.role : null;
-          const team = typeof player === 'object' && player.alignment 
-            ? (player.alignment === 'good' ? 'townsfolk' : (player.role === 'imp' || player.role === 'demon' ? 'demon' : 'minion'))
+          const alignment = typeof player === 'object' ? player.alignment : null;
+          const team = alignment 
+            ? (alignment === 'good' ? 'townsfolk' : (roleName === 'imp' || roleName?.includes('demon') ? 'demon' : 'minion'))
             : null;
           
           await pool.query(`
             INSERT INTO game_players (
               game_id, discord_id, player_name, seat_number,
-              starting_role_name, starting_team
-            ) VALUES ($1, $2, $3, $4, $5, $6)
+              starting_role_name, starting_team, character_name, alignment
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
           `, [
             gameId, 
             discordId, 
             playerName, 
             i + 1,
             roleName,
-            team
+            team,
+            roleName,  // character_name (compatibility)
+            alignment  // alignment (compatibility)
           ]);
         }
       }
