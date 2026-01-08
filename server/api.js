@@ -155,21 +155,26 @@ export const api = {
       if (players && players.length > 0) {
         for (let i = 0; i < players.length; i++) {
           const player = players[i];
+          // Handle both string names and player objects
+          const playerName = typeof player === 'string' ? player : player.name;
+          const discordId = typeof player === 'object' ? (player.discord_id || null) : null;
+          const roleName = typeof player === 'object' ? player.role : null;
+          const team = typeof player === 'object' && player.alignment 
+            ? (player.alignment === 'good' ? 'townsfolk' : (player.role === 'imp' || player.role === 'demon' ? 'demon' : 'minion'))
+            : null;
+          
           await pool.query(`
             INSERT INTO game_players (
-              game_id, discord_id, discord_user_id, player_name, seat_number,
-              character_name, alignment, starting_role_name, starting_team
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              game_id, discord_id, player_name, seat_number,
+              starting_role_name, starting_team
+            ) VALUES ($1, $2, $3, $4, $5, $6)
           `, [
             gameId, 
-            player.discord_id || null, 
-            player.discord_id || null,
-            player.name, 
+            discordId, 
+            playerName, 
             i + 1,
-            player.role,
-            player.alignment,
-            player.role,
-            player.alignment === 'good' ? 'townsfolk' : (player.role === 'imp' || player.role === 'demon' ? 'demon' : 'minion')
+            roleName,
+            team
           ]);
         }
       }
