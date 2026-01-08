@@ -50,7 +50,7 @@ if (process.env.DB_HOST) {
 }
 
 console.log('[api-shared] Pool config:', { 
-  connectionString: poolConfig.connectionString ? poolConfig.connectionString.replace(/:[^:@]+@/, ':***@') : undefined,
+  connectionString: poolConfig.connectionString ? poolConfig.connectionString.replace(/(postgresql:\/\/[^:]+:)[^@]+(@.+)/, '$1***$2') : undefined,
   host: poolConfig.host,
   database: poolConfig.database,
   password: poolConfig.password ? '***' : undefined 
