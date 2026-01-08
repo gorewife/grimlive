@@ -33,7 +33,7 @@ export default defineConfig({
     assetsDir: 'static',
     sourcemap: false,
     minify: 'esbuild',
-    target: 'es2015',
+    target: 'es2020',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
