@@ -31,9 +31,6 @@ if (!process.env.DB_HOST) {
   }
 }
 
-console.log('[api-shared] DB_HOST:', process.env.DB_HOST);
-console.log('[api-shared] DB_PASSWORD type:', typeof process.env.DB_PASSWORD, 'value:', process.env.DB_PASSWORD ? '***' : 'undefined');
-
 // Use individual connection params to avoid password parsing issues with special chars
 const poolConfig = process.env.DB_HOST ? {
   host: process.env.DB_HOST,
@@ -45,7 +42,19 @@ const poolConfig = process.env.DB_HOST ? {
   connectionString: process.env.DATABASE_URL || 'postgresql://localhost/grimlive_dev'
 };
 
-console.log('[api-shared] Pool config:', { ...poolConfig, password: poolConfig.password ? '***' : undefined });
+if (process.env.DB_HOST) {
+  console.log('[api-shared] Using individual connection parameters');
+  console.log('[api-shared] DB_HOST:', process.env.DB_HOST);
+} else {
+  console.log('[api-shared] Using DATABASE_URL connection string');
+}
+
+console.log('[api-shared] Pool config:', { 
+  connectionString: poolConfig.connectionString ? poolConfig.connectionString.replace(/:[^:@]+@/, ':***@') : undefined,
+  host: poolConfig.host,
+  database: poolConfig.database,
+  password: poolConfig.password ? '***' : undefined 
+});
 
 export const pool = new Pool(poolConfig);
 
