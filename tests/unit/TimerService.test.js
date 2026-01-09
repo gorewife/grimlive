@@ -38,11 +38,12 @@ describe("TimerService", () => {
       const result = await timerService.startTimer(timerData);
 
       expect(result).toBeDefined();
+      expect(result).toBe('123456789');
       
       const timers = mockDb.getTable('timers');
       expect(timers.length).toBe(1);
-      expect(timers[0].duration_seconds).toBe(300);
-      expect(timers[0].is_active).toBe(true);
+      expect(timers[0].guild_id).toBe('123456789');
+      expect(timers[0].end_time).toBeGreaterThan(Math.floor(Date.now() / 1000));
     });
 
     test("rejects timer without sessionCode", async () => {
@@ -75,40 +76,29 @@ describe("TimerService", () => {
   });
 
   describe("pauseTimer", () => {
-    test("pauses active timer", async () => {
-      const timerId = await timerService.startTimer({
-        sessionCode: 's1',
-        duration: 300,
-        startedBy: 'TestUser'
-      });
-
-      await timerService.pauseTimer(timerId);
-
-      const timers = mockDb.getTable('timers');
-      expect(timers[0].is_active).toBe(false);
-    });
-
-    test("returns false when no active timer", async () => {
-      await expect(timerService.pauseTimer(999)).rejects.toThrow('Timer not found');
+    test("throws error - not supported in production schema", async () => {
+      const guildId = '123456789';
+      
+      await expect(timerService.pauseTimer(guildId)).rejects.toThrow('Pause timer not supported');
     });
   });
 
   describe("stopTimer", () => {
-    test("stops active timer", async () => {
-      const timerId = await timerService.startTimer({
+    test("stops active timer by guild_id", async () => {
+      await timerService.startTimer({
         sessionCode: 's1',
         duration: 300,
         startedBy: 'TestUser'
       });
 
-      await timerService.stopTimer(timerId);
+      await timerService.stopTimer('123456789');
 
       const timers = mockDb.getTable('timers');
       expect(timers.length).toBe(0);
     });
 
-    test("returns false when no active timer", async () => {
-      await expect(timerService.stopTimer(999)).rejects.toThrow('Timer not found');
+    test("throws error when timer not found", async () => {
+      await expect(timerService.stopTimer('999')).rejects.toThrow('Timer not found');
     });
   });
 
@@ -123,7 +113,8 @@ describe("TimerService", () => {
       const timer = await timerService.getActiveTimer('s1');
 
       expect(timer).not.toBeNull();
-      expect(timer.duration_seconds).toBe(300);
+      expect(timer.guild_id).toBe('123456789');
+      expect(timer.end_time).toBeGreaterThan(Math.floor(Date.now() / 1000));
     });
 
     test("returns null when no active timer", async () => {
@@ -139,33 +130,30 @@ describe("TimerService", () => {
       
       // Add expired timer directly to mock
       mockDb.data.timers.push({
-        timer_id: 999,
-        guild_id: '123456789',
-        category_id: '987654321',
-        duration_seconds: 300,
+        guild_id: '999',
         end_time: pastTime,
-        is_active: true
+        creator_id: null,
+        category_id: null
       });
 
-      await timerService.cleanupExpiredTimers();
+      const count = await timerService.cleanupExpiredTimers();
 
-      const timer = await timerService.getActiveTimer('s1');
-      expect(timer).toBeNull();
+      expect(count).toBe(1);
+      const timers = mockDb.getTable('timers');
+      expect(timers.length).toBe(0);
     });
 
     test("keeps active timers", async () => {
-      const futureTime = Math.floor(Date.now() / 1000) + 300;
-      
       await timerService.startTimer({
         sessionCode: 's1',
-        duration: 300,
-        endTime: futureTime
+        duration: 300
       });
 
-      await timerService.cleanupExpiredTimers();
+      const count = await timerService.cleanupExpiredTimers();
 
-      const timer = await timerService.getActiveTimer('s1');
-      expect(timer).toBeTruthy();
+      expect(count).toBe(0);
+      const timers = mockDb.getTable('timers');
+      expect(timers.length).toBe(1);
     });
   });
 });

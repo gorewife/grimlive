@@ -80,7 +80,6 @@ export class MockDatabase {
     };
     this.nextId = {
       game_id: 1,
-      timer_id: 1
     };
   }
 
@@ -191,21 +190,22 @@ export class MockDatabase {
     // INSERT INTO timers
     if (sqlLower.includes('insert into timers')) {
       const timer = {
-        timer_id: this.nextId.timer_id++,
         guild_id: params[0],
         category_id: params[1],
-        duration_seconds: params[2],
-        end_time: params[3],
-        is_active: true
+        end_time: params[2],
+        creator_id: params[3] || null
       };
+      // Remove existing timer for this guild (guild_id is PK)
+      this.data.timers = this.data.timers.filter(t => t.guild_id !== timer.guild_id);
       this.data.timers.push(timer);
       return { rows: [timer] };
     }
 
     // SELECT FROM timers
     if (sqlLower.includes('select') && sqlLower.includes('timers')) {
-      if (sqlLower.includes('where guild_id') || sqlLower.includes('where category_id')) {
-        const rows = this.data.timers.filter(t => t.is_active);
+      if (sqlLower.includes('where guild_id')) {
+        const guildId = params[0];
+        const rows = this.data.timers.filter(t => t.guild_id === guildId);
         return { rows };
       }
       return { rows: this.data.timers };
@@ -241,20 +241,11 @@ export class MockDatabase {
         const game = this.data.games.find(g => g.game_id === gameId);
         if (game) {
           game.is_active = false;
-          game.ended_at = new Date();
+          game.end_time = Math.floor(Date.now() / 1000);
+          if (sqlLower.includes('winner')) {
+            game.winner = params[0];
+          }
           return { rows: [game], rowCount: 1 };
-        }
-      }
-      return { rows: [], rowCount: 0 };
-    }
-
-    if (sqlLower.includes('update timers')) {
-      if (sqlLower.includes('where timer_id')) {
-        const timerId = params[params.length - 1];
-        const timer = this.data.timers.find(t => t.timer_id === timerId);
-        if (timer && timer.is_active) {
-          timer.is_active = false;
-          return { rows: [timer], rowCount: 1 };
         }
       }
       return { rows: [], rowCount: 0 };
@@ -285,9 +276,9 @@ export class MockDatabase {
     }
 
     if (sqlLower.includes('delete from timers')) {
-      if (sqlLower.includes('where timer_id')) {
-        const timerId = params[0];
-        const timerIndex = this.data.timers.findIndex(t => t.timer_id === timerId);
+      if (sqlLower.includes('where guild_id')) {
+        const guildId = params[0];
+        const timerIndex = this.data.timers.findIndex(t => t.guild_id === guildId);
         if (timerIndex !== -1) {
           const removed = this.data.timers.splice(timerIndex, 1);
           return { rows: removed, rowCount: 1 };
@@ -295,10 +286,14 @@ export class MockDatabase {
         return { rows: [], rowCount: 0 };
       }
       // Cleanup expired timers
-      const now = params[0];
-      const beforeCount = this.data.timers.length;
-      this.data.timers = this.data.timers.filter(t => t.end_time >= now);
-      return { rows: [], rowCount: beforeCount - this.data.timers.length };
+      if (sqlLower.includes('where end_time')) {
+        const now = params[0];
+        const beforeCount = this.data.timers.length;
+        const expired = this.data.timers.filter(t => t.end_time < now);
+        this.data.timers = this.data.timers.filter(t => t.end_time >= now);
+        return { rows: expired, rowCount: beforeCount - this.data.timers.length };
+      }
+      return { rows: [], rowCount: 0 };
     }
 
     if (sqlLower.includes('update') || sqlLower.includes('delete')) {
@@ -331,7 +326,6 @@ export class MockDatabase {
     };
     this.nextId = {
       game_id: 1,
-      timer_id: 1
     };
   }
 

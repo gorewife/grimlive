@@ -4,107 +4,78 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- GRIMKEEPER BASE SCHEMA (from migration 012)
 -- ============================================================================
 
--- Guilds table
+-- Guilds table (production schema)
 CREATE TABLE IF NOT EXISTS guilds (
     guild_id BIGINT PRIMARY KEY,
-    grimoire_link TEXT,
-    active_session_id UUID,
-    language VARCHAR(5) DEFAULT 'en' NOT NULL
+    botc_category_id BIGINT,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now(),
+    storyteller_role_id BIGINT
 );
 
-CREATE INDEX IF NOT EXISTS idx_guilds_language ON guilds(language);
-
--- Sessions table
+-- Sessions table (production schema)
 CREATE TABLE IF NOT EXISTS sessions (
-    session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     guild_id BIGINT NOT NULL REFERENCES guilds(guild_id) ON DELETE CASCADE,
     category_id BIGINT NOT NULL,
-    town_square_channel_id BIGINT,
-    grimoire_link TEXT,
     destination_channel_id BIGINT,
-    announce_channel_id BIGINT,
+    grimoire_link TEXT,
     exception_channel_id BIGINT,
+    announce_channel_id BIGINT,
     active_game_id INTEGER,
+    created_at DOUBLE PRECISION NOT NULL,
+    last_active DOUBLE PRECISION NOT NULL,
     storyteller_user_id BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_active INTEGER,  -- Unix timestamp
     vc_caps JSONB DEFAULT '{}'::jsonb,
-    session_code TEXT UNIQUE,
-    UNIQUE(guild_id, category_id)
+    session_code VARCHAR(8),
+    PRIMARY KEY (guild_id, category_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_sessions_guild_id ON sessions(guild_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_category_id ON sessions(category_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_active_game_id ON sessions(active_game_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_code ON sessions(session_code);
+CREATE INDEX IF NOT EXISTS idx_sessions_guild ON sessions(guild_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_last_active ON sessions(last_active);
 CREATE INDEX IF NOT EXISTS idx_sessions_session_code ON sessions(session_code);
 
--- Games table (unified for both services)
+-- Games table (production schema)
 CREATE TABLE IF NOT EXISTS games (
     game_id SERIAL PRIMARY KEY,
-    guild_id BIGINT REFERENCES guilds(guild_id) ON DELETE CASCADE,
-    session_id UUID REFERENCES sessions(session_id) ON DELETE SET NULL,
-    category_id BIGINT,
-    
-    -- Grimkeeper fields
-    started_at TIMESTAMP,
-    ended_at TIMESTAMP,
-    script TEXT,
-    num_players INTEGER,
-    storyteller_id BIGINT,
-    winning_team TEXT CHECK (winning_team IN ('good', 'evil')),
-    duration_minutes INTEGER,
-    
-    -- Grimlive fields
+    guild_id BIGINT NOT NULL REFERENCES guilds(guild_id) ON DELETE CASCADE,
+    script TEXT NOT NULL,
     custom_name TEXT,
-    start_time INTEGER,  -- Unix timestamp (auto-synced with started_at)
-    end_time INTEGER,    -- Unix timestamp (auto-synced with ended_at)
-    players JSONB,
+    start_time DOUBLE PRECISION NOT NULL,
+    end_time DOUBLE PRECISION,
+    winner TEXT CHECK (winner IN ('Good', 'Evil', 'Cancel')),
     player_count INTEGER,
-    storyteller_user_id BIGINT,  -- Auto-synced with storyteller_id
-    is_active BOOLEAN DEFAULT false,
-    winner TEXT CHECK (winner IN ('good', 'evil')),  -- Auto-synced with winning_team
-    completed_at TIMESTAMP
+    players JSONB,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT now(),
+    completed_at TIMESTAMP,
+    storyteller_id BIGINT,
+    category_id BIGINT,
+    storyteller_user_id BIGINT
 );
 
 CREATE INDEX IF NOT EXISTS idx_games_guild_id ON games(guild_id);
 CREATE INDEX IF NOT EXISTS idx_games_storyteller_id ON games(storyteller_id);
 CREATE INDEX IF NOT EXISTS idx_games_storyteller_user_id ON games(storyteller_user_id);
-CREATE INDEX IF NOT EXISTS idx_games_started_at ON games(started_at);
-CREATE INDEX IF NOT EXISTS idx_games_session_id ON games(session_id);
-CREATE INDEX IF NOT EXISTS idx_games_category_id ON games(category_id);
 CREATE INDEX IF NOT EXISTS idx_games_is_active ON games(is_active);
+CREATE INDEX IF NOT EXISTS idx_games_category_id ON games(category_id);
+CREATE INDEX IF NOT EXISTS idx_games_guild_active ON games(guild_id, is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_games_guild_completed ON games(guild_id, completed_at DESC) WHERE is_active = false;
 
 -- Add FK for sessions.active_game_id after games table exists
 ALTER TABLE sessions ADD CONSTRAINT sessions_active_game_id_fkey 
     FOREIGN KEY (active_game_id) REFERENCES games(game_id) ON DELETE SET NULL;
 
--- Storyteller stats
-CREATE TABLE IF NOT EXISTS storyteller_stats (
-    guild_id BIGINT NOT NULL REFERENCES guilds(guild_id) ON DELETE CASCADE,
-    storyteller_id BIGINT NOT NULL,
-    games_run INTEGER DEFAULT 0,
-    total_minutes INTEGER DEFAULT 0,
-    good_wins INTEGER DEFAULT 0,
-    evil_wins INTEGER DEFAULT 0,
-    PRIMARY KEY (guild_id, storyteller_id)
-);
-
--- Timers
+-- Timers (production schema - simplified)
 CREATE TABLE IF NOT EXISTS timers (
-    timer_id SERIAL PRIMARY KEY,
-    guild_id BIGINT NOT NULL REFERENCES guilds(guild_id) ON DELETE CASCADE,
-    category_id BIGINT,
-    channel_id BIGINT NOT NULL,
-    message_id BIGINT NOT NULL UNIQUE,
-    phase TEXT NOT NULL CHECK (phase IN ('nomination', 'discussion', 'private', 'unknown')),
-    duration_seconds INTEGER NOT NULL,
-    end_time TIMESTAMP NOT NULL,
-    is_paused BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE
+    guild_id BIGINT PRIMARY KEY REFERENCES guilds(guild_id) ON DELETE CASCADE,
+    end_time DOUBLE PRECISION NOT NULL,
+    creator_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    category_id BIGINT
 );
 
-CREATE INDEX IF NOT EXISTS idx_timers_guild_id ON timers(guild_id);
-CREATE INDEX IF NOT EXISTS idx_timers_category_id ON timers(category_id);
+CREATE INDEX IF NOT EXISTS idx_timers_category ON timers(category_id) WHERE category_id IS NOT NULL;
 
 -- ============================================================================
 -- GRIMLIVE TABLES (from migrations 001-002)
