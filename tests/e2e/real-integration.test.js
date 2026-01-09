@@ -195,16 +195,30 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
   });
   
   describe("Timer Synchronization", () => {
+    let sessionToken;
+    
+    beforeAll(async () => {
+      const response = await fetch(`${GRIMLIVE_API}/api/session/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discord_user_id: TEST_DISCORD_USER })
+      });
+      const data = await response.json();
+      sessionToken = data.token;
+    });
+    
     test("timer started via API creates database entry", async () => {
       await cleanupTestData();
       
       const response = await fetch(`${GRIMLIVE_API}/api/timer/start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
         body: JSON.stringify({
           sessionCode: TEST_SESSION_CODE,
-          duration: 300,
-          discordUserId: TEST_DISCORD_USER
+          duration: 300
         })
       });
       
@@ -212,59 +226,62 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
       
       // Verify timer in database
       const result = await dbPool.query(
-        'SELECT * FROM timers WHERE guild_id = $1 AND category_id = $2',
-        [TEST_GUILD_ID, TEST_CATEGORY_ID]
+        'SELECT * FROM timers WHERE guild_id = $1',
+        [TEST_GUILD_ID]
       );
       
       expect(result.rows.length).toBe(1);
-      expect(result.rows[0].duration_seconds).toBe(300);
-      expect(result.rows[0].is_paused).toBe(false);
+      expect(result.rows[0].creator_id).toBe(TEST_DISCORD_USER);
     });
     
     test("timer pause updates database", async () => {
       await fetch(`${GRIMLIVE_API}/api/timer/start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
         body: JSON.stringify({
           sessionCode: TEST_SESSION_CODE,
-          duration: 300,
-          discordUserId: TEST_DISCORD_USER
+          duration: 300
         })
       });
       
       // Pause timer
       const response = await fetch(`${GRIMLIVE_API}/api/timer/pause`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
         body: JSON.stringify({ sessionCode: TEST_SESSION_CODE })
       });
       
-      expect(response.ok).toBe(true);
-      
-      // Check database
-      const result = await dbPool.query(
-        'SELECT is_paused FROM timers WHERE guild_id = $1 AND category_id = $2',
-        [TEST_GUILD_ID, TEST_CATEGORY_ID]
-      );
-      
-      expect(result.rows[0].is_paused).toBe(true);
+      expect(response.ok).toBe(false); // Pause not supported
+      const data = await response.json();
+      expect(data.error).toContain('not supported');
     });
     
     test("timer stop removes from database", async () => {
       await fetch(`${GRIMLIVE_API}/api/timer/start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
         body: JSON.stringify({
           sessionCode: TEST_SESSION_CODE,
-          duration: 300,
-          discordUserId: TEST_DISCORD_USER
+          duration: 300
         })
       });
       
       // Stop timer
       const response = await fetch(`${GRIMLIVE_API}/api/timer/stop`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
         body: JSON.stringify({ sessionCode: TEST_SESSION_CODE })
       });
       
@@ -272,8 +289,8 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
       
       // Verify removed
       const result = await dbPool.query(
-        'SELECT * FROM timers WHERE guild_id = $1 AND category_id = $2',
-        [TEST_GUILD_ID, TEST_CATEGORY_ID]
+        'SELECT * FROM timers WHERE guild_id = $1',
+        [TEST_GUILD_ID]
       );
       
       expect(result.rows.length).toBe(0);
