@@ -147,8 +147,8 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
       
       // Verify players saved
       const playersResult = await dbPool.query(
-        'SELECT * FROM game_players WHERE game_id = $1 ORDER BY discord_user_id',
-        [result.game_id]
+        'SELECT * FROM game_players WHERE game_id = $1 ORDER BY discord_id',
+        [result.gameId]
       );
       
       expect(playersResult.rows.length).toBe(3);
@@ -270,7 +270,7 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
         })
       });
       const gameData = await gameResp.json();
-      gameId = gameData.game_id;
+      gameId = gameData.gameId;
     });
     
     test("ending game updates database with winner", async () => {
