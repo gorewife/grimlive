@@ -12,8 +12,7 @@ import { logger } from './logger.js';
 const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env file - always load if DB_HOST not set, even if other env vars exist
-if (!process.env.DB_HOST) {
+if (!process.env.DB_HOST && !process.env.DATABASE_URL) {
   const envPath = path.join(__dirname, '.env');
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf-8');
@@ -27,8 +26,6 @@ if (!process.env.DB_HOST) {
       }
     });
     console.log('[api-shared] Loaded .env file');
-  } else {
-    console.log('[api-shared] No .env file found at', envPath);
   }
 }
 
