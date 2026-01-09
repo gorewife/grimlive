@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import { logger } from './logger.js';
+import { ValidationUtils } from './utils/ValidationUtils.js';
 import {
   pool,
   parseBody,
@@ -153,8 +155,19 @@ export const apiV1 = {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const params = url.searchParams;
     
-    const limit = Math.min(parseInt(params.get('limit')) || 50, 100); // Max 100
-    const offset = parseInt(params.get('offset')) || 0;
+    // P1-18: Use ValidationUtils for pagination validation
+    const limitParam = params.get('limit');
+    const offsetParam = params.get('offset');
+    const paginationValidation = ValidationUtils.validatePagination(
+      limitParam ? parseInt(limitParam, 10) : null,
+      offsetParam ? parseInt(offsetParam, 10) : null
+    );
+    
+    if (!paginationValidation.valid) {
+      return jsonResponse({ error: paginationValidation.errors[0] }, 400);
+    }
+    
+    const { limit, offset } = paginationValidation.sanitized;
     const script = params.get('script'); // Filter by script
     const winner = params.get('winner'); // Filter by winner (good/evil)
     const startDate = params.get('start_date'); // ISO date

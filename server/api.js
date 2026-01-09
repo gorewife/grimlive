@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { logger } from './logger.js';
+import { ValidationUtils } from './utils/ValidationUtils.js';
 import {
   pool,
   jsonResponse,
@@ -103,7 +104,19 @@ export const api = {
     }
 
     const body = await parseBody(req);
-    const { script, customName, players, storytellerId, sessionCode } = body;
+    let { script, customName, players, storytellerId, sessionCode } = body;
+
+    // P1-16: Sanitize inputs
+    script = ValidationUtils.sanitizeScriptName(script);
+    if (customName) {
+      customName = ValidationUtils.sanitizeString(customName, 100);
+    }
+    if (sessionCode) {
+      sessionCode = ValidationUtils.sanitizeSessionCode(sessionCode);
+      if (!sessionCode) {
+        return jsonResponse({ error: 'Invalid session code format' }, 400);
+      }
+    }
 
     if (!session.discord_user_id) {
       return jsonResponse({ 
@@ -549,8 +562,10 @@ export const api = {
 
   timerStart: async (req) => {
     const body = await parseBody(req);
-    const { sessionCode, duration, discordUserId } = body;
+    let { sessionCode, duration, discordUserId } = body;
 
+    // P1-16: Sanitize sessionCode
+    sessionCode = ValidationUtils.sanitizeSessionCode(sessionCode);
     if (!sessionCode) {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
@@ -595,8 +610,10 @@ export const api = {
 
   timerStop: async (req) => {
     const body = await parseBody(req);
-    const { sessionCode } = body;
+    let { sessionCode } = body;
 
+    // P1-16: Sanitize sessionCode
+    sessionCode = ValidationUtils.sanitizeSessionCode(sessionCode);
     if (!sessionCode) {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
@@ -627,8 +644,10 @@ export const api = {
 
   timerPause: async (req) => {
     const body = await parseBody(req);
-    const { sessionCode } = body;
+    let { sessionCode } = body;
 
+    // P1-16: Sanitize sessionCode
+    sessionCode = ValidationUtils.sanitizeSessionCode(sessionCode);
     if (!sessionCode) {
       return jsonResponse({ error: 'sessionCode required' }, 400);
     }
