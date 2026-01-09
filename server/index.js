@@ -242,7 +242,7 @@ if (process.env.NODE_ENV === "development") {
   server.listen(8001, async () => {
     logger.info('HTTP server listening on port 8001 (development mode)');
     await initializeServices();
-    startCleanupTask(serviceContainer);
+    await startCleanupTask(serviceContainer);
   });
 }
 
@@ -553,6 +553,6 @@ if (process.env.NODE_ENV !== "development") {
   server.listen(8001, async () => {
     await initializeServices();
     logger.info("Server and services initialized");
-    startCleanupTask(serviceContainer);
+    await startCleanupTask(serviceContainer);
   });
 }

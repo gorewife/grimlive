@@ -14,13 +14,13 @@ export class CleanupService {
   /**
    * Start the cleanup task
    */
-  start() {
+  async start() {
     const cleanupConfig = this.config.getCleanupConfig();
     
     this.logger.info(`Starting cleanup task (runs every ${cleanupConfig.interval / 60000} minutes)`);
 
     // Run immediately on startup
-    this.cleanupStaleGames();
+    await this.cleanupStaleGames();
 
     // Then run periodically
     this.intervalId = setInterval(() => {

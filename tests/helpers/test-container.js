@@ -118,15 +118,39 @@ export class MockDatabase {
       return { rows: this.data.web_sessions };
     }
 
+    // INSERT INTO sessions
+    if (sqlLower.includes('insert into sessions')) {
+      const session = {
+        guild_id: params[0],
+        category_id: params[1],
+        session_code: params[2]
+      };
+      this.data.sessions.push(session);
+      return { rows: [session] };
+    }
+
+    // SELECT FROM sessions
+    if (sqlLower.includes('select') && sqlLower.includes('sessions') && !sqlLower.includes('web_sessions')) {
+      if (sqlLower.includes('where session_code')) {
+        const sessionCode = params[0];
+        const rows = this.data.sessions.filter(s => s.session_code === sessionCode);
+        return { rows };
+      }
+      return { rows: this.data.sessions };
+    }
+
     // INSERT INTO games
     if (sqlLower.includes('insert into games')) {
       const game = {
         game_id: this.nextId.game_id++,
         guild_id: params[0],
-        script: params[1],
-        num_players: params[2],
-        storyteller_id: params[3],
-        started_at: new Date(),
+        category_id: params[1],
+        script: params[2],
+        custom_name: params[3],
+        start_time: params[4],
+        players: params[5],
+        player_count: params[6],
+        storyteller_id: params[7],
         is_active: true
       };
       this.data.games.push(game);
@@ -141,7 +165,9 @@ export class MockDatabase {
         player_name: params[2],
         seat_number: params[3],
         starting_role_name: params[4],
-        starting_team: params[5]
+        starting_team: params[5],
+        character_name: params[6],
+        alignment: params[7]
       };
       this.data.game_players.push(player);
       return { rows: [player] };
@@ -176,6 +202,15 @@ export class MockDatabase {
       return { rows: [timer] };
     }
 
+    // SELECT FROM timers
+    if (sqlLower.includes('select') && sqlLower.includes('timers')) {
+      if (sqlLower.includes('where guild_id') || sqlLower.includes('where category_id')) {
+        const rows = this.data.timers.filter(t => t.is_active);
+        return { rows };
+      }
+      return { rows: this.data.timers };
+    }
+
     // UPDATE/DELETE operations
     if (sqlLower.includes('update web_sessions')) {
       if (sqlLower.includes('where token')) {
@@ -200,6 +235,72 @@ export class MockDatabase {
       return { rows: [], rowCount: 0 };
     }
 
+    if (sqlLower.includes('update games')) {
+      if (sqlLower.includes('where game_id')) {
+        const gameId = params[params.length - 1];
+        const game = this.data.games.find(g => g.game_id === gameId);
+        if (game) {
+          game.is_active = false;
+          game.ended_at = new Date();
+          return { rows: [game], rowCount: 1 };
+        }
+      }
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (sqlLower.includes('update timers')) {
+      if (sqlLower.includes('where timer_id')) {
+        const timerId = params[params.length - 1];
+        const timer = this.data.timers.find(t => t.timer_id === timerId);
+        if (timer && timer.is_active) {
+          timer.is_active = false;
+          return { rows: [timer], rowCount: 1 };
+        }
+      }
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (sqlLower.includes('update sessions')) {
+      if (sqlLower.includes('where session_code')) {
+        const sessionCode = params[params.length - 1];
+        const session = this.data.sessions.find(s => s.session_code === sessionCode);
+        if (session) {
+          if (sqlLower.includes('grimoire_link')) {
+            session.grimoire_link = params[0];
+            session.active_game_id = params[1];
+            session.last_active = params[2];
+          } else if (sqlLower.includes('active_game_id = null')) {
+            session.active_game_id = null;
+          }
+          return { rows: [session], rowCount: 1 };
+        }
+      }
+      if (sqlLower.includes('where active_game_id')) {
+        const gameId = params[0];
+        const sessions = this.data.sessions.filter(s => s.active_game_id === gameId);
+        sessions.forEach(s => s.active_game_id = null);
+        return { rows: sessions, rowCount: sessions.length };
+      }
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (sqlLower.includes('delete from timers')) {
+      if (sqlLower.includes('where timer_id')) {
+        const timerId = params[0];
+        const timerIndex = this.data.timers.findIndex(t => t.timer_id === timerId);
+        if (timerIndex !== -1) {
+          const removed = this.data.timers.splice(timerIndex, 1);
+          return { rows: removed, rowCount: 1 };
+        }
+        return { rows: [], rowCount: 0 };
+      }
+      // Cleanup expired timers
+      const now = params[0];
+      const beforeCount = this.data.timers.length;
+      this.data.timers = this.data.timers.filter(t => t.end_time >= now);
+      return { rows: [], rowCount: beforeCount - this.data.timers.length };
+    }
+
     if (sqlLower.includes('update') || sqlLower.includes('delete')) {
       return { rows: [], rowCount: 0 };
     }
@@ -209,7 +310,8 @@ export class MockDatabase {
   }
 
   async transaction(callback) {
-    return await callback();
+    // Execute callback with this database as the "client"
+    return await callback(this);
   }
 
   async close() {}
