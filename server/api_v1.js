@@ -102,7 +102,7 @@ async function verifyApiKey(req) {
       remaining: rate_limit - requestLog.requests.length
     };
   } catch (error) {
-    console.error('API key verification error:', error);
+    logger.error('API key verification error:', error);
     return { valid: false, error: 'Internal server error' };
   }
 }
@@ -117,7 +117,7 @@ async function logApiUsage(keyId, endpoint, method, status, ipAddress) {
       [keyId, endpoint, method, status, ipAddress]
     );
   } catch (error) {
-    console.error('Failed to log API usage:', error);
+    logger.error('Failed to log API usage:', error);
   }
 }
 
@@ -215,7 +215,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error fetching games:', error);
+      logger.error('Error fetching games:', error);
       logApiUsage(auth.keyId, '/api/v1/games', 'GET', 500, req.socket.remoteAddress);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
@@ -261,7 +261,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error fetching game:', error);
+      logger.error('Error fetching game:', error);
       logApiUsage(auth.keyId, `/api/v1/games/${gameId}`, 'GET', 500, req.socket.remoteAddress);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
@@ -363,7 +363,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      logger.error('Error fetching stats:', error);
       logApiUsage(auth.keyId, '/api/v1/stats/summary', 'GET', 500, req.socket.remoteAddress);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
@@ -473,7 +473,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error fetching player stats:', error);
+      logger.error('Error fetching player stats:', error);
       logApiUsage(auth.keyId, `/api/v1/players/${discordId}/stats`, 'GET', 500, req.socket.remoteAddress);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
@@ -554,7 +554,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error fetching script stats:', error);
+      logger.error('Error fetching script stats:', error);
       logApiUsage(auth.keyId, `/api/v1/scripts/${scriptName}/stats`, 'GET', 500, req.socket.remoteAddress);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
@@ -626,7 +626,7 @@ export const apiV1 = {
         }
       }, 201);
     } catch (error) {
-      console.error('Error creating API key:', error);
+      logger.error('Error creating API key:', error);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
   },
@@ -676,7 +676,7 @@ export const apiV1 = {
         }))
       });
     } catch (error) {
-      console.error('Error listing API keys:', error);
+      logger.error('Error listing API keys:', error);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
   },
@@ -727,7 +727,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error deleting API key:', error);
+      logger.error('Error deleting API key:', error);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
   },
@@ -809,7 +809,7 @@ export const apiV1 = {
         }
       });
     } catch (error) {
-      console.error('Error updating API key:', error);
+      logger.error('Error updating API key:', error);
       return jsonResponse({ error: 'Internal server error' }, 500);
     }
   }
