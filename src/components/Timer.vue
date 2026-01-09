@@ -10,15 +10,6 @@
           <div class="timer-label">Time Remaining</div>
         </div>
         <div v-if="!session.isSpectator" class="timer-controls">
-          <button
-            @click="togglePause"
-            class="pause-button"
-            :title="session.timer.isPaused ? 'Resume Timer' : 'Pause Timer'"
-          >
-            <font-awesome-icon
-              :icon="session.timer.isPaused ? 'play' : 'pause'"
-            />
-          </button>
           <button @click="stopTimer" class="stop-button" title="Stop Timer">
             <font-awesome-icon icon="times" />
           </button>
@@ -107,31 +98,14 @@ export default {
         }
       }
     },
-    togglePause() {
-      if (this.session.timer.isPaused) {
-        // Resume
-        this.$store.commit("session/resumeTimer");
-        this.$store.state.grimoire.sendTimer({
-          action: "resume",
-          endTime: this.session.timer.endTime,
-        });
-      } else {
-        // Pause
-        this.$store.commit("session/pauseTimer");
-        this.$store.state.grimoire.sendTimer({
-          action: "pause",
-          pausedRemaining: this.session.timer.pausedRemaining,
-        });
-      }
-    },
+
     updateNow() {
       this.now = Date.now();
 
-      // Check if timer has expired (only when not paused)
+      // Check if timer has expired
       if (
         this.remainingSeconds === 0 &&
-        this.session.timer.isActive &&
-        !this.session.timer.isPaused
+        this.session.timer.isActive
       ) {
         this.handleTimerComplete();
       }
@@ -282,7 +256,6 @@ export default {
   gap: 8px;
 }
 
-.pause-button,
 .stop-button {
   width: 40px;
   height: 40px;
