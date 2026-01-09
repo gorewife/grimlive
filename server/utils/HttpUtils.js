@@ -94,12 +94,20 @@ export class ResponseUtils {
 export class RequestUtils {
   /**
    * Parse JSON body from request
+   * Caches result on request object to allow multiple reads
    */
   static async parseBody(req, maxSize = 1024 * 100) {
+    // Return cached body if already parsed
+    if (req._parsedBody !== undefined) {
+      console.log('[parseBody] Returning cached body');
+      return req._parsedBody;
+    }
+
     return new Promise((resolve, reject) => {
       // Check if the stream has already ended
       if (req.readableEnded) {
         console.log('[parseBody] Stream already ended, cannot read body');
+        req._parsedBody = {};
         resolve({});
         return;
       }
@@ -127,7 +135,9 @@ export class RequestUtils {
       req.on('end', () => {
         console.log('[parseBody] End event, dataEvents:', dataEvents, 'body length:', body.length);
         try {
-          resolve(body ? JSON.parse(body) : {});
+          const parsed = body ? JSON.parse(body) : {};
+          req._parsedBody = parsed; // Cache for future calls
+          resolve(parsed);
         } catch (error) {
           reject(new Error('Invalid JSON'));
         }
