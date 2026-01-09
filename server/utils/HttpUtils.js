@@ -97,6 +97,13 @@ export class RequestUtils {
    */
   static async parseBody(req, maxSize = 1024 * 100) {
     return new Promise((resolve, reject) => {
+      // Check if the stream has already ended
+      if (req.readableEnded) {
+        console.log('[parseBody] Stream already ended, cannot read body');
+        resolve({});
+        return;
+      }
+
       let body = '';
       let size = 0;
       let dataEvents = 0;
