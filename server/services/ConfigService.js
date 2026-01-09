@@ -63,14 +63,30 @@ export class ConfigService {
    * Get server configuration
    */
   getServerConfig() {
+    const port = parseInt(process.env.PORT, 10);
+    const pingInterval = parseInt(process.env.PING_INTERVAL, 10);
+    const maxBodySize = parseInt(process.env.MAX_BODY_SIZE, 10);
+
+    if (isNaN(port) || port < 1 || port > 65535) {
+      throw new Error(`Invalid PORT: ${process.env.PORT}. Must be a number between 1-65535`);
+    }
+
+    if (process.env.PING_INTERVAL && (isNaN(pingInterval) || pingInterval < 1000)) {
+      throw new Error(`Invalid PING_INTERVAL: ${process.env.PING_INTERVAL}. Must be >= 1000ms`);
+    }
+
+    if (process.env.MAX_BODY_SIZE && (isNaN(maxBodySize) || maxBodySize < 1024)) {
+      throw new Error(`Invalid MAX_BODY_SIZE: ${process.env.MAX_BODY_SIZE}. Must be >= 1024 bytes`);
+    }
+
     return {
-      port: parseInt(process.env.PORT) || 8001,
+      port,
       nodeEnv: process.env.NODE_ENV || 'development',
       isProduction: process.env.NODE_ENV === 'production',
       isTest: process.env.NODE_ENV === 'test',
       sslEnabled: process.env.SSL_ENABLED === 'true',
-      pingInterval: parseInt(process.env.PING_INTERVAL) || 30000,
-      maxBodySize: parseInt(process.env.MAX_BODY_SIZE) || 1024 * 100,
+      pingInterval: pingInterval || 30000,
+      maxBodySize: maxBodySize || 1024 * 100,
     };
   }
 

@@ -51,7 +51,8 @@ export class CleanupService {
       const result = await this.db.query(`
         UPDATE games 
         SET is_active = FALSE,
-            end_time = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
+            end_time = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
+            completed_at = CURRENT_TIMESTAMP
         WHERE is_active = TRUE 
           AND start_time < $1
           AND end_time IS NULL
