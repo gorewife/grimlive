@@ -41,10 +41,6 @@ export default {
       if (!this.session.timer.isActive) {
         return 0;
       }
-      // If paused, return the saved pausedRemaining value
-      if (this.session.timer.isPaused) {
-        return this.session.timer.pausedRemaining;
-      }
       if (!this.session.timer.endTime) {
         return 0;
       }

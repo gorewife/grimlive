@@ -18,7 +18,6 @@ const handleVote = (state, [index, vote]) => {
   // Ensure votes array is properly sized (fill with 0s if needed)
   if (state.votes.length < expectedCount) {
     const newVotes = Array(expectedCount).fill(0);
-    // Preserve existing votes
     state.votes.forEach((v, i) => {
       newVotes[i] = v || 0;
     });
@@ -58,9 +57,6 @@ const state = () => ({
     duration: 0,
     endTime: null,
     startedBy: null,
-    isPaused: false,
-    pausedTime: null,
-    pausedRemaining: 0,
   },
 });
 
@@ -101,7 +97,6 @@ const mutations = {
     { nomination, votes, votingSpeed, lockedVote, isVoteInProgress } = {},
   ) {
     state.nomination = nomination || false;
-    // Preserve existing votes array if no new votes provided and we have an array
     // This prevents losing vote data when only the nomination pair is updated
     if (votes !== undefined) {
       state.votes = votes;
@@ -165,26 +160,6 @@ const mutations = {
     state.timer.duration = 0;
     state.timer.endTime = null;
     state.timer.startedBy = null;
-    state.timer.isPaused = false;
-    state.timer.pausedTime = null;
-    state.timer.pausedRemaining = 0;
-  },
-  pauseTimer(state) {
-    if (!state.timer.isActive || state.timer.isPaused) return;
-    const remaining = Math.max(
-      0,
-      Math.floor((state.timer.endTime - Date.now()) / 1000),
-    );
-    state.timer.isPaused = true;
-    state.timer.pausedTime = Date.now();
-    state.timer.pausedRemaining = remaining;
-  },
-  resumeTimer(state) {
-    if (!state.timer.isActive || !state.timer.isPaused) return;
-    const newEndTime = Date.now() + state.timer.pausedRemaining * 1000;
-    state.timer.endTime = newEndTime;
-    state.timer.isPaused = false;
-    state.timer.pausedTime = null;
   },
   updateTimer(state, { endTime }) {
     state.timer.endTime = endTime;

@@ -647,7 +647,7 @@ class LiveSession {
 
   /**
    * Send timer update to all clients
-   * @param timerData - { action: 'start'|'stop'|'complete'|'pause'|'resume', duration?, endTime?, startedBy?, pausedRemaining? }
+   * @param timerData - { action: 'start'|'stop'|'complete'|'sync', duration?, endTime?, startedBy? }
    */
   sendTimer(timerData) {
     if (!this._socket || this._isSpectator) return;
@@ -676,12 +676,6 @@ class LiveSession {
       case "complete":
         // Timer completed on another client
         this._store.commit("session/stopTimer");
-        break;
-      case "pause":
-        this._store.commit("session/pauseTimer");
-        break;
-      case "resume":
-        this._store.commit("session/resumeTimer");
         break;
       case "sync":
         // Sync timer state (for late-joining clients)
