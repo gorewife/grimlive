@@ -11,6 +11,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
 import { startCleanupTask } from "./cleanup.js";
+import { getServiceContainer } from "./services/ServiceContainer.js";
+import { LegacyAPIHandler } from "./handlers/LegacyAPIHandler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +29,22 @@ if (fs.existsSync(envPath)) {
     }
   });
   logger.info('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
+}
+
+// Initialize service container
+let serviceContainer;
+let legacyAPIHandler;
+
+async function initializeServices() {
+  try {
+    serviceContainer = getServiceContainer();
+    await serviceContainer.initialize();
+    legacyAPIHandler = new LegacyAPIHandler(serviceContainer);
+    logger.info('Service container initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize service container:', error);
+    throw error;
+  }
 }
 
 const register = new client.Registry();
@@ -159,14 +177,15 @@ const requestHandler = async (req, res) => {
     try {
       let response;
       
+      // Use new handler for implemented endpoints, fall back to old api.js for others
       if (path === 'session/create' && req.method === 'POST') {
-        response = await api.createSession(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.createSession(req) : await api.createSession(req);
       } else if (path === 'session/update-discord' && req.method === 'POST') {
-        response = await api.updateSessionDiscordUser(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.updateSessionDiscordUser(req) : await api.updateSessionDiscordUser(req);
       } else if (path === 'game/start' && req.method === 'POST') {
-        response = await api.startGame(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.startGame(req) : await api.startGame(req);
       } else if (path === 'game/end' && req.method === 'POST') {
-        response = await api.endGame(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.endGame(req) : await api.endGame(req);
       } else if (path === 'game/cancel' && req.method === 'POST') {
         response = await api.cancelGame(req);
       } else if (path === 'game/update-role' && req.method === 'POST') {
@@ -176,11 +195,11 @@ const requestHandler = async (req, res) => {
       } else if (path === 'player/death' && req.method === 'POST') {
         response = await api.addDeath(req);
       } else if (path === 'timer/start' && req.method === 'POST') {
-        response = await api.timerStart(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.startTimer(req) : await api.timerStart(req);
       } else if (path === 'timer/stop' && req.method === 'POST') {
-        response = await api.timerStop(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.stopTimer(req) : await api.timerStop(req);
       } else if (path === 'timer/pause' && req.method === 'POST') {
-        response = await api.timerPause(req);
+        response = legacyAPIHandler ? await legacyAPIHandler.pauseTimer(req) : await api.timerPause(req);
       } else if (path === 'timer/resume' && req.method === 'POST') {
         response = await api.timerResume(req);
       } else if (path === 'mute' && req.method === 'POST') {
@@ -220,9 +239,10 @@ const server = (process.env.NODE_ENV === "development" || !options.cert)
   : https.createServer(options, requestHandler);
 
 if (process.env.NODE_ENV === "development") {
-  server.listen(8001, () => {
+  server.listen(8001, async () => {
     logger.info('HTTP server listening on port 8001 (development mode)');
-    startCleanupTask();
+    await initializeServices();
+    startCleanupTask(serviceContainer);
   });
 }
 
@@ -502,8 +522,12 @@ process.on('SIGTERM', () => {
   logger.info('SIGTERM received, closing server gracefully...');
   wss.close(() => {
     logger.info('WebSocket server closed');
-    server.close(() => {
+    server.close(async () => {
       logger.info('HTTP server closed');
+      if (serviceContainer) {
+        await serviceContainer.shutdown();
+        logger.info('Service container shutdown complete');
+      }
       process.exit(0);
     });
   });
@@ -513,8 +537,12 @@ process.on('SIGINT', () => {
   logger.info('SIGINT received, closing server gracefully...');
   wss.close(() => {
     logger.info('WebSocket server closed');
-    server.close(() => {
+    server.close(async () => {
       logger.info('HTTP server closed');
+      if (serviceContainer) {
+        await serviceContainer.shutdown();
+        logger.info('Service container shutdown complete');
+      }
       process.exit(0);
     });
   });
@@ -522,6 +550,9 @@ process.on('SIGINT', () => {
 
 if (process.env.NODE_ENV !== "development") {
   logger.info("server starting");
-  server.listen(8001);
-  startCleanupTask();
+  server.listen(8001, async () => {
+    await initializeServices();
+    logger.info("Server and services initialized");
+    startCleanupTask(serviceContainer);
+  });
 }
