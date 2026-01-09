@@ -22,8 +22,11 @@ jobs:
     - name: Install dependencies
       run: bun install
     
-    - name: Run unit/integration tests
-      run: bun test tests/integration/
+    - name: Run unit tests
+      run: bun test tests/unit/
+    
+    - name: Run integration tests
+      run: bun test tests/integration/role-distribution.test.js
     
     - name: Test summary
       run: echo "✅ Unit and integration tests passed"
