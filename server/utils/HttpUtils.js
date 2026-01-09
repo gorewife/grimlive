@@ -100,6 +100,8 @@ export class RequestUtils {
       let body = '';
       let size = 0;
 
+      req.resume(); // Ensure request stream is flowing
+
       req.on('data', chunk => {
         size += chunk.length;
         if (size > maxSize) {
