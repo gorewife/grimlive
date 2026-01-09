@@ -148,18 +148,4 @@ export class RequestUtils {
            req.headers['x-real-ip'] || 
            req.socket.remoteAddress;
   }
-
-  /**
-   * Parse query parameters
-   */
-  static parseQueryParams(req) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const params = {};
-    
-    for (const [key, value] of url.searchParams.entries()) {
-      params[key] = value;
-    }
-    
-    return params;
-  }
 }

@@ -4,6 +4,7 @@ import { ValidationUtils } from './utils/ValidationUtils.js';
 import {
   pool,
   parseBody,
+  jsonResponse,
   normalizeGameData,
   normalizePlayerData,
   getGameWithPlayers,
@@ -11,21 +12,6 @@ import {
 } from './api-shared.js';
 
 logger.info('API v1 initialized (read-only public endpoints)');
-
-// ============================================================================
-// V1-SPECIFIC UTILITIES
-// ============================================================================
-
-function jsonResponse(data, status = 200) {
-  return {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Version': '1.0'
-    },
-    text: async () => JSON.stringify(data)
-  };
-}
 
 // ============================================================================
 // AUTHENTICATION & RATE LIMITING
@@ -757,7 +743,8 @@ export const apiV1 = {
       return jsonResponse({ error: 'Missing authorization token' }, 401);
     }
 
-    try {\n      // Verify session token
+    try {
+      // Verify session token
       const sessionResult = await pool.query(
         'SELECT discord_user_id FROM web_sessions WHERE token = $1 AND expires_at > $2',
         [token, Math.floor(Date.now() / 1000)]

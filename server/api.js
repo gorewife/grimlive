@@ -6,9 +6,6 @@ import {
   jsonResponse,
   parseBody,
   normalizeGameData,
-  validateGameStart,
-  validateGameEnd,
-  validateTimerData,
   getSessionByCode,
   getGameWithPlayers,
   updateSessionActivity,
@@ -124,8 +121,8 @@ export const api = {
       }, 400);
     }
 
-    // Validate input using shared validation
-    const validation = validateGameStart({ script, players, sessionCode });
+    // Validate input using ValidationUtils
+    const validation = ValidationUtils.validateGameStart({ script, players, sessionCode });
     if (!validation.valid) {
       return jsonResponse({ error: validation.errors[0] }, 400);
     }
@@ -250,7 +247,7 @@ export const api = {
     }
     
     // Validate input using shared validation
-    const validation = validateGameEnd({ gameId, winner: finalWinner });
+    const validation = ValidationUtils.validateGameEnd({ gameId, winner: finalWinner });
     if (!validation.valid) {
       return jsonResponse({ error: validation.errors[0] }, 400);
     }

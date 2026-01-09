@@ -16,20 +16,7 @@ import { LegacyAPIHandler } from "./handlers/LegacyAPIHandler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf-8');
-  envContent.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const [key, ...values] = trimmed.split('=');
-      if (key && values.length) {
-        process.env[key.trim()] = values.join('=').trim();
-      }
-    }
-  });
-  logger.info('Loaded .env file with DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? 'present' : 'missing');
-}
+// P1-11: Removed duplicate .env loading - ConfigService already handles this
 
 // Initialize service container
 let serviceContainer;
