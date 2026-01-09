@@ -251,7 +251,7 @@ const wss = new WebSocketServer({
   verifyClient: (info) =>
     info.origin &&
     !!info.origin.match(
-      /^https?:\/\/([^.]+\.github\.io|[^.]+\.pages\.dev|localhost|clocktower\.live|grim\.hystericca\.dev)/i,
+      /^https?:\/\/([^.]+\.github\.io|[^.]+\.pages\.dev|localhost:8080|localhost:8001|clocktower\.live|grim\.hystericca\.dev)/i,
     ),
 });
 

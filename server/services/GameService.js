@@ -90,7 +90,16 @@ export class GameService extends IGameService {
    * End a game
    */
   async endGame(gameId, winner) {
-    if (!['good', 'evil', 'Good', 'Evil', 'Cancel'].includes(winner)) {
+    // Normalize winner to match database CHECK constraint: 'Good', 'Evil', or 'Cancel'
+    let normalizedWinner = winner;
+    if (winner) {
+      const lower = winner.toLowerCase();
+      if (lower === 'good') normalizedWinner = 'Good';
+      else if (lower === 'evil') normalizedWinner = 'Evil';
+      else if (lower === 'cancel') normalizedWinner = 'Cancel';
+    }
+
+    if (!['Good', 'Evil', 'Cancel'].includes(normalizedWinner)) {
       throw new Error('Invalid winner value');
     }
 
@@ -101,7 +110,7 @@ export class GameService extends IGameService {
         // Update game
         await client.query(
           'UPDATE games SET end_time = $1, winner = $2, is_active = FALSE WHERE game_id = $3',
-          [endTime, winner, gameId]
+          [endTime, normalizedWinner, gameId]
         );
 
         // Clear active_game_id from sessions
@@ -111,7 +120,7 @@ export class GameService extends IGameService {
         );
       });
 
-      this.logger.info(`Game ${gameId} ended, winner: ${winner}`);
+      this.logger.info(`Game ${gameId} ended, winner: ${normalizedWinner}`);
     } catch (error) {
       this.logger.error('Failed to end game:', error);
       throw new Error('Failed to end game');

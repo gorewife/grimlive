@@ -41,20 +41,20 @@ export class CleanupService {
 
   /**
    * Clean up stale games (older than threshold)
-   * Uses actual production schema: started_at/ended_at (TIMESTAMP), is_active (BOOLEAN)
+   * Uses actual production schema: start_time/end_time (double precision UNIX timestamps), is_active (BOOLEAN)
    */
   async cleanupStaleGames() {
     const cleanupConfig = this.config.getCleanupConfig();
-    const thresholdTime = new Date(Date.now() - (cleanupConfig.staleGameThreshold * 1000));
+    const thresholdTime = Math.floor(Date.now() / 1000) - cleanupConfig.staleGameThreshold;
 
     try {
       const result = await this.db.query(`
         UPDATE games 
         SET is_active = FALSE,
-            ended_at = CURRENT_TIMESTAMP
+            end_time = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
         WHERE is_active = TRUE 
-          AND started_at < $1
-          AND ended_at IS NULL
+          AND start_time < $1
+          AND end_time IS NULL
         RETURNING game_id
       `, [thresholdTime]);
 

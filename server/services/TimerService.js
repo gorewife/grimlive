@@ -15,6 +15,7 @@ export class TimerService extends ITimerService {
 
   /**
    * Start a timer
+   * Production schema: guild_id (PK), end_time (double precision), creator_id, created_at, category_id
    */
   async startTimer(timerData) {
     const {
@@ -42,35 +43,30 @@ export class TimerService extends ITimerService {
     const endTime = now + duration;
 
     try {
-      // Check if timer already exists for this session
+      // Check if timer already exists for this guild (guild_id is PK)
       const existing = await this.db.query(
-        'SELECT timer_id FROM timers WHERE guild_id = $1 AND category_id = $2 AND is_active = true',
-        [sessionData.guild_id, sessionData.category_id]
+        'SELECT guild_id FROM timers WHERE guild_id = $1',
+        [sessionData.guild_id]
       );
 
       if (existing.rows.length > 0) {
         throw new Error('Timer already active for this session');
       }
 
-      // Insert timer
-      const result = await this.db.query(`
+      // Insert timer (guild_id is PK, no timer_id)
+      await this.db.query(`
         INSERT INTO timers (
-          guild_id, category_id, duration_seconds, start_time, end_time,
-          started_by, is_active
-        ) VALUES ($1, $2, $3, $4, $5, $6, true)
-        RETURNING timer_id
+          guild_id, category_id, end_time, creator_id, created_at
+        ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
       `, [
         sessionData.guild_id,
         sessionData.category_id,
-        duration,
-        now,
         endTime,
         startedBy
       ]);
 
-      const timerId = result.rows[0].timer_id;
-      this.logger.info(`Timer ${timerId} started for session ${sessionCode}`);
-      return timerId;
+      this.logger.info(`Timer started for guild ${sessionData.guild_id}, session ${sessionCode}`);
+      return sessionData.guild_id; // Return guild_id as identifier
 
     } catch (error) {
       this.logger.error('Failed to start timer:', error);
@@ -79,41 +75,29 @@ export class TimerService extends ITimerService {
   }
 
   /**
-   * Pause a timer
+   * Pause a timer - NOT SUPPORTED in production schema
+   * Production schema doesn't have is_active field
    */
-  async pauseTimer(timerId) {
-    try {
-      const result = await this.db.query(
-        'UPDATE timers SET is_active = false WHERE timer_id = $1 AND is_active = true RETURNING timer_id',
-        [timerId]
-      );
-
-      if (result.rows.length === 0) {
-        throw new Error('Timer not found or already paused');
-      }
-
-      this.logger.info(`Timer ${timerId} paused`);
-    } catch (error) {
-      this.logger.error('Failed to pause timer:', error);
-      throw error;
-    }
+  async pauseTimer(guildId) {
+    throw new Error('Pause timer not supported in current schema - delete timer instead');
   }
 
   /**
    * Stop a timer
+   * Production schema uses guild_id as PK
    */
-  async stopTimer(timerId) {
+  async stopTimer(guildId) {
     try {
       const result = await this.db.query(
-        'DELETE FROM timers WHERE timer_id = $1 RETURNING timer_id',
-        [timerId]
+        'DELETE FROM timers WHERE guild_id = $1 RETURNING guild_id',
+        [guildId]
       );
 
       if (result.rows.length === 0) {
         throw new Error('Timer not found');
       }
 
-      this.logger.info(`Timer ${timerId} stopped`);
+      this.logger.info(`Timer stopped for guild ${guildId}`);
     } catch (error) {
       this.logger.error('Failed to stop timer:', error);
       throw error;
@@ -122,6 +106,7 @@ export class TimerService extends ITimerService {
 
   /**
    * Get active timer for session
+   * Production schema: guild_id is PK, no is_active field
    */
   async getActiveTimer(sessionCode) {
     try {
@@ -132,10 +117,9 @@ export class TimerService extends ITimerService {
 
       const result = await this.db.query(
         `SELECT * FROM timers 
-         WHERE guild_id = $1 AND category_id = $2 AND is_active = true
-         ORDER BY start_time DESC
+         WHERE guild_id = $1
          LIMIT 1`,
-        [sessionData.guild_id, sessionData.category_id]
+        [sessionData.guild_id]
       );
 
       return result.rows[0] || null;
@@ -147,13 +131,14 @@ export class TimerService extends ITimerService {
 
   /**
    * Clean up expired timers
+   * Production schema: end_time (double precision UNIX timestamp)
    */
   async cleanupExpiredTimers() {
     const now = Math.floor(Date.now() / 1000);
 
     try {
       const result = await this.db.query(
-        'DELETE FROM timers WHERE end_time < $1 RETURNING timer_id',
+        'DELETE FROM timers WHERE end_time < $1 RETURNING guild_id',
         [now]
       );
 
