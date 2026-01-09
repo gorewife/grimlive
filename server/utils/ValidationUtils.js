@@ -130,4 +130,45 @@ export class ValidationUtils {
       alignment: player.alignment || null
     };
   }
+
+  /**
+    sanitize string input to prevent XSS/injection attacks
+   */
+  static sanitizeString(input, maxLength = 255) {
+    if (typeof input !== 'string') {
+      return '';
+    }
+
+    let sanitized = input
+      .replace(/\0/g, '')
+      .replace(/[\x00-\x1F\x7F]/g, '')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+
+    if (sanitized.length > maxLength) {
+      sanitized = sanitized.substring(0, maxLength);
+    }
+
+    return sanitized;
+  }
+
+  static sanitizeSessionCode(code) {
+    if (typeof code !== 'string') {
+      return null;
+    }
+    
+    const sanitized = code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return sanitized.length > 0 && sanitized.length <= 16 ? sanitized : null;
+  }
+
+  static sanitizeScriptName(name) {
+    if (typeof name !== 'string') {
+      return '';
+    }
+
+    return name
+      .replace(/[^a-zA-Z0-9 '\-]/g, '')
+      .trim()
+      .substring(0, 100);
+  }
 }
