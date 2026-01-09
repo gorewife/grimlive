@@ -8,7 +8,7 @@ import {
   logApiCall
 } from './api-shared.js';
 
-console.log('API v1 initialized (read-only public endpoints)');
+logger.info('API v1 initialized (read-only public endpoints)');
 
 // ============================================================================
 // V1-SPECIFIC UTILITIES
@@ -105,7 +105,7 @@ async function verifyApiKey(req) {
     pool.query(
       'UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = $1',
       [id]
-    ).catch(err => console.error('Failed to update last_used_at:', err));
+    ).catch(err => logger.error('Failed to update last_used_at:', err));
 
     return { 
       valid: true, 
@@ -576,8 +576,8 @@ export const apiV1 = {
     try {
       // Verify session token
       const sessionResult = await pool.query(
-        'SELECT discord_user_id FROM web_sessions WHERE session_token = $1 AND expires_at > NOW()',
-        [token]
+        'SELECT discord_user_id FROM web_sessions WHERE token = $1 AND expires_at > $2',
+        [token, Math.floor(Date.now() / 1000)]
       );
 
       if (!sessionResult.rows.length) {
@@ -646,8 +646,8 @@ export const apiV1 = {
     try {
       // Verify session token
       const sessionResult = await pool.query(
-        'SELECT discord_user_id FROM web_sessions WHERE session_token = $1 AND expires_at > NOW()',
-        [token]
+        'SELECT discord_user_id FROM web_sessions WHERE token = $1 AND expires_at > $2',
+        [token, Math.floor(Date.now() / 1000)]
       );
 
       if (!sessionResult.rows.length) {
@@ -696,8 +696,8 @@ export const apiV1 = {
     try {
       // Verify session token
       const sessionResult = await pool.query(
-        'SELECT discord_user_id FROM web_sessions WHERE session_token = $1 AND expires_at > NOW()',
-        [token]
+        'SELECT discord_user_id FROM web_sessions WHERE token = $1 AND expires_at > $2',
+        [token, Math.floor(Date.now() / 1000)]
       );
 
       if (!sessionResult.rows.length) {
@@ -744,11 +744,10 @@ export const apiV1 = {
       return jsonResponse({ error: 'Missing authorization token' }, 401);
     }
 
-    try {
-      // Verify session token
+    try {\n      // Verify session token
       const sessionResult = await pool.query(
-        'SELECT discord_user_id FROM web_sessions WHERE session_token = $1 AND expires_at > NOW()',
-        [token]
+        'SELECT discord_user_id FROM web_sessions WHERE token = $1 AND expires_at > $2',
+        [token, Math.floor(Date.now() / 1000)]
       );
 
       if (!sessionResult.rows.length) {

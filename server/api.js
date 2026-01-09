@@ -36,7 +36,7 @@ async function verifyToken(req) {
     );
     return result.rows[0] || null;
   } catch (error) {
-    console.error('Error verifying token:', error);
+    logger.error('Error verifying token:', error);
     return null;
   }
 }
@@ -56,7 +56,7 @@ export const api = {
         [sessionId, token, discord_user_id || null, expiresAt]
       );
       
-      console.log(`Created session ${sessionId} for Discord user ${discord_user_id || 'anonymous'}`);
+      logger.info(`Created session ${sessionId} for Discord user ${discord_user_id || 'anonymous'}`);
       
       return jsonResponse({ 
         sessionId, 
@@ -64,7 +64,7 @@ export const api = {
         expiresAt: new Date(expiresAt * 1000).toISOString()
       });
     } catch (error) {
-      console.error('Failed to create session:', error);
+      logger.error('Failed to create session:', error);
       return jsonResponse({ error: 'Failed to create session' }, 500);
     }
   },
@@ -88,10 +88,10 @@ export const api = {
         [discord_user_id, session.token]
       );
       
-      console.log(`Updated session ${session.session_id} with Discord user ${discord_user_id}`);
+      logger.info(`Updated session ${session.session_id} with Discord user ${discord_user_id}`);
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Failed to update session:', error);
+      logger.error('Failed to update session:', error);
       return jsonResponse({ error: 'Failed to update session' }, 500);
     }
   },
@@ -226,7 +226,15 @@ export const api = {
     const { game_id: gameId, winner, winning_team: winningTeam } = body;
     
     // Support both 'winner' and 'winningTeam' for compatibility
-    const finalWinner = winner || winningTeam;
+    let finalWinner = winner || winningTeam;
+    
+    // Normalize to match database CHECK constraint: 'Good', 'Evil', or 'Cancel'
+    if (finalWinner) {
+      const normalized = finalWinner.toLowerCase();
+      if (normalized === 'good') finalWinner = 'Good';
+      else if (normalized === 'evil') finalWinner = 'Evil';
+      else if (normalized === 'cancel') finalWinner = 'Cancel';
+    }
     
     // Validate input using shared validation
     const validation = validateGameEnd({ gameId, winner: finalWinner });
@@ -340,7 +348,7 @@ export const api = {
       
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Cancel game error:', error);
+      logger.error('Cancel game error:', error);
       return jsonResponse({ error: 'Failed to cancel game' }, 500);
     }
   },
@@ -397,7 +405,7 @@ export const api = {
         return jsonResponse({ playerId: result.rows[0].id });
       }
     } catch (error) {
-      console.error('Failed to add player:', error);
+      logger.error('Failed to add player:', error);
       return jsonResponse({ error: 'Failed to add player' }, 500);
     }
   },
@@ -412,7 +420,7 @@ export const api = {
 
     const clientId = process.env.DISCORD_CLIENT_ID;
     if (!clientId) {
-      console.error('DISCORD_CLIENT_ID not set');
+      logger.error('DISCORD_CLIENT_ID not set');
       return jsonResponse({ error: 'Discord OAuth not configured' }, 500);
     }
 
@@ -457,7 +465,7 @@ export const api = {
       const tokenData = await tokenResponse.json();
       
       if (!tokenData.access_token) {
-        console.error('Failed to get access token:', tokenData);
+        logger.error('Failed to get access token:', tokenData);
         return jsonResponse({ error: 'Failed to get access token' }, 500);
       }
 
@@ -474,7 +482,7 @@ export const api = {
         avatar: userData.avatar
       });
     } catch (error) {
-      console.error('Discord OAuth error:', error);
+      logger.error('Discord OAuth error:', error);
       return jsonResponse({ error: 'OAuth failed' }, 500);
     }
   },
@@ -534,7 +542,7 @@ export const api = {
 
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Failed to update player role:', error);
+      logger.error('Failed to update player role:', error);
       return jsonResponse({ error: 'Failed to update player role' }, 500);
     }
   },
@@ -580,7 +588,7 @@ export const api = {
         endTime: endTime.toISOString()
       });
     } catch (error) {
-      console.error('Timer start error:', error);
+      logger.error('Timer start error:', error);
       return jsonResponse({ error: 'Failed to start timer' }, 500);
     }
   },
@@ -612,7 +620,7 @@ export const api = {
 
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Timer stop error:', error);
+      logger.error('Timer stop error:', error);
       return jsonResponse({ error: 'Failed to stop timer' }, 500);
     }
   },
@@ -644,7 +652,7 @@ export const api = {
 
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Timer pause error:', error);
+      logger.error('Timer pause error:', error);
       return jsonResponse({ error: 'Failed to pause timer' }, 500);
     }
   },
@@ -676,7 +684,7 @@ export const api = {
 
       return jsonResponse({ success: true });
     } catch (error) {
-      console.error('Timer resume error:', error);
+      logger.error('Timer resume error:', error);
       return jsonResponse({ error: 'Failed to resume timer' }, 500);
     }
   },
@@ -713,7 +721,7 @@ export const api = {
         message: 'Mute announcement queued'
       });
     } catch (error) {
-      console.error('Failed to queue mute announcement:', error);
+      logger.error('Failed to queue mute announcement:', error);
       return jsonResponse({ error: 'Failed to queue mute announcement' }, 500);
     }
   },
@@ -750,7 +758,7 @@ export const api = {
         message: 'Unmute announcement queued'
       });
     } catch (error) {
-      console.error('Failed to queue unmute announcement:', error);
+      logger.error('Failed to queue unmute announcement:', error);
       return jsonResponse({ error: 'Failed to queue unmute announcement' }, 500);
     }
   },
@@ -787,7 +795,7 @@ export const api = {
         message: 'Call announcement queued'
       });
     } catch (error) {
-      console.error('Failed to queue call announcement:', error);
+      logger.error('Failed to queue call announcement:', error);
       return jsonResponse({ error: 'Failed to queue call announcement' }, 500);
     }
   },
@@ -828,7 +836,7 @@ export const api = {
         message: 'Timer announcement queued'
       });
     } catch (error) {
-      console.error('Failed to queue timer announcement:', error);
+      logger.error('Failed to queue timer announcement:', error);
       return jsonResponse({ error: 'Failed to queue timer announcement' }, 500);
     }
   },
@@ -865,7 +873,7 @@ export const api = {
         message: 'Timer cancel queued'
       });
     } catch (error) {
-      console.error('Failed to queue timer cancel:', error);
+      logger.error('Failed to queue timer cancel:', error);
       return jsonResponse({ error: 'Failed to queue timer cancel' }, 500);
     }
   }

@@ -43,13 +43,13 @@ const poolConfig = process.env.DB_HOST ? {
 };
 
 if (process.env.DB_HOST) {
-  console.log('[api-shared] Using individual connection parameters');
-  console.log('[api-shared] DB_HOST:', process.env.DB_HOST);
+  logger.info('[api-shared] Using individual connection parameters');
+  logger.debug('[api-shared] DB_HOST:', process.env.DB_HOST);
 } else {
-  console.log('[api-shared] Using DATABASE_URL connection string');
+  logger.info('[api-shared] Using DATABASE_URL connection string');
 }
 
-console.log('[api-shared] Pool config:', { 
+logger.debug('[api-shared] Pool config:', { 
   connectionString: poolConfig.connectionString ? poolConfig.connectionString.replace(/(postgresql:\/\/[^:]+:)[^@]+(@.+)/, '$1***$2') : undefined,
   host: poolConfig.host,
   database: poolConfig.database,
@@ -59,7 +59,7 @@ console.log('[api-shared] Pool config:', {
 export const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
-  console.error('Unexpected database error:', err);
+  logger.error('Unexpected database error:', err);
 });
 
 // ============================================================================
@@ -129,7 +129,7 @@ export async function parseBody(req) {
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch (e) {
-        console.error('JSON parse error:', e.message);
+        logger.error('JSON parse error:', e.message);
         resolve({});
       }
     });
@@ -332,6 +332,5 @@ export async function updateSessionActivity(guildId, categoryId) {
 // ============================================================================
 
 export function logApiCall(source, endpoint, method, status, details = '') {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${source} ${method} ${endpoint} - ${status} ${details}`);
+  logger.info(`${source} ${method} ${endpoint} - ${status}${details ? ' ' + details : ''}`);
 }
