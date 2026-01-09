@@ -71,17 +71,6 @@ const requestHandler = async (req, res) => {
   res.on('finish', () => clearTimeout(timeoutId));
   res.on('close', () => clearTimeout(timeoutId));
 
-  const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB
-  let bodySize = 0;
-  req.on('data', (chunk) => {
-    bodySize += chunk.length;
-    if (bodySize > MAX_BODY_SIZE) {
-      res.writeHead(413, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Request entity too large' }));
-      req.destroy();
-    }
-  });
-
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
@@ -184,12 +173,6 @@ const requestHandler = async (req, res) => {
   // Legacy API endpoints (backward compatible, session-based auth)
   if (url.pathname.startsWith('/api/')) {
     const path = url.pathname.slice(5); // Remove '/api/'
-    
-    // Pre-parse body for POST/PATCH/PUT requests to avoid stream consumption race conditions
-    if (['POST', 'PATCH', 'PUT'].includes(req.method)) {
-      const { RequestUtils } = await import('./utils/HttpUtils.js');
-      await RequestUtils.parseBody(req);
-    }
     
     try {
       let response;

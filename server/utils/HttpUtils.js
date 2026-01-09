@@ -96,17 +96,15 @@ export class RequestUtils {
    * Parse JSON body from request
    * Caches result on request object to allow multiple reads
    */
-  static async parseBody(req, maxSize = 1024 * 100) {
+  static async parseBody(req, maxSize = 10 * 1024 * 1024) {
     // Return cached body if already parsed
     if (req._parsedBody !== undefined) {
-      console.log('[parseBody] Returning cached body');
       return req._parsedBody;
     }
 
     return new Promise((resolve, reject) => {
       // Check if the stream has already ended
       if (req.readableEnded) {
-        console.log('[parseBody] Stream already ended, cannot read body');
         req._parsedBody = {};
         resolve({});
         return;
@@ -114,15 +112,8 @@ export class RequestUtils {
 
       let body = '';
       let size = 0;
-      let dataEvents = 0;
-
-      console.log('[parseBody] Starting, readable:', req.readable, 'readableEnded:', req.readableEnded);
-
-      req.resume(); // Ensure request stream is flowing
 
       req.on('data', chunk => {
-        dataEvents++;
-        console.log('[parseBody] Data event', dataEvents, 'chunk size:', chunk.length);
         size += chunk.length;
         if (size > maxSize) {
           req.destroy();
@@ -133,7 +124,6 @@ export class RequestUtils {
       });
 
       req.on('end', () => {
-        console.log('[parseBody] End event, dataEvents:', dataEvents, 'body length:', body.length);
         try {
           const parsed = body ? JSON.parse(body) : {};
           req._parsedBody = parsed; // Cache for future calls
@@ -144,7 +134,6 @@ export class RequestUtils {
       });
 
       req.on('error', error => {
-        console.log('[parseBody] Error event:', error);
         reject(error);
       });
     });

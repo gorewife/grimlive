@@ -209,6 +209,7 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
     
     test("timer started via API creates database entry", async () => {
       await cleanupTestData();
+      sessionToken = await createTestSession(); // Recreate after cleanup deletes web_sessions
       
       const response = await fetch(`${GRIMLIVE_API}/api/timer/start`, {
         method: 'POST',

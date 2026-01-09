@@ -186,15 +186,11 @@ export class LegacyAPIHandler {
    * Start a timer
    */
   async startTimer(req) {
-    this.logger.info('[startTimer] Beginning request');
     const auth = await this.verifyAuth(req);
-    this.logger.info('[startTimer] Auth complete');
     if (!auth.authorized) return auth.response;
 
     try {
-      this.logger.info('[startTimer] Parsing body');
       const body = await RequestUtils.parseBody(req);
-      this.logger.info('[startTimer] Body parsed:', body);
       const { sessionCode, duration } = body;
 
       // Validate
