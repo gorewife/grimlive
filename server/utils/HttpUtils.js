@@ -99,10 +99,15 @@ export class RequestUtils {
     return new Promise((resolve, reject) => {
       let body = '';
       let size = 0;
+      let dataEvents = 0;
+
+      console.log('[parseBody] Starting, readable:', req.readable, 'readableEnded:', req.readableEnded);
 
       req.resume(); // Ensure request stream is flowing
 
       req.on('data', chunk => {
+        dataEvents++;
+        console.log('[parseBody] Data event', dataEvents, 'chunk size:', chunk.length);
         size += chunk.length;
         if (size > maxSize) {
           req.destroy();
@@ -113,6 +118,7 @@ export class RequestUtils {
       });
 
       req.on('end', () => {
+        console.log('[parseBody] End event, dataEvents:', dataEvents, 'body length:', body.length);
         try {
           resolve(body ? JSON.parse(body) : {});
         } catch (error) {
@@ -120,7 +126,10 @@ export class RequestUtils {
         }
       });
 
-      req.on('error', reject);
+      req.on('error', error => {
+        console.log('[parseBody] Error event:', error);
+        reject(error);
+      });
     });
   }
 
