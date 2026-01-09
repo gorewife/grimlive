@@ -8,6 +8,7 @@
 
 import { ResponseUtils, RequestUtils } from '../utils/HttpUtils.js';
 import { ValidationUtils } from '../utils/ValidationUtils.js';
+import { logger } from '../logger.js';
 
 export class LegacyAPIHandler {
   constructor(container) {
@@ -15,7 +16,7 @@ export class LegacyAPIHandler {
     this.sessionService = container.get('session');
     this.gameService = container.get('game');
     this.timerService = container.get('timer');
-    this.logger = container.get('config').get('logger'); // Assuming logger in container or use global
+    this.logger = logger;
   }
 
   /**
