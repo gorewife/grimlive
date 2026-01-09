@@ -20,6 +20,15 @@ export class PostgreSQLRepository extends IDatabaseRepository {
       this.logger.error('Unexpected database error:', err);
     });
 
+    this.poolMetricsInterval = setInterval(() => {
+      const poolStats = {
+        total: this.pool.totalCount,
+        idle: this.pool.idleCount,
+        waiting: this.pool.waitingCount
+      };
+      this.logger.debug('Pool metrics:', poolStats);
+    }, 60000); // Log every minute
+
     this.logger.info('PostgreSQL connection pool initialized');
   }
 
@@ -39,7 +48,11 @@ export class PostgreSQLRepository extends IDatabaseRepository {
       return result;
     } catch (error) {
       this.logger.error('Query error:', error.message);
-      this.logger.debug('Failed query:', queryText);
+      // Mask parameters to avoid logging sensitive data
+      const maskedParams = params.map(p => 
+        typeof p === 'string' && p.length > 3 ? p[0] + '***' : '***'
+      );
+      this.logger.debug('Failed query:', queryText.substring(0, 100), 'params:', maskedParams);
       throw error;
     }
   }
@@ -67,6 +80,9 @@ export class PostgreSQLRepository extends IDatabaseRepository {
    * Close the connection pool
    */
   async close() {
+    if (this.poolMetricsInterval) {
+      clearInterval(this.poolMetricsInterval);
+    }
     await this.pool.end();
     this.logger.info('Database connection pool closed');
   }
@@ -82,6 +98,14 @@ export class PostgreSQLRepository extends IDatabaseRepository {
       this.logger.error('Database health check failed:', error.message);
       return false;
     }
+  }
+
+  getPoolMetrics() {
+    return {
+      total: this.pool.totalCount,
+      idle: this.pool.idleCount,
+      waiting: this.pool.waitingCount
+    };
   }
 
   /**

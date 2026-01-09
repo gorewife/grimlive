@@ -72,6 +72,29 @@ if (process.env.NODE_ENV === "production" && process.env.SSL_ENABLED === "true")
 }
 
 const requestHandler = async (req, res) => {
+  const REQUEST_TIMEOUT = 30000; // 30 seconds
+  const timeoutId = setTimeout(() => {
+    if (!res.headersSent) {
+      res.writeHead(408, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Request timeout' }));
+      req.destroy();
+    }
+  }, REQUEST_TIMEOUT);
+
+  res.on('finish', () => clearTimeout(timeoutId));
+  res.on('close', () => clearTimeout(timeoutId));
+
+  const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB
+  let bodySize = 0;
+  req.on('data', (chunk) => {
+    bodySize += chunk.length;
+    if (bodySize > MAX_BODY_SIZE) {
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Request entity too large' }));
+      req.destroy();
+    }
+  });
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
@@ -80,6 +103,7 @@ const requestHandler = async (req, res) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
     res.writeHead(200);
     res.end();
     return;
