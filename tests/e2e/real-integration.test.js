@@ -295,7 +295,7 @@ describe("E2E: Grimlive + Grimkeeper Integration", () => {
       );
       
       expect(result.rows[0].is_active).toBe(false);
-      expect(result.rows[0].winner).toBe('good');
+      expect(result.rows[0].winner).toBe('Good');
       expect(result.rows[0].end_time).toBeTruthy();
     });
     
