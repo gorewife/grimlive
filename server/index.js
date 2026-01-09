@@ -185,6 +185,12 @@ const requestHandler = async (req, res) => {
   if (url.pathname.startsWith('/api/')) {
     const path = url.pathname.slice(5); // Remove '/api/'
     
+    // Pre-parse body for POST/PATCH/PUT requests to avoid stream consumption race conditions
+    if (['POST', 'PATCH', 'PUT'].includes(req.method)) {
+      const { RequestUtils } = await import('./utils/HttpUtils.js');
+      await RequestUtils.parseBody(req);
+    }
+    
     try {
       let response;
       
