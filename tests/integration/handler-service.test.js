@@ -129,7 +129,7 @@ describe("LegacyAPIHandler Integration", () => {
       const data = JSON.parse(await response.text());
 
       expect(response.status).toBe(200);
-      expect(data.gameId).toBeDefined();
+      expect(data.game_id).toBeDefined();
       expect(mockDb.data.games.length).toBe(1);
       expect(mockDb.data.games[0].script).toBe('Trouble Brewing');
     });
@@ -175,7 +175,7 @@ describe("LegacyAPIHandler Integration", () => {
       
       // Now end it
       const endBody = {
-        gameId: startData.gameId,
+        gameId: startData.game_id,
         winner: 'good'
       };
       const endReq = createMockRequest(endBody, { 'authorization': `Bearer ${testToken}` });

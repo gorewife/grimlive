@@ -762,7 +762,7 @@ export default {
         ? "https://api.hystericca.dev"
         : "http://localhost:8001";
       const redirectUri = encodeURIComponent(
-        window.location.origin + "/auth/callback",
+        window.location.origin + "/auth/callback.html",
       );
       const authUrl = `${baseUrl}/auth/discord?redirect_uri=${redirectUri}`;
 

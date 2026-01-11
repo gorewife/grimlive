@@ -3,11 +3,8 @@
  * Handles all game-related operations with dependency injection
  */
 
-import { IGameService } from '../interfaces/IGameService.js';
-
-export class GameService extends IGameService {
+export class GameService {
   constructor(database, sessionService, logger) {
-    super();
     this.db = database;
     this.sessionService = sessionService;
     this.logger = logger;
@@ -38,8 +35,24 @@ export class GameService extends IGameService {
         throw new Error('Invalid session code');
       }
 
+      // Check if session has an active game reference
       if (sessionData.active_game_id) {
-        throw new Error('Session already has an active game');
+        // Verify the game actually exists and is active
+        const existingGame = await this.db.query(
+          'SELECT game_id, is_active FROM games WHERE game_id = $1',
+          [sessionData.active_game_id]
+        );
+
+        if (existingGame.rows.length > 0 && existingGame.rows[0].is_active) {
+          throw new Error('Session already has an active game');
+        }
+
+        // Game doesn't exist or is not active - clear the stale reference
+        await this.db.query(
+          'UPDATE sessions SET active_game_id = NULL WHERE guild_id = $1 AND category_id = $2',
+          [sessionData.guild_id, sessionData.category_id]
+        );
+        this.logger.info(`Cleared stale active_game_id ${sessionData.active_game_id} from session ${sessionCode}`);
       }
 
       guildId = sessionData.guild_id;
@@ -77,6 +90,32 @@ export class GameService extends IGameService {
         await this.sessionService.linkGrimoireToSession(sessionCode, result);
       }
 
+      // Create announcement for grimkeeper if we have guild and category
+      if (guildId && categoryId) {
+        try {
+          await this.db.query(
+            `INSERT INTO announcements (
+              guild_id, category_id, announcement_type, game_id, data, created_at
+            ) VALUES ($1, $2, 'game_start', $3, $4, $5)`,
+            [
+              guildId,
+              categoryId,
+              result,
+              JSON.stringify({
+                script,
+                custom_name: customName,
+                player_count: playerCount,
+                storyteller_id: storytellerId
+              }),
+              Math.floor(Date.now() / 1000)
+            ]
+          );
+        } catch (announcementError) {
+          this.logger.error('Failed to create game start announcement:', announcementError);
+          // Don't fail the whole request if announcement fails
+        }
+      }
+
       this.logger.info(`Game ${result} started successfully`);
       return { gameId: result };
 
@@ -106,6 +145,7 @@ export class GameService extends IGameService {
     const endTime = Math.floor(Date.now() / 1000);
 
     try {
+      let gameData;
       await this.db.transaction(async (client) => {
         // Update game
         await client.query(
@@ -118,7 +158,46 @@ export class GameService extends IGameService {
           'UPDATE sessions SET active_game_id = NULL WHERE active_game_id = $1',
           [gameId]
         );
+
+        // Get game data for announcement
+        const gameResult = await client.query(
+          'SELECT guild_id, category_id, script, custom_name, player_count, storyteller_id FROM games WHERE game_id = $1',
+          [gameId]
+        );
+        gameData = gameResult.rows[0];
       });
+
+      // Create announcement for grimkeeper if we have guild and category
+      if (gameData && gameData.guild_id && gameData.category_id) {
+        try {
+          // Determine announcement type based on winner
+          const announcementType = normalizedWinner === 'Cancel' ? 'game_cancel' : 'game_end';
+          
+          await this.db.query(
+            `INSERT INTO announcements (
+              guild_id, category_id, announcement_type, game_id, data, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              gameData.guild_id,
+              gameData.category_id,
+              announcementType,
+              gameId,
+              JSON.stringify({
+                script: gameData.script,
+                custom_name: gameData.custom_name,
+                player_count: gameData.player_count,
+                storyteller_id: gameData.storyteller_id,
+                winner: normalizedWinner
+              }),
+              Math.floor(Date.now() / 1000)
+            ]
+          );
+          this.logger.info(`Created ${announcementType} announcement for game ${gameId}`);
+        } catch (announcementError) {
+          this.logger.error('Failed to create game end announcement:', announcementError);
+          // Don't fail the whole request if announcement fails
+        }
+      }
 
       this.logger.info(`Game ${gameId} ended, winner: ${normalizedWinner}`);
     } catch (error) {
@@ -259,8 +338,8 @@ export class GameService extends IGameService {
       await client.query(`
         INSERT INTO game_players (
           game_id, discord_id, player_name, seat_number,
-          starting_role_name, starting_team, character_name, alignment
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          starting_role_name, starting_team, starting_role_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       `, [
         gameId,
         discordId,
@@ -268,8 +347,7 @@ export class GameService extends IGameService {
         i + 1,
         roleName,
         team,
-        roleName,  // character_name (compatibility)
-        alignment  // alignment (compatibility)
+        roleName ? roleName.toLowerCase().replace(/\s+/g, '') : null  // starting_role_id
       ]);
     }
   }

@@ -209,7 +209,7 @@ const actions = {
         },
         body: JSON.stringify({
           gameId: state.currentGameId,
-          winningTeam: winner,
+          winner: winner,
         }),
       });
 

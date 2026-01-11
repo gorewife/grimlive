@@ -5,7 +5,6 @@ import http from "http";
 import { URL } from "url";
 import { WebSocketServer, WebSocket } from "ws";
 import client from "prom-client";
-import { api } from "./api.js";
 import { apiV1 } from "./api_v1.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,8 +14,6 @@ import { getServiceContainer } from "./services/ServiceContainer.js";
 import { LegacyAPIHandler } from "./handlers/LegacyAPIHandler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// P1-11: Removed duplicate .env loading - ConfigService already handles this
 
 // Initialize service container
 let serviceContainer;
@@ -104,14 +101,14 @@ const requestHandler = async (req, res) => {
   
   // Auth endpoints
   if (url.pathname === '/auth/discord') {
-    const response = await api.discordOAuth(req);
+    const response = await legacyAPIHandler.discordOAuth(req);
     if (response.headers?.Location) {
       res.writeHead(response.status || 302, response.headers);
       res.end();
       return;
     }
   } else if (url.pathname === '/auth/discord/callback') {
-    const response = await api.discordCallback(req);
+    const response = await legacyAPIHandler.discordCallback(req);
     res.writeHead(response.status || 200, { 'Content-Type': 'application/json' });
     const body = await response.text();
     res.end(body);
@@ -177,44 +174,37 @@ const requestHandler = async (req, res) => {
     try {
       let response;
       
-      // Use new handler for implemented endpoints, fall back to old api.js for others
+      // All routes now use handlers
       if (path === 'session/create' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.createSession(req) : await api.createSession(req);
+        response = await legacyAPIHandler.createSession(req);
       } else if (path === 'session/update-discord' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.updateSessionDiscordUser(req) : await api.updateSessionDiscordUser(req);
+        response = await legacyAPIHandler.updateSessionDiscordUser(req);
       } else if (path === 'game/start' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.startGame(req) : await api.startGame(req);
+        response = await legacyAPIHandler.startGame(req);
       } else if (path === 'game/end' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.endGame(req) : await api.endGame(req);
+        response = await legacyAPIHandler.endGame(req);
       } else if (path === 'game/cancel' && req.method === 'POST') {
-        response = await api.cancelGame(req);
+        response = await legacyAPIHandler.cancelGame(req);
       } else if (path === 'game/update-role' && req.method === 'POST') {
-        response = await api.updateRole(req);
+        response = await legacyAPIHandler.updateRole(req);
       } else if (path === 'player/add' && req.method === 'POST') {
-        response = await api.addPlayer(req);
-      } else if (path === 'player/death' && req.method === 'POST') {
-        response = await api.addDeath(req);
+        response = await legacyAPIHandler.addPlayer(req);
       } else if (path === 'timer/start' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.startTimer(req) : await api.timerStart(req);
+        response = await legacyAPIHandler.startTimer(req);
       } else if (path === 'timer/stop' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.stopTimer(req) : await api.timerStop(req);
+        response = await legacyAPIHandler.stopTimer(req);
       } else if (path === 'timer/pause' && req.method === 'POST') {
-        response = legacyAPIHandler ? await legacyAPIHandler.pauseTimer(req) : await api.timerPause(req);
-      } else if (path === 'timer/resume' && req.method === 'POST') {
-        response = await api.timerResume(req);
+        response = await legacyAPIHandler.pauseTimer(req);
       } else if (path === 'mute' && req.method === 'POST') {
-        response = await api.mute(req);
+        response = await legacyAPIHandler.mute(req);
       } else if (path === 'unmute' && req.method === 'POST') {
-        response = await api.unmute(req);
+        response = await legacyAPIHandler.unmute(req);
       } else if (path === 'call' && req.method === 'POST') {
-        response = await api.call(req);
+        response = await legacyAPIHandler.call(req);
       } else if (path === 'timerAnnounce' && req.method === 'POST') {
-        response = await api.timerAnnounce(req);
+        response = await legacyAPIHandler.timerAnnounce(req);
       } else if (path === 'timerCancel' && req.method === 'POST') {
-        response = await api.timerCancel(req);
-      } else if (path.startsWith('stats/game/') && req.method === 'GET') {
-        const gameId = path.split('/')[2];
-        response = api.getGameStats(req, gameId);
+        response = await legacyAPIHandler.timerCancel(req);
       } else {
         response = Response.json({ error: 'Not found' }, { status: 404 });
       }

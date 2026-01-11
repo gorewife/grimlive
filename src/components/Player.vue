@@ -210,9 +210,9 @@
       >
         <div class="name-row">
           <span>{{ player.name }}</span>
-          <img
+          <font-awesome-icon
             v-if="isStatsLinked && player.id"
-            src="../assets/Discord--Streamline-Simple-Icons.webp"
+            :icon="['fab', 'discord']"
             class="discord-indicator"
             title="Stats tracking enabled"
           />

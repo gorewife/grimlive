@@ -163,10 +163,9 @@ export class MockDatabase {
         discord_id: params[1],
         player_name: params[2],
         seat_number: params[3],
-        starting_role_name: params[4],
-        starting_team: params[5],
-        character_name: params[6],
-        alignment: params[7]
+        starting_role_id: params[4],
+        starting_role_name: params[5],
+        starting_team: params[6]
       };
       this.data.game_players.push(player);
       return { rows: [player] };

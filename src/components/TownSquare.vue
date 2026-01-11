@@ -570,7 +570,12 @@ export default defineComponent({
       height: 14vh;
       margin: 0 0.5%;
       display: inline-block;
+      position: relative;
       transition: all 250ms;
+
+      &:hover {
+        z-index: 100;
+      }
     }
 
     @media (orientation: portrait) {
@@ -652,7 +657,7 @@ export default defineComponent({
     position: absolute;
     padding: 5px 10px 5px 30px;
     width: 350px;
-    z-index: 25;
+    z-index: 1;
     font-size: 70%;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 10px;

@@ -97,12 +97,7 @@ const mutations = {
     { nomination, votes, votingSpeed, lockedVote, isVoteInProgress } = {},
   ) {
     state.nomination = nomination || false;
-    // This prevents losing vote data when only the nomination pair is updated
-    if (votes !== undefined) {
-      state.votes = votes;
-    } else if (!Array.isArray(state.votes)) {
-      state.votes = [];
-    }
+    state.votes = votes !== undefined ? votes : [];
     state.votingSpeed = votingSpeed || state.votingSpeed;
     state.lockedVote = lockedVote || 0;
     state.isVoteInProgress = isVoteInProgress || false;

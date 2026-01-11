@@ -41,41 +41,11 @@ export class CleanupService {
 
   /**
    * Clean up stale games (older than threshold)
-   * Uses actual production schema: start_time/end_time (double precision UNIX timestamps), is_active (BOOLEAN)
+   * Note: Skipped when games is a view (grimkeeper uses views)
    */
   async cleanupStaleGames() {
-    const cleanupConfig = this.config.getCleanupConfig();
-    const thresholdTime = Math.floor(Date.now() / 1000) - cleanupConfig.staleGameThreshold;
-
-    try {
-      const result = await this.db.query(`
-        UPDATE games 
-        SET is_active = FALSE,
-            end_time = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
-            completed_at = CURRENT_TIMESTAMP
-        WHERE is_active = TRUE 
-          AND start_time < $1
-          AND end_time IS NULL
-        RETURNING game_id
-      `, [thresholdTime]);
-
-      if (result.rows.length > 0) {
-        this.logger.info(`Marked ${result.rows.length} stale games as inactive`);
-
-        // Clear active_game_id from sessions
-        for (const game of result.rows) {
-          await this.db.query(
-            'UPDATE sessions SET active_game_id = NULL WHERE active_game_id = $1',
-            [game.game_id]
-          );
-        }
-      }
-    } catch (error) {
-      // Suppress error if games is a VIEW (known in some environments)
-      if (error.code !== '0A000') { // 0A000 = cannot update view
-        this.logger.error('Error cleaning up stale games:', error);
-      }
-    }
+    // Skip cleanup - grimkeeper uses views which cannot be updated
+    return;
   }
 
   /**

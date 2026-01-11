@@ -1,15 +1,14 @@
 /**
  * PostgreSQL Database Repository Implementation
- * Concrete implementation of IDatabaseRepository for PostgreSQL
+ * PostgreSQL connection pool with query logging and health checks
  */
 
 import pg from 'pg';
-import { IDatabaseRepository } from '../interfaces/IDatabaseRepository.js';
 import { logger } from '../logger.js';
 
 const { Pool } = pg;
 
-export class PostgreSQLRepository extends IDatabaseRepository {
+export class PostgreSQLRepository {
   constructor(config, loggerInstance = logger) {
     super();
     this.config = config;

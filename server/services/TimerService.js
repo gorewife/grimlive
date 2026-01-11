@@ -3,11 +3,8 @@
  * Handles all timer-related operations with dependency injection
  */
 
-import { ITimerService } from '../interfaces/ITimerService.js';
-
-export class TimerService extends ITimerService {
+export class TimerService {
   constructor(database, sessionService, logger) {
-    super();
     this.db = database;
     this.sessionService = sessionService;
     this.logger = logger;

@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../../grimkeeper"
+		},
+		{
+			"path": "../../../../.github"
 		}
 	],
 	"settings": {}

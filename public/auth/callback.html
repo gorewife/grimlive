@@ -40,7 +40,7 @@
       
       console.log('[Callback] Fetching user data from:', `${baseUrl}/auth/discord/callback`);
       
-      fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`)
+      fetch(`${baseUrl}/auth/discord/callback?code=${code}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback.html')}`)
         .then(response => {
           console.log('[Callback] Discord callback response status:', response.status);
           return response.json();

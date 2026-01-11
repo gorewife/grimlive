@@ -4,11 +4,9 @@
  */
 
 import crypto from 'crypto';
-import { ISessionService } from '../interfaces/ISessionService.js';
 
-export class SessionService extends ISessionService {
+export class SessionService {
   constructor(database, logger) {
-    super();
     this.db = database;
     this.logger = logger;
   }

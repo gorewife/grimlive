@@ -215,27 +215,20 @@ export default {
     return {
       voteTimer: null,
       countdownAudio: null,
-      audioLoaded: false,
     };
   },
+  watch: {
+    'session.isVoteInProgress'(newVal, oldVal) {
+      if (newVal && !oldVal && this.session.isSpectator && this.countdownAudio && !this.grimoire.isMuted) {
+        this.countdownAudio.currentTime = 0;
+        this.countdownAudio.play().catch(err => console.warn("Audio play prevented:", err));
+      }
+    }
+  },
   mounted() {
-    // Preload countdown audio
     this.countdownAudio = new Audio(
       new URL("@/assets/sounds/countdown.mp3", import.meta.url).href,
     );
-    this.countdownAudio.preload = "auto";
-
-    // Track when audio is loaded
-    this.countdownAudio.addEventListener(
-      "canplaythrough",
-      () => {
-        this.audioLoaded = true;
-      },
-      { once: true },
-    );
-
-    // Start loading the audio
-    this.countdownAudio.load();
   },
   beforeUnmount() {
     // Clean up audio and timers
@@ -252,21 +245,11 @@ export default {
       this.$store.commit("session/lockVote", 0);
       this.$store.commit("session/setVoteInProgress", true);
 
-      // Play countdown sound
       if (this.countdownAudio && !this.grimoire.isMuted) {
         this.countdownAudio.currentTime = 0;
-
-        // If audio isn't fully loaded yet, try to load it first
-        if (!this.audioLoaded) {
-          this.countdownAudio.load();
-        }
-
-        const playPromise = this.countdownAudio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn("Audio play prevented - ", err);
-          });
-        }
+        this.countdownAudio.play().catch((err) => {
+          console.warn("Audio play prevented:", err);
+        });
       }
 
       this.voteTimer = setInterval(() => {
