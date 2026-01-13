@@ -502,8 +502,8 @@ export default defineComponent({
   left: 10px;
   background: linear-gradient(
     135deg,
-    rgba(42, 26, 61, 0.9) 0%,
-    rgba(26, 15, 40, 0.95) 100%
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.95) 100%
   );
   backdrop-filter: blur(4px);
   border-radius: 10px;

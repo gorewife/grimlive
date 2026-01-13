@@ -166,7 +166,7 @@ h3 {
   margin: 0 0 0.5em;
   text-align: center;
   font-size: 1.8em;
-  color: $gold;
+  color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -174,7 +174,7 @@ h3 {
   text-align: center;
   margin: 0 0 2em;
   font-size: 1.1em;
-  color: rgba(255, 255, 255, 0.8);
+  color: white;
   font-style: italic;
 }
 
@@ -197,15 +197,15 @@ h3 {
   transition: all 0.25s ease;
 
   &:hover {
-    background: rgba(212, 175, 55, 0.15);
-    border-color: rgba(212, 175, 55, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-2px);
   }
 
   &.active {
-    background: rgba(212, 175, 55, 0.25);
-    border-color: $gold;
-    color: $gold;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+    color: white;
   }
 
   &:active {
@@ -217,7 +217,7 @@ h3 {
   margin-bottom: 2em;
   padding: 1.5em;
   background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -225,7 +225,7 @@ h3 {
 .custom-label {
   display: block;
   margin-bottom: 1em;
-  color: $gold;
+  color: white;
   font-size: 1.1em;
   font-weight: 600;
   text-align: center;
@@ -269,7 +269,7 @@ h3 {
 
       &:focus {
         outline: none;
-        border-color: $gold;
+        border-color: white;
       }
 
       &::placeholder {
@@ -283,12 +283,12 @@ h3 {
   text-align: center;
   margin-bottom: 2em;
   padding: 1em;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
 
   em {
-    color: $gold;
+    color: white;
     font-size: 1.2em;
     font-weight: 600;
     font-style: normal;
@@ -322,14 +322,14 @@ h3 {
   }
 
   .start-button {
-    background: rgba(212, 175, 55, 0.2);
-    border: 2px solid $gold;
-    color: $gold;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
 
     &:hover:not(:disabled) {
-      background: rgba(212, 175, 55, 0.3);
+      background: rgba(255, 255, 255, 0.3);
       box-shadow:
-        0 0 20px rgba(212, 175, 55, 0.4),
+        0 0 20px rgba(255, 255, 255, 0.4),
         0 6px 15px rgba(0, 0, 0, 0.5);
       transform: translateY(-2px);
     }

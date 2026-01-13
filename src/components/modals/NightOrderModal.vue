@@ -489,8 +489,8 @@ ul {
       z-index: 25;
       background: linear-gradient(
         135deg,
-        rgba(42, 26, 61, 0.95) 0%,
-        rgba(26, 15, 40, 0.98) 100%
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(0, 0, 0, 0.98) 100%
       );
       backdrop-filter: blur(4px);
       border-radius: 10px;

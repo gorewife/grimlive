@@ -234,7 +234,7 @@ body {
 
 /* Global focus styles for accessibility */
 *:focus-visible {
-  outline: 3px solid $gold;
+  outline: 3px solid #000000;
   outline-offset: 2px;
   border-radius: 3px;
 }
@@ -243,9 +243,9 @@ button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 [role="tab"]:focus-visible {
-  outline: 3px solid $gold;
+  outline: 3px solid #000000;
   outline-offset: 2px;
-  box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Skip to main content link for screen readers */
@@ -253,8 +253,8 @@ a:focus-visible,
   position: absolute;
   top: -40px;
   left: 0;
-  background: $gold;
-  color: #000;
+  background: #000000;
+  color: #ffffff;
   padding: 8px;
   text-decoration: none;
   z-index: 10000;
@@ -365,43 +365,25 @@ ul {
 }
 .button {
   padding: 0;
-  border: solid 0.125em rgba(212, 175, 55, 0.3);
+  border: solid 0.125em rgba(0, 0, 0, 0.2);
   border-radius: 15px;
-  box-shadow:
-    inset 0 1px 1px rgba(212, 175, 55, 0.2),
-    0 0 15px rgba(123, 44, 191, 0.3),
-    0 4px 10px rgba(0, 0, 0, 0.6);
-  background:
-    radial-gradient(
-        at 0 -15%,
-        rgba(212, 175, 55, 0.1) 70%,
-        rgba(255, 255, 255, 0) 71%
-      )
-      0 0/ 80% 90% no-repeat content-box,
-    linear-gradient(#3a2a4a, #1a0a2a) content-box,
-    linear-gradient(#2a1a3d, #0d0515) border-box;
-  color: #f5e6d3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(#ffffff, #f5f5f5);
+  color: #000000;
   font-weight: bold;
-  text-shadow:
-    0 0 8px rgba(123, 44, 191, 0.5),
-    1px 1px rgba(0, 0, 0, 0.8);
+  text-shadow: none;
   line-height: 170%;
   margin: 5px auto;
   cursor: pointer;
   transition: all 350ms ease;
   white-space: nowrap;
   &:hover {
-    color: rgba(212, 175, 55, 1);
-    box-shadow:
-      inset 0 1px 1px rgba(212, 175, 55, 0.3),
-      0 0 25px rgba(123, 44, 191, 0.5),
-      0 4px 15px rgba(0, 0, 0, 0.7);
-    text-shadow:
-      0 0 12px rgba(212, 175, 55, 0.6),
-      1px 1px rgba(0, 0, 0, 0.8);
+    color: #000000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(#f5f5f5, #e5e5e5);
   }
   &.disabled {
-    color: #6a5a7a;
+    color: #999999;
     cursor: default;
     opacity: 0.5;
   }
@@ -413,47 +395,17 @@ ul {
     height: 10px;
   }
   &.townsfolk {
-    background:
-      radial-gradient(
-          at 0 -15%,
-          rgba(212, 175, 55, 0.1) 70%,
-          rgba(255, 255, 255, 0) 71%
-        )
-        0 0/80% 90% no-repeat content-box,
-      linear-gradient(#4a5fc1, rgba(26, 15, 40, 0.8)) content-box,
-      linear-gradient(#2a1a3d, #1a2d5f) border-box;
-    box-shadow:
-      inset 0 1px 1px rgba(74, 95, 193, 0.4),
-      0 0 15px rgba(74, 95, 193, 0.3),
-      0 4px 10px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(#f0f0f0, #e0e0e0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     &:hover:not(.disabled) {
-      color: rgba(212, 175, 55, 1);
-      box-shadow:
-        inset 0 1px 1px rgba(74, 95, 193, 0.5),
-        0 0 25px rgba(74, 95, 193, 0.5),
-        0 4px 15px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
   }
   &.demon {
-    background:
-      radial-gradient(
-          at 0 -15%,
-          rgba(212, 175, 55, 0.1) 70%,
-          rgba(255, 255, 255, 0) 71%
-        )
-        0 0/80% 90% no-repeat content-box,
-      linear-gradient(#8b0000, rgba(26, 15, 40, 0.8)) content-box,
-      linear-gradient(#2a1a3d, #5f0000) border-box;
-    box-shadow:
-      inset 0 1px 1px rgba(139, 0, 0, 0.4),
-      0 0 15px rgba(139, 0, 0, 0.3),
-      0 4px 10px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(#e0e0e0, #d0d0d0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     &:hover:not(.disabled) {
-      color: rgba(212, 175, 55, 1);
-      box-shadow:
-        inset 0 1px 1px rgba(139, 0, 0, 0.5),
-        0 0 25px rgba(139, 0, 0, 0.5),
-        0 4px 15px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
   }
 }
@@ -474,34 +426,15 @@ video#background {
   bottom: 0;
   top: 0;
   pointer-events: none;
-  background: black;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 1) 0%,
-    rgba(1, 22, 46, 1) 50%,
-    rgba(0, 39, 70, 1) 100%
-  );
+  background: rgba(0, 0, 0, 0.3);
   opacity: 0;
   transition: opacity 1s ease-in-out;
   &:after {
     content: " ";
     display: block;
     width: 100%;
-    padding-right: 2000px;
     height: 100%;
-    background: url("assets/clouds.webp") repeat;
-    background-size: 2000px auto;
-    animation: move-background 120s linear infinite;
-    opacity: 0.3;
-  }
-}
-
-@keyframes move-background {
-  from {
-    transform: translate3d(-2000px, 0px, 0px);
-  }
-  to {
-    transform: translate3d(0px, 0px, 0px);
+    opacity: 0;
   }
 }
 

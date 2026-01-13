@@ -10,7 +10,6 @@ const { Pool } = pg;
 
 export class PostgreSQLRepository {
   constructor(config, loggerInstance = logger) {
-    super();
     this.config = config;
     this.logger = loggerInstance;
     this.pool = new Pool(config);

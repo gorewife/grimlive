@@ -450,7 +450,7 @@ export default {
 
     .tab {
       padding: 6px 12px;
-      background: rgba(26, 15, 40, 0.6);
+      background: rgba(0, 0, 0, 0.6);
       border: 2px solid rgba(212, 175, 55, 0.3);
       border-radius: 8px 8px 0 0;
       cursor: pointer;
@@ -462,12 +462,12 @@ export default {
       position: relative;
 
       &:hover {
-        background: rgba(42, 26, 61, 0.8);
+        background: rgba(0, 0, 0, 0.8);
         border-color: rgba(212, 175, 55, 0.5);
       }
 
       &.active {
-        background: rgba(42, 26, 61, 0.95);
+        background: rgba(0, 0, 0, 0.95);
         border-color: rgba(212, 175, 55, 0.7);
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
         color: rgba(212, 175, 55, 1);
@@ -508,8 +508,8 @@ export default {
         margin-top: 5px;
         background: linear-gradient(
           135deg,
-          rgba(42, 26, 61, 0.95) 0%,
-          rgba(26, 15, 40, 0.98) 100%
+          rgba(0, 0, 0, 0.95) 0%,
+          rgba(0, 0, 0, 0.98) 100%
         );
         border: 2px solid rgba(212, 175, 55, 0.3);
         border-radius: 8px;
@@ -539,7 +539,7 @@ export default {
           }
 
           &:hover {
-            background: rgba(42, 26, 61, 0.8);
+            background: rgba(0, 0, 0, 0.8);
             color: rgba(212, 175, 55, 1);
 
             .shortcut {

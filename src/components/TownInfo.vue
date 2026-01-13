@@ -175,19 +175,19 @@ export default {
       color: #fff;
     }
     .townsfolk {
-      color: $townsfolk;
+      color: #4a5fc1;
     }
     .outsider {
-      color: $outsider;
+      color: #5a8fa8;
     }
     .minion {
-      color: $minion;
+      color: #c85a28;
     }
     .demon {
-      color: $demon;
+      color: #8b0000;
     }
     .traveller {
-      color: $traveller;
+      color: #7b2cbf;
     }
   }
 

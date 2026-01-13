@@ -1319,7 +1319,7 @@ export default {
       padding: 2px 5px;
       color: #f5e6d3;
       text-align: left;
-      background: rgba(26, 15, 40, 0.5);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1345,7 +1345,7 @@ export default {
         display: flex;
         padding: 0;
         padding-bottom: 20px;
-        background: rgba(26, 15, 40, 0.5);
+        background: rgba(0, 0, 0, 0.5);
         margin-top: 0 !important;
         margin-bottom: 0;
         min-height: auto;
@@ -1360,7 +1360,7 @@ export default {
           cursor: pointer;
           transition: all 250ms ease;
           font-size: 1.2em;
-          background: rgba(26, 15, 40, 0.5);
+          background: rgba(0, 0, 0, 0.5);
           border-top: none;
           border-left: none;
           color: inherit;
@@ -1373,7 +1373,7 @@ export default {
           &:active,
           &:focus-visible {
             outline: none !important;
-            background: rgba(26, 15, 40, 0.5) !important;
+            background: rgba(0, 0, 0, 0.5) !important;
             box-shadow: none !important;
           }
           &:last-child {
@@ -1397,7 +1397,7 @@ export default {
       &:not(.headline):not(.tabs):hover {
         cursor: pointer;
         color: rgba(212, 175, 55, 1);
-        background: rgba(42, 26, 61, 0.7);
+        background: rgba(0, 0, 0, 0.7);
         text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
       }
 

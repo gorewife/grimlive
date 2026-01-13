@@ -76,8 +76,8 @@ export default {
 .modal {
   background: linear-gradient(
     135deg,
-    rgba(42, 26, 61, 0.95) 0%,
-    rgba(26, 15, 40, 0.98) 100%
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.25) 100%
   );
   padding: 20px 30px;
   border-radius: 15px;

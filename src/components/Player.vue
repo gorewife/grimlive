@@ -330,7 +330,12 @@
             })`,
           }"
         ></span>
-        <span class="text">{{ reminder.name }}</span>
+        <span 
+          class="text"
+          :style="{
+            fontSize: reminder.name.length <= 2 ? '120%' : reminder.name.length <= 4 ? '100%' : reminder.name.length <= 8 ? '70%' : '50%'
+          }"
+        >{{ reminder.name }}</span>
       </div>
     </template>
     <div class="reminder add" @click="$emit('trigger', ['openReminderModal'])">
@@ -986,8 +991,8 @@ li.move:not(.from) .player .overlay svg.move {
   width: 120%;
   background: linear-gradient(
     135deg,
-    rgba(42, 26, 61, 0.85) 0%,
-    rgba(26, 15, 40, 0.9) 100%
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.25) 100%
   );
   backdrop-filter: blur(4px);
   border: 2px solid rgba(212, 175, 55, 0.3);
@@ -1054,8 +1059,8 @@ li.move:not(.from) .player .overlay svg.move {
   white-space: nowrap;
   background: linear-gradient(
     135deg,
-    rgba(42, 26, 61, 0.9) 0%,
-    rgba(26, 15, 40, 0.95) 100%
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.25) 100%
   );
   backdrop-filter: blur(4px);
   padding: 2px 5px;
@@ -1119,7 +1124,7 @@ li.move:not(.from) .player .overlay svg.move {
 
 .player.dead .night-order em {
   color: #b8a8c8;
-  background: linear-gradient(180deg, rgba(26, 15, 40, 1) 0%, #5a4a6a 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 100%);
 }
 
 /***** Reminder token *****/
@@ -1145,7 +1150,6 @@ li.move:not(.from) .player .overlay svg.move {
   .text {
     line-height: 90%;
     color: black;
-    font-size: 50%;
     font-weight: bold;
     text-align: center;
     margin-top: 50%;
