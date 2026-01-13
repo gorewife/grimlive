@@ -46,7 +46,7 @@
       <div
         class="night-order first"
         v-if="
-          nightOrder.get(player).first &&
+          nightOrder.get(player)?.first &&
           grimoire.isNightOrder &&
           !session.isSpectator
         "
@@ -59,7 +59,7 @@
       <div
         class="night-order other"
         v-if="
-          nightOrder.get(player).other &&
+          nightOrder.get(player)?.other &&
           grimoire.isNightOrder &&
           !session.isSpectator
         "

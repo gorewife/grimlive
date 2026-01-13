@@ -111,8 +111,6 @@ export default {
       sections: [],
       activeSection: 0,
       showAddMenu: false,
-      nightCount: 0,
-      dayCount: 0,
       isCollapsed: false,
       position: { x: 100, y: 100 },
       size: { width: 600, height: 500 },
@@ -221,23 +219,28 @@ export default {
     },
 
     addSection(type) {
+      const getNextNumber = (sectionType) => {
+        const numbers = this.sections
+          .filter(s => s.type === sectionType)
+          .map(s => parseInt(s.name.match(/\d+/)?.[0]))
+          .filter(Boolean);
+        
+        for (let i = 1; i <= numbers.length + 1; i++) {
+          if (!numbers.includes(i)) return i;
+        }
+      };
+
       let name = "";
       if (type === "night") {
-        this.nightCount++;
-        name = `Night ${this.nightCount}`;
+        name = `Night ${getNextNumber("night")}`;
       } else if (type === "day") {
-        this.dayCount++;
-        name = `Day ${this.dayCount}`;
+        name = `Day ${getNextNumber("day")}`;
       } else {
         name = prompt("Enter section name:");
         if (!name) return;
       }
 
-      this.sections.push({
-        name,
-        content: "",
-        type,
-      });
+      this.sections.push({ name, content: "", type });
       this.activeSection = this.sections.length - 1;
       this.showAddMenu = false;
       this.saveJournal();
@@ -257,8 +260,6 @@ export default {
     saveJournal() {
       const journalData = {
         sections: this.sections,
-        nightCount: this.nightCount,
-        dayCount: this.dayCount,
       };
       localStorage.setItem("grimoire-journal", JSON.stringify(journalData));
     },
@@ -282,8 +283,6 @@ export default {
         try {
           const data = JSON.parse(saved);
           this.sections = data.sections || [];
-          this.nightCount = data.nightCount || 0;
-          this.dayCount = data.dayCount || 0;
         } catch (e) {
           console.error("Failed to load journal:", e);
         }
@@ -291,7 +290,6 @@ export default {
 
       // Initialize with first night if empty
       if (this.sections.length === 0) {
-        this.nightCount = 1;
         this.sections = [
           {
             name: "Night 1",
@@ -344,8 +342,6 @@ export default {
         },
       ];
       this.activeSection = 0;
-      this.nightCount = 1;
-      this.dayCount = 0;
       this.saveJournal();
     },
   },
