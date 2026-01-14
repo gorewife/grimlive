@@ -1,0 +1,7 @@
+target/
+.env
+.DS_Store
+*.pem
+*.key
+migrations/
+Cargo.lock

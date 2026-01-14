@@ -366,6 +366,10 @@ export default {
     display: block;
   }
 
+  .overlay {
+    color: white;
+  }
+
   em {
     color: $demon;
     font-style: normal;

@@ -601,17 +601,17 @@ export default {
   },
   watch: {},
   methods: {
-    setBackground() {
-      const background = prompt("Enter custom background URL");
+    async setBackground() {
+      const background = await window.$dialog.prompt("Enter custom background URL");
       if (background || background === "") {
         this.$store.commit("setBackground", background);
       }
     },
-    hostSession() {
+    async hostSession() {
       if (this.session.sessionId) return;
-      const sessionId = prompt(
+      const sessionId = await window.$dialog.prompt(
         "Enter a channel number / name for your session",
-        Math.round(Math.random() * 10000),
+        Math.round(Math.random() * 10000).toString(),
       );
       if (sessionId) {
         this.$store.commit("session/clearVoteHistory");
@@ -625,11 +625,11 @@ export default {
       const link = url + "#" + this.session.sessionId;
       navigator.clipboard.writeText(link);
     },
-    distributeRoles() {
+    async distributeRoles() {
       if (this.session.isSpectator) return;
       const popup =
         "Do you want to distribute assigned characters to all SEATED players?";
-      if (confirm(popup)) {
+      if (await window.$dialog.confirm(popup)) {
         this.$store.commit("session/distributeRoles", true);
         setTimeout(
           (() => {
@@ -639,16 +639,16 @@ export default {
         );
       }
     },
-    imageOptIn() {
+    async imageOptIn() {
       const popup =
         "Are you sure you want to allow custom images? A malicious script file author might track your IP address this way.";
-      if (this.grimoire.isImageOptIn || confirm(popup)) {
+      if (this.grimoire.isImageOptIn || await window.$dialog.confirm(popup)) {
         this.toggleImageOptIn();
       }
     },
-    joinSession() {
+    async joinSession() {
       if (this.session.sessionId) return this.leaveSession();
-      let sessionId = prompt(
+      let sessionId = await window.$dialog.prompt(
         "Enter the channel number / name of the session you want to join",
       );
       if (sessionId.match(/^https?:\/\//i)) {
@@ -661,29 +661,32 @@ export default {
         this.$store.commit("session/setSessionId", sessionId);
       }
     },
-    leaveSession() {
-      if (confirm("Are you sure you want to leave the active live game?")) {
+    async leaveSession() {
+      if (await window.$dialog.confirm("Are you sure you want to leave the active live game?")) {
         this.$store.commit("session/setSpectator", false);
         this.$store.commit("session/setSessionId", "");
       }
     },
-    addPlayer() {
+    async addPlayer() {
       if (this.session.isSpectator) return;
       if (this.players.length >= 20) return;
-      const name = prompt("Player name", "Player " + (this.players.length + 1));
+      const name = await window.$dialog.prompt("Player name", "Player " + (this.players.length + 1));
       if (name) {
         this.$store.commit("players/add", name);
       }
+      // Refocus the window after dialog closes
+      window.focus();
+      document.body.focus();
     },
-    randomizeSeatings() {
+    async randomizeSeatings() {
       if (this.session.isSpectator) return;
-      if (confirm("Are you sure you want to randomize seatings?")) {
+      if (await window.$dialog.confirm("Are you sure you want to randomize seatings?")) {
         this.$store.dispatch("players/randomize");
       }
     },
-    clearPlayers() {
+    async clearPlayers() {
       if (this.session.isSpectator) return;
-      if (confirm("Are you sure you want to remove all players?")) {
+      if (await window.$dialog.confirm("Are you sure you want to remove all players?")) {
         // abort vote if in progress
         if (this.session.nomination) {
           this.$store.commit("session/nomination");
@@ -691,8 +694,8 @@ export default {
         this.$store.commit("players/clear");
       }
     },
-    clearRoles() {
-      if (confirm("Are you sure you want to remove all player roles?")) {
+    async clearRoles() {
+      if (await window.$dialog.confirm("Are you sure you want to remove all player roles?")) {
         this.$store.dispatch("players/clearRoles");
       }
     },
@@ -746,7 +749,7 @@ export default {
 
       // Can only enable if Discord is linked
       if (!this.isStatTrackingEnabled && !this.isDiscordLinked) {
-        alert("Please log in with Discord first to enable stat tracking.");
+        await window.$dialog.alert("Please log in with Discord first to enable stat tracking.");
         return;
       }
 
@@ -769,18 +772,18 @@ export default {
       // Redirecting to OAuth
       window.location.href = authUrl;
     },
-    logoutDiscord() {
-      if (confirm("Log out of Discord? This will disable stat tracking.")) {
+    async logoutDiscord() {
+      if (await window.$dialog.confirm("Log out of Discord? This will disable stat tracking.")) {
         this.$store.dispatch("stats/logout");
         window.location.reload();
       }
     },
-    confirmSessionCode() {
+    async confirmSessionCode() {
       const code = this.tempSessionCode.trim();
       if (!code) return;
 
       if (!this.sessionCodeConfirmed) {
-        const confirmed = confirm(
+        const confirmed = await window.$dialog.confirm(
           `Save session code "${code}"?\n\nThis links your game to the Discord bot.`,
         );
         if (!confirmed) return;
@@ -806,12 +809,12 @@ export default {
 
       const sessionCode = this.sessionCode;
       if (!sessionCode) {
-        alert("Enter session code from Discord (*game command) to link stats");
+        await window.$dialog.alert("Enter session code from Discord (*game command) to link stats");
         return;
       }
 
       if (!this.sessionCodeConfirmed) {
-        const confirmed = confirm(
+        const confirmed = await window.$dialog.confirm(
           `Start game with session code "${sessionCode}"?`,
         );
         if (!confirmed) return;
@@ -869,14 +872,14 @@ export default {
             .filter((p) => p !== null);
 
           await Promise.all(playerPromises);
-          alert(`✓ Game started! ID: ${data.game_id}`);
+          await window.$dialog.alert(`✓ Game started! ID: ${data.game_id}`);
         } else {
-          alert("Failed to start game. Check session code and try again.");
+          await window.$dialog.alert("Failed to start game. Check session code and try again.");
           this.$store.commit("stats/setCurrentGameId", null);
         }
       } catch (error) {
         logger.error("Start game error:", error);
-        alert(`Error starting game: ${error.message || "Unknown error"}`);
+        await window.$dialog.alert(`Error starting game: ${error.message || "Unknown error"}`);
         // Rollback game ID if game was started but player updates failed
         if (gameStarted) {
           try {
@@ -933,10 +936,10 @@ export default {
 
         await Promise.all(playerPromises);
         await this.$store.dispatch("stats/endGame", { winner: winningTeam });
-        alert(`✓ Game ended! ${winningTeam} wins.`);
+        await window.$dialog.alert(`✓ Game ended! ${winningTeam} wins.`);
       } catch (error) {
         console.error("End game error:", error);
-        alert(`Error ending game: ${error.message || "Unknown error"}`);
+        await window.$dialog.alert(`Error ending game: ${error.message || "Unknown error"}`);
       } finally {
         this.isEndingGame = false;
       }

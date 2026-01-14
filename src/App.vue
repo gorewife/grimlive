@@ -59,6 +59,7 @@
       <NightOrderModal />
       <VoteHistoryModal />
       <GameStateModal />
+      <DialogModal ref="dialogModal" />
     </ErrorBoundary>
 
     <Gradients />
@@ -90,6 +91,7 @@ const VoteHistoryModal = defineAsyncComponent(() => import("@/components/modals/
 const GameStateModal = defineAsyncComponent(() => import("@/components/modals/GameStateModal"));
 const JournalModal = defineAsyncComponent(() => import("./components/modals/JournalModal"));
 const TimerModal = defineAsyncComponent(() => import("./components/modals/TimerModal"));
+const DialogModal = defineAsyncComponent(() => import("./components/modals/DialogModal"));
 
 export default {
   components: {
@@ -98,6 +100,7 @@ export default {
     VoteHistoryModal,
     JournalModal,
     TimerModal,
+    DialogModal,
     NpcModal,
     NightOrderModal,
     Vote,
@@ -119,6 +122,14 @@ export default {
   data() {
     return {
       version,
+    };
+  },
+  mounted() {
+    // Setup global dialog functions
+    window.$dialog = {
+      alert: (message, title) => this.$refs.dialogModal.show("alert", message, "", title),
+      confirm: (message, title) => this.$refs.dialogModal.show("confirm", message, "", title),
+      prompt: (message, defaultValue = "", title) => this.$refs.dialogModal.show("prompt", message, defaultValue, title),
     };
   },
   methods: {
@@ -395,16 +406,24 @@ ul {
     height: 10px;
   }
   &.townsfolk {
-    background: linear-gradient(#f0f0f0, #e0e0e0);
+    background: linear-gradient(color.adjust($townsfolk, $lightness: 15%), color.adjust($townsfolk, $lightness: 10%));
+    color: white;
+    border-color: color.adjust($townsfolk, $lightness: -10%);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     &:hover:not(.disabled) {
+      background: linear-gradient(color.adjust($townsfolk, $lightness: 20%), color.adjust($townsfolk, $lightness: 15%));
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
   }
   &.demon {
-    background: linear-gradient(#e0e0e0, #d0d0d0);
+    background: linear-gradient(color.adjust($demon, $lightness: 15%), color.adjust($demon, $lightness: 10%));
+    color: white;
+    border-color: color.adjust($demon, $lightness: -10%);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     &:hover:not(.disabled) {
+      background: linear-gradient(color.adjust($demon, $lightness: 20%), color.adjust($demon, $lightness: 15%));
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
   }
@@ -434,11 +453,18 @@ video#background {
     display: block;
     width: 100%;
     height: 100%;
+    background-image: url("assets/clouds.webp");
+    background-size: cover;
+    background-position: center center;
     opacity: 0;
+    transition: opacity 2s ease-in-out;
   }
 }
 
 #app.night > .backdrop {
-  opacity: 0.5;
+  opacity: 1;
+  &:after {
+    opacity: 1;
+  }
 }
 </style>

@@ -1,0 +1,59 @@
+[package]
+name = "grimlive-server"
+version = "2.21.3"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Blood on the Clocktower WebSocket Server - Rust Edition"
+
+[dependencies]
+# Web framework
+axum = { version = "0.7", features = ["ws", "macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+
+# WebSocket
+tokio-tungstenite = "0.24"
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "macros", "uuid", "chrono"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Crypto & Auth
+sha2 = "0.10"
+hex = "0.4"
+uuid = { version = "1.0", features = ["serde", "v4"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Async utilities
+futures = "0.3"
+async-trait = "0.1"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Environment & Config
+dotenvy = "0.15"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# URL encoding
+urlencoding = "2.1"
+
+# HTTP client (for Discord OAuth)
+reqwest = { version = "0.12", features = ["json"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
