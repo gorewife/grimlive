@@ -1,4 +1,4 @@
-name: Deploy Backend to Production
+name: Deploy Rust Backend to Production
 
 on:
   workflow_dispatch:
@@ -9,12 +9,25 @@ on:
         default: ''
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     if: github.event.inputs.confirm == 'deploy'
     
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    
+    - name: Build Rust backend (release)
+      run: |
+        cd server-rs
+        cargo build --release
+        strip target/release/grimlive-server
+        ls -lh target/release/grimlive-server
     
     - name: Setup SSH key
       run: |
@@ -34,19 +47,38 @@ jobs:
         EOF
         chmod 600 ~/.ssh/config
     
-    - name: Run deployment script
+    - name: Deploy binary to server
       run: |
-        chmod +x scripts/deploy-integration.sh
-        ./scripts/deploy-integration.sh
+        ssh botserver "mkdir -p ~/grimlive-backend"
+        scp server-rs/target/release/grimlive-server botserver:~/grimlive-backend/
+        scp server-rs/.env.example botserver:~/grimlive-backend/.env.example
+    
+    - name: Restart backend service
+      run: |
+        ssh botserver << 'EOF'
+          cd ~/grimlive-backend
+          
+          # Stop old backend (Node.js or Rust)
+          pm2 stop grimlive-backend || true
+          pm2 delete grimlive-backend || true
+          
+          # Ensure .env exists
+          [ ! -f .env ] && cp .env.example .env
+          
+          # Start new Rust backend with PM2
+          pm2 start grimlive-server --name grimlive-backend
+          pm2 save
+          pm2 list
+        EOF
     
     - name: Verify deployment
       run: |
         sleep 5
         curl -f https://api.hystericca.dev/health || exit 1
-        echo "✅ Deployment successful and server is healthy"
+        echo "✅ Rust backend deployment successful!"
     
     - name: Notify on failure
       if: failure()
       run: |
-        echo "❌ Deployment failed! Check the logs above."
+        echo "❌ Deployment failed! Check PM2 logs with: pm2 logs grimlive-backend"
         exit 1
